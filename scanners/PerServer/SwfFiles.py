@@ -53,4 +53,3 @@ class Z0SCAN(PluginBase):
                         result.add_detail("payload请求", req.reqinfo, generateResponse(req),
                                         "匹配到存在漏洞的md5:{}".format(md5_value), "", "", PLACE.GET)
                         self.success(result)
-                        break

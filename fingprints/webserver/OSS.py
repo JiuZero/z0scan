@@ -1,11 +1,9 @@
 #!/usr/bin/env python 
 # -*- coding:utf-8 -*-
-# @name:    Darwin
+# @name:    OSS
 
 from re import search, I, compile, error
-
-from lib.core.enums import OS
-
+from lib.core.data import KB
 
 def _prepare_pattern(pattern):
     """
@@ -18,12 +16,12 @@ def _prepare_pattern(pattern):
     except error as e:
         return compile(r'(?!x)x')
 
+keys = ['aliyunoss', 'amazons3', 'minio', 'ceph'] # 检测OSS特征标识
 
 def fingerprint(headers, content):
-    _ = False
     if 'server' in headers.keys():
-        _ |= search(r"Darwin", headers["server"], I) is not None
-    if 'x-powered-by' in headers.keys():
-        _ |= search(r"Darwin", headers["x-powered-by"], I) is not None
-
-    if _: return OS.DARWIN
+        for _ in keys:
+            if search(_, headers["server"], I):
+                KB["OSS_STATE"] = True
+                return
+    KB["OSS_STATE"] = False

@@ -31,7 +31,6 @@ XSS_LIMIT_CONTENT_TYPE = True  # 限制xss的content-type，为True时限制cont
 SQLi_TIME = 3 # SQLi插件延时时间 (不建议设置为大于4的数值)
 TOP_RISK_GET_PARAMS = {"id", 'action', 'type', 'm', 'callback', 'cb'} # 高风险级参数
 ignoreParams = ['submit', '_', '_t', 'rand', 'hash'] # 会忽略的参数
-oss_indicators = ['aliyunoss', 'amazons3', 'minio', 'ceph'] # 检测OSS特征标识
 
 
 # 反连配置

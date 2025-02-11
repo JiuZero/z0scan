@@ -125,5 +125,9 @@ class VulType(object):
     SMUGGLING = 'SMUGGLING'
     # 服务器端模板注入（SSTI），攻击者通过注入恶意模板代码到服务器端模板引擎中执行
     SSTI = 'SSTI'
-    # 未经授权访问（Unauth），攻击者试图访问他们没有权限访问的资源或服务
+    # 未授权访问（Unauth），攻击者试图访问他们没有权限访问的资源或服务
     UNAUTH = 'UNAUTH'
+    # 接管漏洞
+    TAKEOVER = 'TAKEOVER'
+    # 文件上传
+    FILEUPLOAD = 'FILEUPLOAD'

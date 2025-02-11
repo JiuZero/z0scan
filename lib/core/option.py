@@ -64,6 +64,8 @@ def initKb():
         WEB_SERVER.APACHE: None
     } # 初始化WEB_SERVER版本信息
 
+    KB["OSS_STATE"] = False # 初始化OSS指纹状态
+
 
 def initPlugins():
     # 加载检测插件
