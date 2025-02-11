@@ -97,7 +97,7 @@ Optimization:
 
 - PerServer
 
-|插件名称|插件简述|检测方式|加载前提|
+|插件名称|插件简述|检测方式|要求|
 |:---:|:----:|:---:|:---:|
 |IisShortname|IIS短文件名漏洞检测|主动|/|
 |IisNginxParse|IIS与Nginx服务解析漏洞|主动|/|
@@ -114,7 +114,7 @@ Optimization:
 
 - PerFile
 
-|插件名称|插件简述|检测方式|加载前提|
+|插件名称|插件简述|检测方式|要求|
 |:---:|:----:|:---:|:---:|
 |SQLiBool|SQL布尔盲注检测|主动|NoWaf|
 |SQLiTime|SQL时间盲注检测|主动|NoWaf|
@@ -133,14 +133,14 @@ Optimization:
 
 - PerFolder
 
-|插件名称|插件简述|检测类型|加载前提|
+|插件名称|插件简述|检测方式|要求|
 |:---:|:----:|:---:|:---:|
 |BackupFolder|备份文件扫描|主动|Level>=2|
 |DirectoryBrowse|目录遍历|主动|/|
 |PhpinfoCraw|Phpinfo文件发现|主动|Level>=2|
 |RepositoryLeak|仓库源码泄漏|主动|NoWaf,Level>=2|
 
-- 注意：加载前提忽略了指纹要素（忽略指纹要素的功能还在开发）
+- 注意：插件的运行同时还会受到服务指纹的影响（忽略指纹要素的功能还在开发）
 
 ## 被动代理流程图
 
