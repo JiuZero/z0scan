@@ -20,7 +20,7 @@ def cmd_line_parser(argv=None):
     parser = argparse.ArgumentParser(prog='Z0SCAN', usage=usage)
     parser.add_argument("-v", "--version", dest="version", action="store_true", help="Show program's version number and exit")
     parser.add_argument("--debug", dest="debug", action="store_true", help="Show programs's exception")
-    parser.add_argument("-l", "--level", dest="level", type=int, choices=list(range(1, 4)), help="Different level use different payload: 1-3(The default numbers see config.py)")
+    parser.add_argument("-l", "--level", dest="level", type=int, choices=list(range(1, 5)), help="Different level use different payload: 1-4(The default numbers see config.py)")
     # Proxy options
     proxy = parser.add_argument_group('Proxy', 'Passive Agent Mode Options')
     proxy.add_argument("-s", "--server-addr", dest="server_addr", help="Server addr format:(ip:port) ")

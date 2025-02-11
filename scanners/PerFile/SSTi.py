@@ -11,7 +11,7 @@ from urllib.parse import unquote
 import requests
 
 from lib.core.common import random_str, generateResponse, url_dict2str
-from lib.core.data import conf
+from lib.core.data import conf, KB
 from lib.core.enums import HTTPMETHOD, PLACE, VulType
 from lib.core.output import ResultObject
 from lib.core.plugins import PluginBase
@@ -54,7 +54,8 @@ class Z0SCAN(PluginBase):
         return r
 
     def audit(self):
-
+        if KB["WafState"]:
+            return
         parse_params = set(getParamsFromHtml(self.response.text))
         resp = self.response.text
         params_data = {}

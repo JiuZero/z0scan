@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 
 import requests
 from lxml import etree
-from lib.core.data import KB
+from lib.core.data import KB, conf
 from lib.core.common import generateResponse
 from lib.core.enums import VulType, PLACE
 from lib.core.plugins import PluginBase
@@ -17,7 +17,7 @@ class Z0SCAN(PluginBase):
     name = 'idea目录解析'
 
     def audit(self):
-        if not KB["WAF_STATE"]:
+        if not KB["WafState"] and conf.level >= 2:
             headers = self.requests.headers
             p = urlparse(self.requests.url)
             domain = "{}://{}/".format(p.scheme, p.netloc)

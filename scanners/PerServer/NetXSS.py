@@ -5,7 +5,7 @@
 from urllib.parse import urlparse
 
 import requests
-from lib.core.data import conf
+from lib.core.data import conf, KB
 from lib.core.common import random_str, generateResponse
 from lib.core.enums import VulType, PLACE
 from lib.core.plugins import PluginBase
@@ -15,7 +15,7 @@ class Z0SCAN(PluginBase):
     name = '.NET通杀XSS'
 
     def audit(self):
-        if conf.level == 3:
+        if conf.level == 4 and not KB["WafState"]:
             p = urlparse(self.requests.url)
             domain = "{}://{}/".format(p.scheme, p.netloc)
 

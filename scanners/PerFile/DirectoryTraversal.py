@@ -8,7 +8,7 @@ import re
 from urllib.parse import unquote, quote
 
 from lib.core.common import generateResponse, updateJsonObjectFromStr
-from lib.core.data import conf
+from lib.core.data import conf, KB
 from lib.core.enums import PLACE, OS, WEB_PLATFORM, VulType, POST_HINT
 from lib.core.output import ResultObject
 from lib.core.plugins import PluginBase
@@ -87,6 +87,8 @@ class Z0SCAN(PluginBase):
         return payloads
 
     def audit(self):
+        if KB["WafState"]:
+            return
         plainArray = [
             "; for 16-bit app support",
             "[MCI Extensions.BAK]",

@@ -6,6 +6,7 @@
 from lib.helper.helper_sqli import Get_sql_errors
 from lib.core.common import generateResponse, random_num, random_str
 from lib.core.enums import VulType
+from lib.core.data import KB
 from lib.core.plugins import PluginBase
 from lib.helper.helper_sensitive import sensitive_page_error_message_check
 
@@ -14,6 +15,8 @@ class Z0SCAN(PluginBase):
     name = '基于报错SQL注入'
 
     def audit(self):
+        if KB["WafState"]:
+            return
         num = random_num(4)
         s = random_str(4)
         _payloads = [

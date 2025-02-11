@@ -93,11 +93,60 @@ Optimization:
 ```
 
 
-## 流程图
+## 插件列表
 
-<h1 align="center">
+- PerServer
+
+|插件名称|插件简述|检测方式|加载前提|
+|:---:|:----:|:---:|:---:|
+|IisShortname|IIS短文件名漏洞检测|主动|/|
+|IisNginxParse|IIS与Nginx服务解析漏洞|主动|/|
+|ErrorPage|错误页敏感信息泄露|主动|/|
+|OSSBucketTakeover|OSS储存桶接管|主动|/|
+|OSSFileUpload|OSS储存桶任意文件上传|主动|/|
+|NetXSS|.NET通杀XSS|主动|Level==4,NoWaf|
+|NginxCRLF|Nginx服务CRLF注入|主动|/|
+|NginxWebcache|Nginx错误配置-缓存清除|主动|/|
+|SwfFiles|Flash通杀XSS|主动|Level==4,NoWaf|
+|NginxVariableLeakage|Nginx错误配置-变量读取|主动|/|
+|Idea|Idea目录解析|主动|Level>=2|
+|BackupDomain|基于域名的备份文件检测|主动|\|
+
+- PerFile
+
+|插件名称|插件简述|检测方式|加载前提|
+|:---:|:----:|:---:|:---:|
+|SQLiBool|SQL布尔盲注检测|主动|NoWaf|
+|SQLiTime|SQL时间盲注检测|主动|NoWaf|
+|SQLiError|SQL报错注入检测|主动|/|
+|CommandAspCode|Asp代码执行|主动|Nowaf,Level>=3|
+|CommandPhpCode|Php代码执行|主动|NoWaf,Level>=3|
+|SSTI|SSTI注入检测|主动|Nowaf|
+|XSS|基于JS语义化XSS发现|被动|/|
+|AnalyzeParameter|反序列参数分析|被动|/|
+|JsSensitiveContent|Js敏感信息泄露|被动|/|
+|CommandSystem|系统命令执行|主动|NoWaf,Level>=3|
+|DirectoryTraversal|路径穿越|主动|NoWaf|
+|Unauth|未授权访问|主动|/|
+|PhpRealPath|Php真实目录发现|主动|/|
+
+
+- PerFolder
+
+|插件名称|插件简述|检测类型|加载前提|
+|:---:|:----:|:---:|:---:|
+|BackupFolder|备份文件扫描|主动|Level>=2|
+|DirectoryBrowse|目录遍历|主动|/|
+|PhpinfoCraw|Phpinfo文件发现|主动|Level>=2|
+|RepositoryLeak|仓库源码泄漏|主动|NoWaf,Level>=2|
+
+- 注意：加载前提忽略了指纹要素（忽略指纹要素的功能还在开发）
+
+## 被动代理流程图
+
+<h2 align="center">
 <img src="doc/process.png" alt="process" >
-</h1>
+</h2>
 
 
 ## 版本迭代记录
@@ -113,6 +162,14 @@ Optimization:
 - 部分Nginx服务漏洞的检测逻辑来自于 [nginxpwner](https://github.com/stark0de/nginxpwner)
 - WAF被动规则来自 [wafw00f](https://github.com/EnableSecurity/wafw00f)
 
+
+## 联系
+
+```
+QQ: 3973580951
+QQemail: jiuzer0@qq.com
+WeiXin: JiuZer0
+```
 
 ## 许可
 

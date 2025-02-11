@@ -94,6 +94,56 @@ Optimization:
 ```
 
 
+## Scanner List
+
+- PerServer
+
+|Name|Description|Way|Demand|
+|:---:|:----:|:---:|:---:|
+|IisShortname|IIS short file name vulnerability detection.|Active|/|
+|IisNginxParse|IIS and Nginx service resolution vulnerability.|Active|/|
+|ErrorPage|Error page sensitive information leaked.|Active|/|
+|OSSBucketTakeover|OSS bucket takes over.|Active|/|
+|OSSFileUpload|Upload any file from an OSS bucket|Active|/|
+|NetXSS|.NET XSS|Active|Level==4,NoWaf|
+|NginxCRLF|Nginx CRLF inject|Active|/|
+|NginxWebcache|Nginx Misconfiguration - Cache Clearing|Active|/|
+|SwfFiles|Flash XSS|Active|Level==4,NoWaf|
+|NginxVariableLeakage|Nginx Misconfiguration - variable leakage|Active|/|
+|Idea|Idea directory resolution |Active|Level>=2|
+|BackupDomain|Domain-based backup file detection|Active|\|
+
+- PerFile
+
+|Name|Description|Way|Demand|
+|:---:|:----:|:---:|:---:|
+|SQLiBool|SQL Boolean blind detection|Active|NoWaf|
+|SQLiTime|SQL Time blind detection|Active|NoWaf|
+|SQLiError|SQL Error injection detection|Active|/|
+|CommandAspCode|ASP code execution|Active|Nowaf,Level>=3|
+|CommandPhpCode|PHP code execution|Active|NoWaf,Level>=3|
+|SSTI|SSTI injection|Active|Nowaf|
+|XSS|Based on JS semantic XSS discovery|Passive|/|
+|AnalyzeParameter|Inverse parameter analysis|Passive|/|
+|JsSensitiveContent|Js sensitive information leakage|Passive|/|
+|CommandSystem|System command execution|Active|NoWaf,Level>=3|
+|DirectoryTraversal|Directory traversal|Active|NoWaf|
+|Unauth|Unauthorized access|Active|/|
+|PhpRealPath|Php real path detection|Active|/|
+
+
+- PerFolder
+
+|Name|Description|Way|Demand|
+|:---:|:----:|:---:|:---:|
+|BackupFolder|Backup file scanning|Active|Level>=2|
+|DirectoryBrowse|Directory traversal|Active|/|
+|PhpinfoCraw|Phpinfo file detection|Active|Level>=2|
+|RepositoryLeak|Repository source code leak|Active|NoWaf,Level>=2|
+
+- Note: The loading premise ignores fingerprint elements (the ability to ignore fingerprint elements is still under development)
+
+
 ## Passive Process
 
 <h1 align="center">
@@ -113,6 +163,15 @@ Look at [CHANGELOG](https://github.com/JiuZero/z0scan/blob/master/doc/CHANGE.MD)
 - The logic of IisShortname.by originally came from lijiejie's [IIS_shortname_Scanner](https://github.com/lijiejie/IIS_shortname_Scanner)
 - The detection logic for some Nginx service vulnerabilities comes from [nginxpwner](https://github.com/stark0de/nginxpwner)
 - The passive rules of WAF come from [wafw00f](https://github.com/EnableSecurity/wafw00f)
+
+
+## Contact
+
+```
+QQ: 3973580951
+QQemail: jiuzer0@qq.com
+WeiXin: JiuZer0
+```
 
 
 ## License

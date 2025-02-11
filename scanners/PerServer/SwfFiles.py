@@ -17,7 +17,7 @@ class Z0SCAN(PluginBase):
     name = '通用flash的xss'
 
     def audit(self):
-        if conf.level >= 2 and not KB["WAF_STATE"]:
+        if conf.level == 4 and not KB["WafState"]:
             p = urlparse(self.requests.url)
 
             arg = "{}://{}/".format(p.scheme, p.netloc)

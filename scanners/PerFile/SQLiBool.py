@@ -8,7 +8,7 @@ import difflib
 import re
 
 import requests
-
+from lib.core.data import KB
 from lib.core.common import random_str, generateResponse, url_dict2str
 from lib.core.enums import PLACE, VulType, HTTPMETHOD
 from lib.core.plugins import PluginBase
@@ -166,6 +166,8 @@ class Z0SCAN(PluginBase):
         return payload_true, payload_false
 
     def audit(self):
+        if KB["WafState"]:
+            return
 
         count = 0
         ratio = 0

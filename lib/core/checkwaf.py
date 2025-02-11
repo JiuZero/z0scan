@@ -4,7 +4,7 @@
 from lib.core.data import conf, logger, KB
 from re import search, I, compile, error
 from config import HEURiITIC_WAF_CHECK
-import os, requests
+import os, requests, sys
 from urllib.parse import urlencode
 import random
 import string
@@ -20,10 +20,10 @@ def CheckWaf(self):
         return
     KB["limit"] = True
     if self.requests.hostname in KB["WafHistory"]:
-        KB["WAF_STATE"] = True
+        KB["WafState"] = True
         return
     if not self.requests.hostname in KB["WafHistory"] and self.requests.hostname in KB["CheckHistory"]:
-        KB["WAF_STATE"] = False
+        KB["WafState"] = False
         return
     _ = False
     if 'server' in self.requests.headers.keys():
@@ -32,7 +32,7 @@ def CheckWaf(self):
                 WriteIn(self.requests.hostname)
                 return
             else:
-                KB["WAF_STATE"] = False
+                KB["WafState"] = False
                 KB["CheckHistory"].append(self.requests.hostname)
     if HEURiITIC_WAF_CHECK:
         # Reference: http://seclists.org/nmap-dev/2011/q2/att-1005/http-waf-detect.nse
@@ -49,14 +49,14 @@ def CheckWaf(self):
             WriteIn(self.requests.hostname)
             return
         else:
-            KB["WAF_STATE"] = False
+            KB["WafState"] = False
             KB["CheckHistory"].append(self.requests.hostname)
             return
 
 
 def WriteIn(hostname):
     logger.warning("[%s] Previous heuristics detected that the target is protected by some kind of WAF/IPS" % hostname)
-    KB["WAF_STATE"] = True
+    KB["WafState"] = True
     KB["CheckHistory"].append(hostname)
     KB["WafHistory"].append(hostname)
     try:
@@ -77,7 +77,7 @@ def initWafCheck(root):
         with open(file_path, 'w', encoding='utf-8') as file:
             logger.warning(f"文件 {file_path} 不存在，已创建空文件。")
             logger.warning("QUIT.")
-            exit
+            sys.exit(0)
         # 由于文件是新创建的，不需要再读取
     else:
         try:

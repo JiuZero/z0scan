@@ -17,7 +17,7 @@ class Z0SCAN(PluginBase):
     name = 'phpinfo遍历'
 
     def audit(self):
-        if WEB_PLATFORM.PHP in self.response.programing or conf.level >= 2:
+        if WEB_PLATFORM.PHP in self.response.programing and conf.level >= 2:
             headers = self.requests.headers
             variants = [
                 "phpinfo.php",
