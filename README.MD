@@ -41,8 +41,8 @@ options:
   -h, --help            show this help message and exit
   -v, --version         Show program's version number and exit
   --debug               Show programs's exception
-  -l {1,2,3}, --level {1,2,3}
-                        Different level use different payload: 1-3(The default
+  -l {1,2,3,4}, --level {1,2,3,4}
+                        Different level use different payload: 1-4(The default
                         numbers see config.py)
 
 Proxy:
@@ -110,7 +110,7 @@ Optimization:
 |SwfFiles|Flash通杀XSS|主动|Level==4,NoWaf|
 |NginxVariableLeakage|Nginx错误配置-变量读取|主动|/|
 |Idea|Idea目录解析|主动|Level>=2|
-|BackupDomain|基于域名的备份文件检测|主动|\|
+|BackupDomain|基于域名的备份文件检测|主动|/|
 
 - PerFile
 

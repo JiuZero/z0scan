@@ -1,6 +1,6 @@
 #!/usr/bin/env python 
 # -*- coding:utf-8 -*-
-# @name:    Waf
+# @name:  checkwaf
 from lib.core.data import conf, logger, KB
 from re import search, I, compile, error
 from config import HEURiITIC_WAF_CHECK
@@ -75,7 +75,7 @@ def initWafCheck(root):
     # 检查文件是否存在，如果不存在则创建空文件
     if not os.path.exists(file_path):
         with open(file_path, 'w', encoding='utf-8') as file:
-            logger.warning(f"文件 {file_path} 不存在，已创建空文件。")
+            logger.warning(f"File {file_path} does not exist, an empty file has been created.")
             logger.warning("QUIT.")
             sys.exit(0)
         # 由于文件是新创建的，不需要再读取

@@ -42,8 +42,8 @@ options:
   -h, --help            show this help message and exit
   -v, --version         Show program's version number and exit
   --debug               Show programs's exception
-  -l {1,2,3}, --level {1,2,3}
-                        Different level use different payload: 1-3(The default
+  -l {1,2,3,4}, --level {1,2,3,4}
+                        Different level use different payload: 1-4(The default
                         numbers see config.py)
 
 Proxy:
@@ -111,7 +111,7 @@ Optimization:
 |SwfFiles|Flash XSS|Active|Level==4,NoWaf|
 |NginxVariableLeakage|Nginx Misconfiguration - variable leakage|Active|/|
 |Idea|Idea directory resolution |Active|Level>=2|
-|BackupDomain|Domain-based backup file detection|Active|\|
+|BackupDomain|Domain-based backup file detection|Active|/|
 
 - PerFile
 
