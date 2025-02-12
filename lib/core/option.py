@@ -94,7 +94,7 @@ def initPlugins():
                 logger.error('Not "{}" attribute in the plugin:{}'.format(e, filename))
             except AttributeError:
                 logger.error('Filename:{} not class "{}"'.format(filename, 'Z0SCAN'))
-    logger.info('Load scanner plugins:{}'.format(len(KB["registered"])))
+    logger.info('Load scanner plugins:{}'.format(len(KB["registered"])-1))
 
     # 加载指纹识别插件
     num = 0
@@ -116,6 +116,9 @@ def initPlugins():
             num += 1
 
     logger.info('Load fingerprint plugins:{}'.format(num))
+
+    if conf.ignore_waf:
+        logger.warning('Ignore the presence of Waf.')
 
 
 

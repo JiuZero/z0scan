@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @Time    : 2019/6/30 3:27 PM
-# @Author  : w8ay
+# @Author  : w8ay, JiuZer0
 # @File    : helper_sqli.py
 # refer:https://github.com/boy-hack/poc-t/blob/2.0/script/vulscan.py
+
 import re
 
 from lib.core.enums import DBMS
@@ -90,12 +91,12 @@ def Get_sql_errors():
     errors.append(('\[Macromedia\]\[SQLServer JDBC Driver\]', DBMS.MSSQL))
 
     # Generic errors..
-    # errors.append(('SELECT .*? FROM .*?', DBMS.UNKNOWN))
-    # errors.append(('UPDATE .*? SET .*?', DBMS.UNKNOWN))
-    # errors.append(('INSERT INTO .*?', DBMS.UNKNOWN))
-    # errors.append(('Unknown column', DBMS.UNKNOWN))
-    # errors.append(('where clause', DBMS.UNKNOWN))
-    # errors.append(('SqlServer', DBMS.UNKNOWN))
+    errors.append(('(org\.hibernate\.(query\.)?(Syntax|Query)Exception|', DBMS.UNKNOWN))
+    errors.append(('QuerySyntaxException|HQLException|', DBMS.UNKNOWN))
+    errors.append(('\[unexpected token: .*?\])', DBMS.UNKNOWN))
+    errors.append(('(could not resolve property: \w+|', DBMS.UNKNOWN))
+    errors.append(('expected (IDENT|EOF|end of input)|', DBMS.UNKNOWN))
+    errors.append(('Path expected for join!)', DBMS.UNKNOWN))
 
     sql_errors = []
     for re_string, DBMS_type in errors:

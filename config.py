@@ -28,8 +28,9 @@ PROXY_CONFIG = {
 ABLE = []  # 允许使用的插件
 DISABLE = []  # 不允许使用的插件
 XSS_LIMIT_CONTENT_TYPE = True  # 限制xss的content-type，为True时限制content-type为html，为False不限制
-SQLi_TIME = 3 # SQLi插件延时时间 (不建议设置为大于4的数值)
-TOP_RISK_GET_PARAMS = {"id", 'action', 'type', 'm', 'callback', 'cb'} # 高风险级参数
+SQLi_TIME = 4 # SQLi插件延时时间 (不建议设置为大于4的数值)
+PSEUDO_STATIC_KEYWORDS = ['id', 'user', 'page', 'category'] # 伪静态SQL关键点参数
+TOP_RISK_GET_PARAMS = {"id", 'action', 'type', 'm', 'callback', 'cb'} # 需主动添加的尝试参数（对SSTI、XSS插件产生影响）
 ignoreParams = ['submit', '_', '_t', 'rand', 'hash'] # 会忽略的参数
 
 

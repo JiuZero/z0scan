@@ -42,11 +42,11 @@ class Z0SCAN(PluginBase):
                         r = requests.get(self.requests.url, headers=headers, cookies=data)
                     elif self.requests.method == HTTPMETHOD.POST:
                         r = requests.post(self.requests.url, data=self.requests.post_data, headers=headers,
-                                          cookies=data)
+                                        cookies=data)
                 if "Warning" in r.text and "array given in " in r.text:
                     path = get_middle_text(r.text, 'array given in ', ' on line')
                     result = self.new_result()
                     result.init_info(self.requests.url, self.desc, VulType.SENSITIVE)
                     result.add_detail("payload探测", r.reqinfo, generateResponse(r),
-                                      "将参数{k}={v}替换为{k}[]={v},path路径泄漏:{p}".format(k=k, v=v, p=path), key, v, positon)
+                                    "将参数{k}={v}替换为{k}[]={v},path路径泄漏:{p}".format(k=k, v=v, p=path), key, v, positon)
                     self.success(result)

@@ -13,6 +13,7 @@ import time, config
 # third-party imports
 from lib.core.common import generateResponse, random_num
 from lib.core.enums import PLACE, VulType
+from lib.core.data import KB
 from lib.core.plugins import PluginBase
 
 
@@ -39,6 +40,8 @@ class Z0SCAN(PluginBase):
         return new_dict, zero_dict
 
     def audit(self):
+        if KB["WafState"]:
+            return
         num = random_num(4)
         sql_times = {
             "MySQL": (
@@ -98,9 +101,8 @@ class Z0SCAN(PluginBase):
                     if r1 is not None and flag == self.verify_count:
                         result = self.new_result()
                         result.init_info(self.requests.url, "SQL注入", VulType.SQLI)
+                        print(new_dict)
                         for key, payload in new_dict.items():
-                            result.add_detail("payload探测", r1.reqinfo, generateResponse(r1),
-                                              "DBMS_TYPE:{}，时间相差:{}s".format(dbms_type, delta), key, payload,
-                                              position)
+                            result.add_detail("payload探测", r1.reqinfo, generateResponse(r1),"DBMS_TYPE:{}，时间相差:{}s".format(dbms_type, delta), key, payload, position)
                         self.success(result)
                         return True

@@ -62,6 +62,7 @@ class Z0SCAN(PluginBase):
         self.init()
         iterdatas = []
         if self.requests.method == HTTPMETHOD.GET:
+            # 确定哪些额外的参数需要被解析或添加到请求中
             parse_params = (parse_params | TOP_RISK_GET_PARAMS) - set(self.requests.params.keys())
             for key in parse_params:
                 params_data[key] = random_str(6)

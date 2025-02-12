@@ -5,8 +5,9 @@
 import copy
 import platform
 import socket
-import sys
+import sys, re
 import traceback
+import config
 from urllib.parse import quote
 
 import requests
@@ -66,8 +67,7 @@ class PluginBase(object):
         if conf.level >= 3:
             _params = self.requests.cookies
             iterdatas.append((_params, PLACE.COOKIE))
-        # if conf.level >= 4:
-        #     # for uri
+        # if any(re.search(r'/{}/?(\d+|[^/]+)'.format(re.escape(keyword)), self.requests.url, re.I) for keyword in config.PSEUDO_STATIC_KEYWORDS):
         #     iterdatas.append((self.requests.url, PLACE.URI))
         return iterdatas
 
