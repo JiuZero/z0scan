@@ -9,7 +9,7 @@ SHOW_STATE = False # 显示扫描状态 (关闭它是为了避免影响插件的
 EXCLUDES = ["google", '.gov.', 'baidu', 'firefox']  # 扫描排除网址
 RETRY = 2  # 超时重试次数
 TIMEOUT = 10  # 超时时间
-LEVEL = 2  # 检测等级 (范围1~3)
+LEVEL = 2  # 检测等级 (范围1~4)
 DEBUG = False # DEBUG模式
 HEURiITIC_WAF_CHECK = True # 启发式Waf检测模式 (这个设置的关闭将不影响WAF的被动检测)
 
