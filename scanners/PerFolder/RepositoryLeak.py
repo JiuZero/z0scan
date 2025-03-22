@@ -1,23 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @Time    : 2019/6/29 3:18 PM
-# @Author  : w8ay
+# w8ay 2019/6/29
+# JiuZero 2025/3/4
 
 import re
-
 import requests
-from lib.core.data import KB, conf
-from lib.core.common import generateResponse
-from lib.core.enums import VulType, PLACE
-from lib.core.plugins import PluginBase
+
+from api import KB, conf, generateResponse, VulType, PLACE, PluginBase, Type
 
 
 class Z0SCAN(PluginBase):
-    desc = '''基于流量动态查找目录下仓库源码泄漏'''
-    name = '.git .svn .bzr .hg泄漏插件'
+    name = "RepositoryLeak"
+    desc = '.git .svn .bzr .hg Finder'
 
+    def condition(self):
+        # Waf通常会拦截对这类敏感文件的请求
+        if not KB["WAFSTATE"] and 2 in conf.level:
+            return True
+        return False
+        
     def audit(self):
-        if not KB["WafState"] and conf.level >= 2:
+        if self.condition():
             flag = {
                 "/.svn/all-wcprops": "svn:wc:ra_dav:version-url",
                 "/.git/config": 'repositoryformatversion[\s\S]*',
@@ -31,7 +34,6 @@ class Z0SCAN(PluginBase):
                 r = requests.get(_, headers=headers)
                 if re.search(flag[f], r.text, re.I | re.S | re.M):
                     result = self.new_result()
-                    result.init_info(self.requests.url, "仓库泄漏", VulType.SENSITIVE)
-                    result.add_detail("payload请求", r.reqinfo, generateResponse(r),
-                                    "匹配到正则:{}".format(flag[f]), "", "", PLACE.GET)
+                    result.init_info(Type.REQUEST, self.requests.hostname, r.url, VulType.SENSITIVE, PLACE.URL)
+                    result.add_detail("Request", r.reqinfo, generateResponse(r), "Match {}".format(flag[f]))
                     self.success(result)

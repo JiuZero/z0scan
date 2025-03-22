@@ -3,7 +3,8 @@
 # @name:    OSS
 
 from re import search, I, compile, error
-from lib.core.data import KB
+from lib.core.enums import WEB_SERVER
+from api import KB
 
 def _prepare_pattern(pattern):
     """
@@ -16,12 +17,10 @@ def _prepare_pattern(pattern):
     except error as e:
         return compile(r'(?!x)x')
 
-keys = ['aliyunoss', 'amazons3', 'minio', 'ceph'] # 检测OSS特征标识
+keys = ['aliyunoss', 'amazons3', 'minio', 'ceph']
 
 def fingerprint(headers, content):
     if 'server' in headers.keys():
         for _ in keys:
-            if search(_, headers["server"], I):
-                KB["OSS_STATE"] = True
-                return
-    KB["OSS_STATE"] = False
+            if search(_, headers["server"], I): return WEB_SERVER.OSS, None
+    return None, None

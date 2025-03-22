@@ -5,7 +5,7 @@
 from re import search, I, compile, error
 from lib.core.enums import WEB_SERVER
 from lib.core.common import md5
-from lib.core.data import KB
+from api import KB
 
 def _prepare_pattern(pattern):
     """
@@ -20,16 +20,15 @@ def _prepare_pattern(pattern):
 
 
 def fingerprint(headers, content):
+    version = None
     _ = False
     if 'server' in headers.keys():
         _ = search(r"Tengine", headers["server"], I)
 
     if _:
-        _ = _.group(1) if _ else ""
-        KB["SERVER_VERSION"][WEB_SERVER.TENGINE] = _
-        return WEB_SERVER.TENGINE
-    else:
-        KB["SERVER_VERSION"][WEB_SERVER.TENGINE] = None
+        return WEB_SERVER.TENGINE, None
+    
+    return None, None
 
 
 def fingerprint_assign(url, filter):

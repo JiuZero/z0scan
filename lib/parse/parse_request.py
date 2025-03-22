@@ -40,7 +40,7 @@ class FakeReq(object):
         if re.search('([^=]+)=([^%s]+%s?)' % (DEFAULT_GET_POST_DELIMITER, DEFAULT_GET_POST_DELIMITER),
                      post_data):
             self._post_hint = POST_HINT.NORMAL
-            self._post_data = paramToDict(post_data, place=PLACE.POST, hint=self._post_hint)
+            self._post_data = paramToDict(post_data, place=PLACE.DATA, hint=self._post_hint)
 
         elif re.search(JSON_RECOGNITION_REGEX, post_data):
             self._post_hint = POST_HINT.JSON
@@ -53,7 +53,7 @@ class FakeReq(object):
 
         elif re.search(ARRAY_LIKE_RECOGNITION_REGEX, post_data):
             self._post_hint = POST_HINT.ARRAY_LIKE
-            self._post_data = paramToDict(post_data, place=PLACE.POST, hint=self.post_hint)
+            self._post_data = paramToDict(post_data, place=PLACE.DATA, hint=self.post_hint)
 
         elif re.search(MULTIPART_RECOGNITION_REGEX, post_data):
             self._post_hint = POST_HINT.MULTIPART
@@ -81,13 +81,13 @@ class FakeReq(object):
         self._uri = p.path
         if p.query:
             self._uri = p.path + "?" + p.query
-            self._params = paramToDict(p.query, place=PLACE.GET)
+            self._params = paramToDict(p.query, place=PLACE.PARAM)
 
         self._netloc = "{}://{}{}".format(p.scheme, p.netloc, p.path)
         if "cookie" in self._headers or "Cookie" in self._headers:
             _cookies = self._headers.get("cookie", self._headers.get("Cookie", {}))
             if _cookies:
-                self._cookies = paramToDict(_cookies, place=PLACE.COOKIE)
+                self._cookies = paramToDict(_cookies, place=PLACE.HEADER)
 
     @property
     def raw(self):

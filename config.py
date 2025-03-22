@@ -9,9 +9,10 @@ SHOW_STATE = False # 显示扫描状态 (关闭它是为了避免影响插件的
 EXCLUDES = ["google", '.gov.', 'baidu', 'firefox']  # 扫描排除网址
 RETRY = 2  # 超时重试次数
 TIMEOUT = 10  # 超时时间
-LEVEL = 2  # 检测等级 (范围1~4)
+LEVEL = [0,1,2,3] # 0: 被动分析插件, 1: SQL注入等常见漏洞, 2: 目录枚举, 3: 中间件漏洞, 4: 命令执行等非常见漏洞
 DEBUG = False # DEBUG模式
 HEURiITIC_WAF_CHECK = True # 启发式Waf检测模式 (这个设置的关闭将不影响WAF的被动检测)
+SKIP_SIMILAR_URL = True # 是否跳过相似URL下的扫描以减少请求
 
 
 # 下游代理配置
@@ -29,9 +30,7 @@ ABLE = []  # 允许使用的插件
 DISABLE = []  # 不允许使用的插件
 XSS_LIMIT_CONTENT_TYPE = True  # 限制xss的content-type，为True时限制content-type为html，为False不限制
 SQLi_TIME = 4 # SQLi插件延时时间 (不建议设置为大于4的数值)
-PSEUDO_STATIC_KEYWORDS = ['id', 'user', 'page', 'category'] # 伪静态SQL关键点参数
-TOP_RISK_GET_PARAMS = {"id", 'action', 'type', 'm', 'callback', 'cb'} # 需主动添加的尝试参数（对SSTI、XSS插件产生影响）
-ignoreParams = ['submit', '_', '_t', 'rand', 'hash'] # 会忽略的参数
+PSEUDO_STATIC_KEYWORDS = ['id', 'pid', 'zid', 'user', 'page', 'category', 'column_id', 'tty'] # 伪静态SQL关键点参数（忽略大小写）
 
 
 # 反连配置

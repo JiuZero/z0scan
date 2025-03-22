@@ -4,7 +4,7 @@
 
 from re import search, I, compile, error, IGNORECASE
 from lib.core.enums import WEB_SERVER
-from lib.core.data import KB
+from api import KB
 
 def _prepare_pattern(pattern):
     """
@@ -18,12 +18,11 @@ def _prepare_pattern(pattern):
         return compile(r'(?!x)x')
 
 def fingerprint(headers, content):
+    version = None
     _ = False
     if 'server' in headers.keys():
         _ = search(r"(?:microsoft-)?iis/([\d\.]+)", headers["server"], I)
     if _:
         _ = _.group(1) if _ else ""
-        KB["SERVER_VERSION"][WEB_SERVER.IIS] = _
-        return WEB_SERVER.IIS
-    else:
-        KB["SERVER_VERSION"][WEB_SERVER.IIS] = None
+        return WEB_SERVER.IIS, version
+    return None, None

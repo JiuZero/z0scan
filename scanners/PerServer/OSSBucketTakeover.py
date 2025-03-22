@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @Time    : 2025/2/11
+# JiuZero 2025/3/3
 
 import re
 import requests
 from urllib.parse import urlparse
-from lib.core.common import generateResponse
-from lib.core.enums import VulType, PLACE
-from lib.core.output import ResultObject
-from lib.core.plugins import PluginBase
-from lib.core.data import KB
+
+from api import generateResponse, VulType, PLACE, Type, ResultObject, PluginBase, KB, WEB_SERVER
 
 class Z0SCAN(PluginBase):
-    name = '可能的Bucket接管漏洞'
+    name = "OSSBucketTakeover"
+    desc = 'OSS Bucket Takeover'
 
+    def condition(self):
+        for k, v in self.response.webserver.items():
+            if k == WEB_SERVER.OSS:
+                return True
+        return False
+        
     def audit(self):
-        if KB["OSS_STATE"]:
+        if self.condition():
             r = requests.get(self.requests.netloc + self.variable_leakage, verify=False)
             response_text = r.text.lower()
             for keyword in [
@@ -25,14 +29,7 @@ class Z0SCAN(PluginBase):
                 'bucket doesnotexist', 'bucketnotfound', 'nosuchbucket']:
                 if keyword in response_text:
                     result = self.new_result()
-                    result.init_info(self.requests.url, "可能的Bucket接管漏洞", VulType.TAKEOVER)
-                    result.add_detail(
-                        "Payload请求",
-                        r.reqinfo,
-                        generateResponse(r),
-                        "发现Bucket接管漏洞：目标Bucket未配置或已被删除",
-                        "匹配到的KeyWord",
-                        keyword,
-                        PLACE.URI
-                    )
+                    result.init_info(Type.Request, r.url, self.requests.netloc, VulType.OTHER, PLACE.URL)
+                    result.add_detail("Request", r.reqinfo, generateResponse(r), "Match KeyWord: {}".format(keyword))
                     self.success(result)
+                    return True

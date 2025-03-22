@@ -1,23 +1,25 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @Time    : 2020/5/10 8:53 PM
-# @Author  : w8ay
+# w8ay 2020/5/10
+# JiuZero 2025/3/2
 
 from urllib.parse import urlparse
-
 import requests
 from lxml import etree
-from lib.core.data import KB, conf
-from lib.core.common import generateResponse
-from lib.core.enums import VulType, PLACE
-from lib.core.plugins import PluginBase
+from api import KB, conf, generateResponse, VulType, PLACE, Type, PluginBase
 
 
 class Z0SCAN(PluginBase):
-    name = 'idea目录解析'
-
+    name = "IdeaParse"
+    desc = 'Idea Parse'
+    
+    def condition(self):
+        if not KB["WAFSTATE"] and 3 in conf.level:
+            return True
+        return False
+        
     def audit(self):
-        if not KB["WafState"] and conf.level >= 2:
+        if self.condition():
             headers = self.requests.headers
             p = urlparse(self.requests.url)
             domain = "{}://{}/".format(p.scheme, p.netloc)
@@ -40,7 +42,6 @@ class Z0SCAN(PluginBase):
                                 path_lst.append(path)
                 if path_lst:
                     result = self.new_result()
-                    result.init_info(self.requests.url, "idea敏感文件发现", VulType.DIRSCAN)
-                    result.add_detail("payload请求", r.reqinfo, generateResponse(r),
-                                    "敏感目录列表:{}".format(repr(path_lst)), "", "", PLACE.GET)
+                    result.init_info(Type.REQUEST, self.requests.hostname, r.url, VulType.OTHER, PLACE.URL, msg="Dir List: {}".format(repr(path_lst)))
+                    result.add_detail("Request", r.reqinfo, generateResponse(r), "Dir List: {}".format(repr(path_lst)))
                     self.success(result)

@@ -1,13 +1,8 @@
 #!/usr/bin/env python 
 # -*- coding:utf-8 -*-
-#
-# @name:    PHP
-# @author:  w8ay
 
 from re import search, I, compile, error
-
 from lib.core.enums import WEB_PLATFORM
-
 
 def _prepare_pattern(pattern):
     """
@@ -23,12 +18,13 @@ def _prepare_pattern(pattern):
 
 def fingerprint(headers, content):
     _ = False
-    _ |= _prepare_pattern("\.php(?:$|\?)").search(content) is not None  # url
+    _ = _prepare_pattern("\.php(?:$|\?)").search(content)  # url
     if 'server' in headers.keys():
-        _ |= search(r"php/?([\d.]+)?\;version:\1", headers["server"], I) is not None
+        _ = search(r"php/?([\d.]+)?\;version:\1", headers["server"], I)
     if 'set-cookie' in headers.keys():
-        _ |= search(r"PHPSESSID", headers["set-cookie"], I) is not None
+        _ = search(r"PHPSESSID", headers["set-cookie"], I)
     if 'x-powered-by' in headers.keys():
-        _ |= search(r"php/?([\d.]+)?\;version:\1", headers["x-powered-by"], I) is not None
+        _ = search(r"php/?([\d.]+)?\;version:\1", headers["x-powered-by"], I)
 
-    if _: return WEB_PLATFORM.PHP
+    if _: return WEB_PLATFORM.PHP, None
+    return None, None

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @Time    : 2019/6/28 11:22 PM
-# @Author  : w8ay
-# @File    : controller.py
-import copy, threading, time, traceback, config
+# w8ay 2019/6/28
+# JiuZero 2025/3/1
+
+import copy, threading, time, traceback, config, colorlog
 
 from lib.core.common import dataToStdout
 from lib.core.data import KB, logger, conf
@@ -23,7 +23,7 @@ def run_threads(num_threads, thread_function, args: tuple = ()):
     threads = []
 
     try:
-        info_msg = "Staring [#{0}] threads".format(num_threads)
+        info_msg = "Staring {}{}{} threads".format(logger.y, num_threads, logger.e)
         logger.info(info_msg)
 
         # Start the threads
@@ -92,9 +92,6 @@ def task_run():
 
 def printProgress():
     KB.lock.acquire()
-    if conf.debug:
-        # 查看当前正在运行的插件
-        KB.output.log(repr(KB.running_plugins))
     if config.SHOW_STATE:
         msg = '\033[36m%d\033[0m SUCCESS | \033[36m%d\033[0m RUNNING | \033[36m%d\033[0m REMAIN | \033[36m%s\033[0m SCANNED IN %.2fs' % (KB.output.count(), KB.running, KB.task_queue.qsize(), KB.finished, time.time() - KB.start_time)
         _ = '\r' + ' ' * (KB['console_width'][0] - len(msg)) + msg

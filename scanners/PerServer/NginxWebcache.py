@@ -1,28 +1,31 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# JiuZero 2025/3/3
 
 import requests
 from urllib.parse import urlparse
-from lib.core.common import generateResponse
-from lib.core.enums import WEB_SERVER, VulType, PLACE, HTTPMETHOD
-from lib.core.output import ResultObject
-from lib.core.plugins import PluginBase
-from lib.core.data import conf, KB
+
+from api import generateResponse, WEB_SERVER, VulType, PLACE, HTTPMETHOD, ResultObject, PluginBase, conf, KB, Type
 
 
 class Z0SCAN(PluginBase):
-    name = 'NGINX配置错误导-WEB缓存清理'
+    name = "NginxWebcache"
+    desc = 'Nginx Webcache Clear'
 
     def __init__(self):
         super().__init__()
-
+        
+    def condition(self):
+        for k, v in self.response.webserver.items():
+            if k == WEB_SERVER.NGINX and 3 in conf.level:
+                return True
+        return False
+        
     def audit(self):
-        if KB["SERVER_VERSION"][WEB_SERVER.NGINX] and conf.level == 3:
+        if self.condition():
             r = requests.request("PURGE", self.requests.netloc + "/*", allow_redirects=True, verify=False)
             if r.status_code == 204:
-                ContentType = r.headers.get("Content-Type", '')
                 result = self.new_result()
-                result.init_info(self.requests.url,"NGINX配置错误导-WEB缓存清理",VulType.SENSITIVE)
-                result.add_detail("Payload请求", r.reqinfo, generateResponse(r),
-                    "Content-Type:{}".format(ContentType), "", "", PLACE.URI)
+                result.init_info(Type.Request, self.requests.netloc, self.requests.url, VulType.SENSITIVE, PLACE.URL)
+                result.add_detail("Request", r.reqinfo, generateResponse(r), "Status Code is 204")
                 self.success(result)

@@ -1,11 +1,8 @@
 #!/usr/bin/env python 
 # -*- coding:utf-8 -*-
-# @name:    Darwin
 
 from re import search, I, compile, error
-
 from lib.core.enums import OS
-
 
 def _prepare_pattern(pattern):
     """
@@ -22,8 +19,9 @@ def _prepare_pattern(pattern):
 def fingerprint(headers, content):
     _ = False
     if 'server' in headers.keys():
-        _ |= search(r"Darwin", headers["server"], I) is not None
+        _ = search(r"Darwin", headers["server"], I)
     if 'x-powered-by' in headers.keys():
-        _ |= search(r"Darwin", headers["x-powered-by"], I) is not None
+        _ = search(r"Darwin", headers["x-powered-by"], I)
 
-    if _: return OS.DARWIN
+    if _: return OS.DARWIN, None
+    return None, None

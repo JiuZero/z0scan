@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @Time    : 2019/6/29 4:46 PM
-# @Author  : w8ay
+# w8ay 2019/6/29
+# JiuZero 2025/3/4
 
-from lib.core.enums import VulType, PLACE
-from lib.core.plugins import PluginBase
+from api import VulType, PLACE, PluginBase, Type
 
 
 class Z0SCAN(PluginBase):
-    name = '目录遍历插件'
-    desc = '''遍历每个目录，查看是否可以直接访问'''
+    name = "DirectoryTravel"
+    desc = "Directory Travel"
 
     def audit(self):
 
@@ -25,8 +24,7 @@ class Z0SCAN(PluginBase):
         for i in flag_list:
             if i in resp_str.lower():
                 result = self.new_result()
-                result.init_info(self.requests.url, "目录遍历", VulType.SENSITIVE)
-                result.add_detail("payload请求", self.requests.raw, self.response.raw,
-                                  "匹配到关键词:{}".format(i), "", "", PLACE.GET)
+                result.init_info(Type.ANALYZE, self.requests.hostname, self.requests.url, VulType.SENSITIVE, PLACE.URL)
+                result.add_detail("Request", self.requests.raw, self.response.raw, "Match Keyword {}".format(i))
                 self.success(result)
                 break

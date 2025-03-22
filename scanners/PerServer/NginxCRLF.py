@@ -1,29 +1,32 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# JiuZero 2025/3/3
 
 import requests
 from urllib.parse import urlparse
-from lib.core.common import generateResponse
-from lib.core.enums import WEB_SERVER, VulType, PLACE, HTTPMETHOD
-from lib.core.output import ResultObject
-from lib.core.plugins import PluginBase
-from lib.core.data import KB
+
+from api import generateResponse, WEB_SERVER, VulType, PLACE, HTTPMETHOD, ResultObject, PluginBase, KB, Type
 
 
 class Z0SCAN(PluginBase):
-    name = 'NGINX配置错误-CRLF注入'
+    name = "NginxCRLF"
+    desc = 'NGINX CRLF'
 
     def __init__(self):
         super().__init__()
         self.clrf_path = r'/%0d%0aDetectify:%20clrf'
-
+    
+    def condition(self):
+        for k, v in self.response.webserver.items():
+            if k == WEB_SERVER.NGINX:
+                return True
+        return False
+        
     def audit(self):
-        if KB["SERVER_VERSION"][WEB_SERVER.NGINX]:
+        if self.condition():
             r = requests.get(self.requests.netloc + self.clrf_path, verify=False)
             if "Detectify" in r.headers:
-                ContentType = r.headers.get("Content-Type", '')
                 result = self.new_result()
-                result.init_info(self.requests.url,"NGINX配置错误导-CRLF注入",VulType.SENSITIVE)
-                result.add_detail("Payload请求", r.reqinfo, generateResponse(r),
-                    "Content-Type:{}".format(ContentType), "", "", PLACE.URI)
+                result.init_info(Type.Request, self.requests.hostname, r.url, VulType.CRLF, PLACE.URL)
+                result.add_detail("Request", r.reqinfo, generateResponse(r), "Match Keyword: Detectify")
                 self.success(result)

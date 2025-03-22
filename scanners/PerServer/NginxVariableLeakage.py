@@ -1,30 +1,33 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @Time    : 2025/2/9
-# @File    : Nginx_VariableLeakage.py
+# JiuZero 2025/3/3
 
 import requests
 from urllib.parse import urlparse
-from lib.core.data import conf, KB
-from lib.core.common import generateResponse
-from lib.core.enums import WEB_SERVER, VulType, PLACE, HTTPMETHOD
-from lib.core.output import ResultObject
-from lib.core.plugins import PluginBase
+
+from api import conf, KB, generateResponse, WEB_SERVER, VulType, PLACE, HTTPMETHOD, Type, ResultObject, PluginBase
 
 
 class Z0SCAN(PluginBase):
-    name = 'NGINX配置错误导-变量泄露'
+    name = "NginxVariableLeakage"
+    desc = 'Nginx Variable Leakage'
 
     def __init__(self):
         super().__init__()
         self.variable_leakage = r'/foo$http_referer'
-
+    
+    def condition(self):
+        for k, v in self.response.webserver.items():
+            if k == WEB_SERVER.NGINX and 3 in conf.level:
+                return True
+        return False
+        
     def audit(self):
-        if KB["SERVER_VERSION"][WEB_SERVER.NGINX] or conf.level == 3:
+        if self.condition():
             headers={"Referer": "bar"}
             r = requests.get(self.requests.netloc + self.variable_leakage, headers=headers, verify=False)
             if r.status_code == 204:
                 result = self.new_result()
-                result.init_info(self.requests.url,"NGINX配置错误导-变量泄露",VulType.SENSITIVE)
-                result.add_detail("Payload请求", r.reqinfo, generateResponse(r), "", "", "", PLACE.URI)
+                result.init_info(Type.Request, self.requests.hostname, r.url, VulType.SENSITIVE, PLACE.URL)
+                result.add_detail("Request", r.reqinfo, generateResponse(r), "Status Code is 204")
                 self.success(result)

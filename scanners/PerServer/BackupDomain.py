@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @Time    : 2019/7/21 4:45 PM
-# @Author  : w8ay
+# w8ay 2019/7/21
+# JiuZero 2025/3/1
 
 from urllib.parse import urlparse
-
 import requests
 from tld import parse_tld
-from lib.core.data import conf
-from lib.core.common import generateResponse
-from lib.core.enums import VulType, PLACE
-from lib.core.plugins import PluginBase
+
+from api import conf, generateResponse, VulType, PLACE, PluginBase, Type
 
 
 class Z0SCAN(PluginBase):
-    name = '基于域名的备份文件'
-    desc = '''扫描基于域名的备份文件'''
-
+    name = "BackupDomain"
+    desc = "Backup Files Of Each Domain"
+    def condition(self):
+        if 2 in conf.level:
+            return True
+        return False
+    
     def _check(self, content):
         """
             根据给定的url，探测远程服务器上是存在该文件
@@ -43,7 +44,7 @@ class Z0SCAN(PluginBase):
         return False
 
     def audit(self):
-        if conf.level >= 2:
+        if self.condition():
             headers = self.requests.headers
             url = self.requests.url
             p = urlparse(url)
@@ -70,10 +71,8 @@ class Z0SCAN(PluginBase):
                     if r.status_code == 200 and self._check(content):
                         if int(r.headers.get('Content-Length', 0)) == 0:
                             continue
-
                         rarsize = int(r.headers.get('Content-Length')) // 1024 // 1024
                         result = self.new_result()
-                        result.init_info(self.requests.url, "备份文件下载", VulType.BRUTE_FORCE)
-                        result.add_detail("payload请求", r.reqinfo, content.decode(errors='ignore'),
-                                        "备份文件大小:{}M".format(rarsize), "", "", PLACE.GET)
+                        result.init_info(Type.REQUEST, self.requests.hostname, r.url, VulType.SENSITIVE, PLACE.URL, msg="File Sizes {}M".format(rarsize))
+                        result.add_detail("Request", r.reqinfo, content.decode(errors='ignore'), "File Sizes {}M".format(rarsize))
                         self.success(result)

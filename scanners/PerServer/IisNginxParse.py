@@ -1,22 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# JiuZero 2025/3/3
 
 from urllib.parse import urlparse
-
 import requests
 
-from lib.core.common import generateResponse
-from lib.core.data import conf, KB
 from lib.helper.compare import compare
-from lib.core.enums import WEB_SERVER, VulType, PLACE
-from lib.core.plugins import PluginBase
+from api import generateResponse, conf, KB, WEB_SERVER, VulType, PLACE, Type, PluginBase
 
 
 class Z0SCAN(PluginBase):
-    name = 'IIS/Nginx解析漏洞'
-
+    name = "IisNginxParse"
+    desc = 'Iis/Nginx Parse'
+    
+    def condition(self):
+        for k, v in self.response.webserver.items():
+            if (k == WEB_SERVER.IIS and compare("7.0", "7.5", v)) or (k == WEB_SERVER.NGINX and compare("0.0.1", "0.8.37", v)):
+                return True
+        return False
+        
     def audit(self):
-        if (KB["SERVER_VERSION"][WEB_SERVER.IIS] or KB["SERVER_VERSION"][WEB_SERVER.NGINX]) and (compare("7.0", "7.5", KB["SERVER_VERSION"][WEB_SERVER.IIS]) or compare("0.0.1", "0.8.37", KB["SERVER_VERSION"][WEB_SERVER.NGINX])):
+        if self.condition():
             headers = self.requests.headers
             p = urlparse(self.requests.url)
             domain = "{}://{}/".format(p.scheme, p.netloc)
@@ -25,7 +29,6 @@ class Z0SCAN(PluginBase):
             ContentType = r.headers.get("Content-Type", '')
             if 'html' in ContentType and "allow" in r.text:
                 result = self.new_result()
-                result.init_info(self.requests.url, "IIS/Nginx解析漏洞", VulType.CODE_INJECTION)
-                result.add_detail("payload请求", r.reqinfo, generateResponse(r),
-                                  "Content-Type:{}".format(ContentType), "", "", PLACE.GET)
+                result.init_info(Type.Request, self.requests.hostname, r.url, VulType.OTHER, PLACE.URL)
+                result.add_detail("Request", r.reqinfo, generateResponse(r), "Content-Type:{}".format(ContentType))
                 self.success(result)

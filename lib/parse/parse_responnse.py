@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @Time    : 2020/4/3 11:11 AM
-# @Author  : w8ay
-# @File    : parse_responnse.py
+# w8ay 2020/4/3
+
 import chardet
 from lib.core.enums import WEB_SERVER
 
@@ -14,10 +13,9 @@ class FakeResp(object):
         self._headers = headers
         self._decoding = chardet.detect(self._body)['encoding']  # 探测当前的编码
 
-        self.framework = []
-        self.os = []
-        self.programing = []
-        self.webserver = []
+        self.os = {}
+        self.programing = {}
+        self.webserver = {}
 
     @property
     def status_code(self):

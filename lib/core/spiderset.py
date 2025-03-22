@@ -108,8 +108,7 @@ class SpiderSet(object):
         self.spider_list = {
             "PerFile": {},
             "PerFolder": {},
-            "PerServer": {},
-            "PostScan": {}
+            "PerServer": {}
         }
         self.lock = threading.Lock()
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @Time    : 2019/7/6 4:45 PM
-# @Author  : w8ay
+# w8ay 2019/7/6
+# JiuZero 2025/3/4
 
 import string
 from urllib.parse import urlparse
@@ -13,18 +13,20 @@ import re
 
 from pyjsparser import parse
 
-from lib.core.common import random_str
-from lib.core.enums import VulType, PLACE
-from lib.core.output import ResultObject
-from lib.core.plugins import PluginBase
+from api import random_str, VulType, PLACE, Type, ResultObject, PluginBase, conf
 from lib.helper.helper_sensitive import sensitive_bankcard, sensitive_idcard, sensitive_phone, sensitive_email
 from lib.helper.jscontext import analyse_Literal
 
 
 class Z0SCAN(PluginBase):
-    name = 'JSONP寻找插件'
-    desc = '''自动寻找JSONP请求并自动去除referer查看能否利用'''
+    name = "Jsonp"
+    desc = 'JSONP Sensitive Finder'
 
+    def condition(self):
+        if 0 in conf.level:
+            return True
+        return False
+    
     def jsonp_load(self, jsonp):
         match = re.search('^[^(]*?\((.*)\)[^)]*$', jsonp)
         if match is None:
@@ -76,7 +78,8 @@ class Z0SCAN(PluginBase):
         return result
 
     def audit(self):
-
+        if not self.condition():
+            return
         callbaks = ["callback", "cb", "json"]
         params = self.requests.params
         isBreak = True
@@ -99,7 +102,7 @@ class Z0SCAN(PluginBase):
         if not result2:
             return
         result = ResultObject(self)
-        result.init_info(self.requests.url, "jsonp敏感信息", VulType.SENSITIVE)
-        result.add_detail("payload探测", self.requests.raw, self.response.raw,
-                          "发现敏感信息:{}".format(repr(result2)), "", "", PLACE.GET)
+        result.init_info(Type.REQUEST, self.requests.hostname, req.url, VulType.SENSITIVE, PLACE.PARAMS, msg="Match Sensitive Info {}".format(repr(result2)))
+        result.add_detail("Request", self.requests.raw, self.response.raw, "Match Sensitive Info {}".format(repr(result2)))
         self.success(result)
+        return True

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @Time    : 2019/6/29 1:28 PM
-# @Author  : w8ay
-# @File    : option.py
+# w8ay 2019/6/29
+# JiuZero 2025/3/18
+
 import os
 import threading
 import time
@@ -10,16 +10,16 @@ from queue import Queue
 
 from colorama import init as cinit
 
-from config import DEBUG, EXCLUDES, THREAD_NUM, LEVEL, \
+from config import EXCLUDES, THREAD_NUM, LEVEL, \
     TIMEOUT, \
     RETRY, PROXY_CONFIG, PROXY_CONFIG_BOOL, DISABLE, ABLE, XSS_LIMIT_CONTENT_TYPE
 from lib.core.common import random_UA, dataToStdout, ltrim, random_colorama
 from lib.core.data import path, KB, logger, conf
 from lib.core.exection import PluginCheckError
 from lib.core.loader import load_file_to_module
-from lib.core.checkwaf import initWafCheck
+from lib.core.db import initdb
 from lib.core.output import OutPut
-from lib.core.settings import VERSION, DEFAULT_USER_AGENT
+from lib.core.settings import banner, DEFAULT_USER_AGENT
 from lib.core.spiderset import SpiderSet
 from lib.core.enums import WEB_SERVER
 from thirdpart.console import getTerminalSize
@@ -51,20 +51,11 @@ def initKb():
     KB["result"] = 0  # 结果数量
     KB["running"] = 0  # 正在运行数量
 
-    KB["WafState"] = False # 初始化WAF存在状态
-    KB["CheckHistory"] = [] # 初始化Waf检测记录
-    KB["WafHistory"] = False # 初始化已知Waf列表
+    KB["WAFSTATE"] = False # 初始化WAF存在状态
     KB["limit"] = False # 限制WAF检测
-
-    KB["SERVER_VERSION"] = {
-        WEB_SERVER.IIS: None,
-        WEB_SERVER.NGINX: None,
-        WEB_SERVER.TENGINE: None,
-        WEB_SERVER.TOMCAT: None,
-        WEB_SERVER.APACHE: None
-    } # 初始化WEB_SERVER版本信息
-
-    KB["OSS_STATE"] = False # 初始化OSS指纹状态
+    KB["IGNORE_WAF"] = conf.ignore_waf
+    KB["SCAN_COOKIE"] = conf.scan_cookie
+    KB["DEBUG"] = conf.debug
 
 
 def initPlugins():
@@ -117,14 +108,10 @@ def initPlugins():
 
     logger.info('Load fingerprint plugins:{}'.format(num))
 
-    if conf.ignore_waf:
-        logger.warning('Ignore the presence of Waf.')
-
-
 
 def _init_conf():
-    conf.version = False
-    conf.debug = DEBUG
+    conf.version = None
+    conf.debug = False
     conf.level = LEVEL
     conf.server_addr = None
     conf.url = None
@@ -140,9 +127,9 @@ def _init_conf():
     conf.threads = THREAD_NUM
     conf.disable = DISABLE
     conf.able = ABLE
-    conf.ignore_waf = False
-    # not in cmd parser params
     conf.excludes = EXCLUDES
+    conf.ignore_waf = False
+    conf.scan_cookie = False
     conf.XSS_LIMIT_CONTENT_TYPE = XSS_LIMIT_CONTENT_TYPE
 
 
@@ -171,7 +158,7 @@ def _set_conf():
 
     # server_addr
     if isinstance(conf["server_addr"], str):
-        defaulf = 7778
+        defaulf = 5920
         if ":" in conf["server_addr"]:
             splits = conf["server_addr"].split(":", 2)
             conf["server_addr"] = tuple([splits[0], int(splits[1])])
@@ -204,7 +191,9 @@ def _init_stdout():
     # 指定使用插件
     if conf.disable:
         logger.info("Not use plugins:{}".format(repr(conf.disable)))
-    logger.info("Level of contracting: [#{}]".format(conf.level))
+    logger.info("Level of contracting: {}{}{}".format(logger.y, conf.level, logger.e))
+    if conf.ignore_waf:
+        logger.warning('Ignore the presence of Waf.')
     if conf.html:
         logger.info("Html will be saved in '{}'".format(KB.output.get_html_filename()))
     logger.info("Result will be saved in '{}'".format(KB.output.get_filename()))
@@ -213,19 +202,13 @@ def _init_stdout():
 def init(root, cmdline):
     cinit(autoreset=True)
     setPaths(root)
-    banner()
-    _init_conf()  # 从config.py读取配置信息
-    _merge_options(cmdline)  # 从cmdline读取配置
+    dataToStdout(banner)
+    # 命令行参数将覆盖config中的配置
+    _init_conf()
+    _merge_options(cmdline)
     _set_conf()
     initKb()
     initPlugins()
-    initWafCheck(root)
+    initdb(root)
     _init_stdout()
     patch_all()
-
-
-def banner():
-    msg = '''
-                    \033[96m~ Z0SCAN : \033[92mv{} ~
-            \033[95mThe Active And Passive Scanner Project.\033[0m'''.format(VERSION)
-    print(msg)

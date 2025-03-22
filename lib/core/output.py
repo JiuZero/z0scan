@@ -1,22 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @Time    : 2019/6/29 2:28 PM
-# @Author  : w8ay
-# @File    : output.py
+# w8ay 2019/6/29
+# JiuZero 2025/3/17
+
 import collections
-import json
-import os
-import time
+import json, os, time
 from datetime import datetime
 from threading import Lock
 from urllib.parse import quote
-
-from colorama import Fore
-
-from lib.core.common import dataToStdout, md5
-from lib.core.data import KB, path, conf
+from lib.core.common import md5
+from lib.core.data import KB, path, conf, logger
 from lib.core.settings import VERSION
-
 
 class OutPut(object):
 
@@ -92,67 +86,66 @@ class OutPut(object):
 
         self.lock_file.release()
         self.collect.append(output)
-        vultype = output["type"]
-        url = output["url"]
-        result = output["result"]
-        msg = "[{type}] {url} {result}".format(type=vultype, url=url, result=result)
-        self.log(msg)
-
-    def log(self, msg, color=Fore.YELLOW):
-        width = KB["console_width"][0]
-        outputs = []
-        msgs = msg.split('\n')
-        for i in msgs:
-            line = i
-            while len(line) >= width:
-                _ = line[:width]
-                outputs.append(_)
-                # Share.dataToStdout('\r' + _ + ' ' * (width - len(msg)) + '\n\r')
-                line = line[width:]
-            outputs.append(line)
-        for i in outputs:
-            self.lock_print.acquire()
-            dataToStdout('\r' + color + i + ' ' * (width - len(i)) + '\n\r')
-            self.lock_print.release()
+        """
+        [TIME][INFO] <www.baidu.com> | [SCAN_NAME][SCAN_TYPE]
+        URL : http://www.baidu.com/a/test?id=1
+        Vultype : SQL
+        Position : Params > id
+        Payload : ' and 1=2--+
+        ....
+        """
+        msg = " <{}{}{}> | [{}{}{}] [{}{}{}]\n".format(logger.m, output["hostname"], logger.e, logger.m, output["type"], logger.e, logger.m, output["name"], logger.e)
+        msg += "  {}URL{}      : {}\n".format(logger.cy, logger.e, output["url"])
+        msg += "  {}Vultype{}  : {}\n".format(logger.cy, logger.e, output["vultype"])
+        msg += "  {}Position{} : {}".format(logger.cy, logger.e, output["position"])
+        if output["param"]: msg += " > {k}\n".format(k=output["param"])
+        else: msg += "\n"
+        if output["payload"]: msg += "  {}Payload{}  : {}".format(logger.cy, logger.e, output["payload"])
+        if output["msg"]: msg += "\n  {}Msg{}     : {}".format(logger.cy, logger.e, output["msg"])
+        self.lock_print.acquire()
+        logger.info(msg)
+        self.lock_print.release()
 
 
 class ResultObject(object):
     def __init__(self, baseplugin):
-        self.name = baseplugin.name
-        self.path = baseplugin.path
-
-        self.url = ""  # 插件url
-        self.result = ""  # 插件返回结果
-        self.type = ""  # 漏洞类型 枚举
+        self.name = baseplugin.name # 插件名称
+        self.path = baseplugin.path # 插件路径
         self.detail = collections.OrderedDict()
 
-    def init_info(self, url, result, vultype):
+    def init_info(self, type: str, hostname: str, url: str, vultype: str, position: str, param=None, payload=None, msg=None):
+        self.type = type
+        self.hostname = hostname
         self.url = url
-        self.result = result
-        self.type = vultype
+        self.vultype = vultype
+        self.position = position
+        self.param = param
+        self.payload = payload
+        self.msg = msg
 
-    def add_detail(self, name: str, request: str, response: str, msg: str, param: str, value: str, position: str):
+    # 漏洞验证过程的细节展示
+    def add_detail(self, name: str, request: str, response: str, msg: str):
         if name not in self.detail:
             self.detail[name] = []
         self.detail[name].append({
-            "request": request,
-            "response": response,
-            "msg": msg,
-            "basic": {
-                "param": param,
-                "value": value,
-                "position": position
-            }
+            "request": request,#请求
+            "response": response,#响应
+            "msg": msg#说明
         })
 
     def output(self):
         self.createtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         return {
-            "name": self.name,
-            "path": self.path,
-            "url": self.url,
-            "result": self.result,
-            "type": self.type,
-            "createtime": self.createtime,
-            "detail": self.detail
+            "name": self.name,#插件名称
+            "path": self.path,#插件路径
+            "type": self.type,#扫描类型
+            "hostname": self.hostname,#域名
+            "url": self.url,#URL
+            "vultype": self.vultype,#漏洞类型
+            "position": self.position,#漏洞位置
+            "param": self.param,#参数
+            "payload": self.payload,#Payload
+            "msg": self.msg,#备注信息
+            "createtime": self.createtime,#时间
+            "detail": self.detail#漏洞检测过程
         }

@@ -12,20 +12,20 @@ from urllib.parse import quote
 
 import requests
 import urllib3
+from urllib import parse
+from concurrent.futures import ThreadPoolExecutor
 from requests import ConnectTimeout, HTTPError, TooManyRedirects, ConnectionError
 from urllib3.exceptions import NewConnectionError, PoolError
-
+from urllib.parse import urlsplit, parse_qs, urlunsplit
 from lib.core.settings import VERSION
-from lib.core.common import dataToStdout, createGithubIssue, url_dict2str
-from lib.core.data import conf, KB
+from lib.core.common import url_dict2str # createGithubIssue
+from lib.core.data import conf, KB, logger
 from lib.core.exection import PluginCheckError
 from lib.core.output import ResultObject
 from lib.parse.parse_request import FakeReq
 from lib.parse.parse_responnse import FakeResp
 from lib.core.common import splitUrlPath, updateJsonObjectFromStr
 from lib.core.enums import POST_HINT, PLACE, HTTPMETHOD
-from lib.core.settings import DEFAULT_GET_POST_DELIMITER, DEFAULT_COOKIE_DELIMITER
-
 
 class PluginBase(object):
 
@@ -56,98 +56,95 @@ class PluginBase(object):
     def audit(self):
         raise NotImplementedError
 
-    def generateItemdatas(self, params=None):
+    def generateItemdatas(self):
+        """
+        iterdatas = [
+            ["id", "1", "URL"],
+            ["user", "admin", "PARAMS"]
+        ]
+        """
         iterdatas = []
-        if self.requests.method == HTTPMETHOD.GET:
-            _params = params or self.requests.params
-            iterdatas.append((_params, PLACE.GET))
-        elif self.requests.method == HTTPMETHOD.POST:
-            _params = params or self.requests.post_data
-            iterdatas.append((_params, PLACE.POST))
-        if conf.level >= 3:
-            _params = self.requests.cookies
-            iterdatas.append((_params, PLACE.COOKIE))
-        # if any(re.search(r'/{}/?(\d+|[^/]+)'.format(re.escape(keyword)), self.requests.url, re.I) for keyword in config.PSEUDO_STATIC_KEYWORDS):
-        #     iterdatas.append((self.requests.url, PLACE.URI))
+        if self.requests.params:
+            for k, v in self.requests.params.items():
+                iterdatas.append([k, v, PLACE.PARAM])
+        if self.requests.post_data:
+            for k, v in self.requests.post_data.items():
+                iterdatas.append([k, v, PLACE.DATA])
+        if KB["SCAN_COOKIE"] and self.requests.cookies:
+            for k, v in self.requests.cookies.items():
+                iterdatas.append([k, v, PLACE.COOKIE])
+        if any(re.search(r'/{}/?(\d+|[^/]+)'.format(re.escape(k)), self.requests.url, re.I) for k in config.PSEUDO_STATIC_KEYWORDS):
+            for k in config.PSEUDO_STATIC_KEYWORDS:
+                pattern = re.compile(r'/{}/?(\d+|[^/]+)'.format(re.escape(k)), re.I)
+                match = pattern.search(self.requests.url)
+                if match:
+                    v = match.group(1)
+                    iterdatas.append([k, v, PLACE.URL])
         return iterdatas
 
-    def paramsCombination(self, data: dict, place=PLACE.GET, payloads=[], hint=POST_HINT.NORMAL, urlsafe='/\\'):
-        """
-        组合dict参数,将相关类型参数组合成requests认识的,防止request将参数进行url转义
-
-        :param data:
-        :param hint:
-        :return: payloads -> list
-        """
-        result = []
-        if place == PLACE.POST:
-            if hint == POST_HINT.NORMAL:
-                for key, value in data.items():
-                    new_data = copy.deepcopy(data)
-                    for payload in payloads:
-                        new_data[key] = payload
-                        result.append((key, value, payload, new_data))
-            elif hint == POST_HINT.JSON:
-                for payload in payloads:
-                    for new_data in updateJsonObjectFromStr(data, payload):
-                        result.append(('', '', payload, new_data))
-        elif place == PLACE.GET:
-            for payload in payloads:
-                for key in data.keys():
-                    temp = ""
-                    for k, v in data.items():
-                        if k == key:
-                            temp += "{}={}{} ".format(k, quote(payload, safe=urlsafe), DEFAULT_GET_POST_DELIMITER)
-                        else:
-                            temp += "{}={}{} ".format(k, quote(v, safe=urlsafe), DEFAULT_GET_POST_DELIMITER)
-                    temp = temp.rstrip(DEFAULT_GET_POST_DELIMITER)
-                    result.append((key, data[key], payload, temp))
-        elif place == PLACE.COOKIE:
-            for payload in payloads:
-                for key in data.keys():
-                    temp = ""
-                    for k, v in data.items():
-                        if k == key:
-                            temp += "{}={}{}".format(k, quote(payload, safe=urlsafe), DEFAULT_COOKIE_DELIMITER)
-                        else:
-                            temp += "{}={}{}".format(k, quote(v, safe=urlsafe), DEFAULT_COOKIE_DELIMITER)
-                    result.append((key, data[key], payload, temp))
-        elif place == PLACE.URI:
-            uris = splitUrlPath(data, flag="<--flag-->")
-            for payload in payloads:
-                for uri in uris:
-                    uri = uri.replace("<--flag-->", payload)
-                    result.append(("", "", payload, uri))
-        return result
-
-    def req(self, position, params, headers=None):
+    def insertPayload(self, k, v, positon, payload, urlsafe='/\\'):
+        if positon == PLACE.DATA:
+            data = self.requests.post_data
+            data[k] = v + payload
+            return data
+        elif positon == PLACE.PARAM:
+            params = self.requests.params
+            for key in self.requests.params.keys():
+                if k == key:
+                    params[k] = v + payload
+                return params
+        elif positon == PLACE.COOKIE:
+            cookies = self.requests.cookies
+            for key in self.requests.cookies.keys():
+                if k == key:
+                    cookies[k] = v + payload
+                return cookies
+        elif positon == PLACE.URL:
+            # 未URL编码向伪静态注入点插入的Payload可能导致网站报错
+            payload = parse.quote(payload)
+            url = re.sub(r'/{}/{}'.format(re.escape(k), re.escape(v)),r'/{}/{}'.format(k, parse.quote(v + payload)), self.requests.url)
+            return url
+    
+    def req(self, position, payload):
         r = False
-        if headers is None:
-            headers = self.requests.headers
-        if position == PLACE.GET:
-            r = requests.get(self.requests.netloc, params=params, headers=headers)
-        elif position == PLACE.POST:
-            r = requests.post(self.requests.url, data=params, headers=headers)
-        elif position == PLACE.COOKIE:
-            headers = self.requests.headers
-            if 'Cookie' in headers:
-                del headers["Cookie"]
-            if 'cookie' in headers:
-                del headers["cookie"]
-            if isinstance(params, dict):
-                headers["Cookie"] = url_dict2str(params, PLACE.COOKIE)
-            else:
-                headers["Cookie"] = params
-
+        if position == PLACE.PARAM:
+            url, payload = self.merged_params_requests(self.requests.url, payload)
+            r = requests.get(url, payload, data=self.requests.post_data, headers=self.requests.headers)
+        elif position == PLACE.DATA:
+            # if hint == POST_HINT.NORMAL:
+            url, params = self.merged_params_requests(self.requests.url, self.requests.params)
+            r = requests.post(url, params=params, data=payload, headers=self.requests.headers)
+        if position == PLACE.COOKIE:
+            url, params = self.merged_params_requests(self.requests.url, payload)
             if self.requests.method == HTTPMETHOD.GET:
-                r = requests.get(self.requests.url, headers=headers)
+                r = requests.get(url, params=params, data=self.requests.post_data, headers=payload)
             elif self.requests.method == HTTPMETHOD.POST:
-                r = requests.post(self.requests.url, data=self.requests.post_data, headers=headers,
-                                  cookies=params)
-        elif position == PLACE.URI:
-            r = requests.get(params, headers=self.requests.headers)
+                r = requests.post(url, params=params, data=self.requests.post_data, headers=payload)
+        elif position == PLACE.URL:
+            payload, params = self.merged_params_requests(payload, self.requests.params)
+            if self.requests.method == HTTPMETHOD.GET:
+                r = requests.get(payload, params=params, data=self.requests.post_data, headers=self.requests.headers)
+            elif self.requests.method == HTTPMETHOD.POST:
+                r = requests.post(payload, params=params, data=self.requests.post_data, headers=self.requests.headers)
         return r
-
+    
+    def merged_params_requests(self, url, payload):
+        # 合并URL中的查询参数与payload参数，避免重复
+        # (原因是实战过程中发现部分站点在遇到查询参数重复时会非正常响应)
+        url_parts = urlsplit(url)
+        original_query = parse_qs(url_parts.query)
+        payload_query = {}
+        for key, value in payload.items():
+            if isinstance(value, list):
+                payload_query[key] = value
+            else:
+                payload_query[key] = [value]
+        merged_query = original_query.copy()
+        merged_query.update(payload_query)
+        new_url_parts = url_parts._replace(query=None)
+        new_url = urlunsplit(new_url_parts)
+        return new_url, merged_query
+    
     def execute(self, request: FakeReq, response: FakeResp):
         self.target = ''
         self.requests = request
@@ -157,14 +154,14 @@ class PluginBase(object):
             output = self.audit()
         except NotImplementedError:
             msg = 'Plugin: {0} not defined "{1} mode'.format(self.name, 'audit')
-            dataToStdout('\r' + msg + '\n\r')
+            logger.error(msg)
 
         except (ConnectTimeout, requests.exceptions.ReadTimeout, urllib3.exceptions.ReadTimeoutError, socket.timeout):
             retry = conf.retry
             while retry > 0:
                 msg = 'Plugin: {0} timeout, start it over.'.format(self.name)
-                if conf.debug:
-                    dataToStdout('\r' + msg + '\n\r')
+                if KB["DEBUG"]:
+                    logger.debug(msg)
                 try:
                     output = self.audit()
                     break
@@ -211,16 +208,18 @@ class PluginBase(object):
             raise
         except Exception:
             errMsg = "Z0SCAN plugin traceback:\n"
-            errMsg += "Running version: {}\n".format(VERSION)
-            errMsg += "Python version: {}\n".format(sys.version.split()[0])
-            errMsg += "Operating system: {}\n".format(platform.platform())
+            errMsg += "    Running version: {}\n".format(VERSION)
+            errMsg += "    Python version: {}\n".format(sys.version.split()[0])
+            errMsg += "    Operating system: {}\n".format(platform.platform())
             if request:
                 errMsg += '\n\nrequest raw:\n'
                 errMsg += request.raw
             excMsg = traceback.format_exc()
-            dataToStdout('\r' + errMsg + '\n\r')
-            dataToStdout('\r' + excMsg + '\n\r')
+            logger.error('\r' + errMsg + '\n\r')
+            logger.error('\r' + excMsg + '\n\r')
+            '''
             if createGithubIssue(errMsg, excMsg):
-                dataToStdout('\r' + "[x] a issue has reported" + '\n\r')
+                logger.info('A issue has reported')'
+            '''
 
         return output

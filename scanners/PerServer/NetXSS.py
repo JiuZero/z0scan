@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @Author  : w8ay
+# w8ay
+# JiuZero 2025/3/3
 
 from urllib.parse import urlparse
-
 import requests
-from lib.core.data import conf, KB
-from lib.core.common import random_str, generateResponse
-from lib.core.enums import VulType, PLACE
-from lib.core.plugins import PluginBase
+
+from api import conf, KB, random_str, generateResponse, VulType, PLACE, Type, PluginBase
 
 
 class Z0SCAN(PluginBase):
-    name = '.NET通杀XSS'
-
+    name = "NetXSS"
+    desc = '.NET XSS'
+    def condition(self):
+        if conf.level == 4 and not KB["WAFSTATE"]:
+            return True
+        return False
+        
     def audit(self):
-        if conf.level == 4 and not KB["WafState"]:
+        if self.condition():
             p = urlparse(self.requests.url)
             domain = "{}://{}/".format(p.scheme, p.netloc)
 
@@ -29,9 +32,7 @@ class Z0SCAN(PluginBase):
                 req2 = requests.get(url2, headers=self.requests.headers)
                 if new_payload in req2.text:
                     result = self.new_result()
-                    result.init_info(self.requests.url, ".NET通杀XSS", VulType.XSS)
-                    result.add_detail("Payload回显", req.reqinfo, generateResponse(req),
-                                    "Payload:{}回显在页面".format(payload), "", "", PLACE.GET)
-                    result.add_detail("Payload回显", req2.reqinfo, generateResponse(req2),
-                                    "Payload:{}回显在页面".format(payload), "", "", PLACE.GET)
+                    result.init_info(Type.Request, self.requests.hostname, "{} | {}".format(req.url, req2.url), VulType.XSS, PLACE.URL)
+                    result.add_detail("Request", req.reqinfo, generateResponse(req), "Payload:{}回显在页面".format(payload))
+                    result.add_detail("Request", req2.reqinfo, generateResponse(req2), "Payload:{}回显在页面".format(payload))
                     self.success(result)

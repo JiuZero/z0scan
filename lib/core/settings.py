@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @File    : settings.py
 
-import config
 from lib.core.enums import WEB_SERVER
+from lib.core.data import logger
 
-VERSION = '1.0.1'
+VERSION = '2025.3.22'
 SITE = 'https://github.com/JiuZero/z0scan'
 DEFAULT_USER_AGENT = "z0scan/#v%s (%s)" % (VERSION, SITE)
+
+banner = """
+{cy}__  _     __   _   _  _ _     
+{cy} / (.\   (_ ` / ` /_) )\ )       {m}~ Z0SCAN : {b}v{v} ~
+{cy}/_  \_) .__) (_. / / (  (.   {g}{s}{e}
+
+""".format(s=SITE, v=VERSION, m=logger.m, cy=logger.cy, g=logger.g, b=logger.b, e=logger.e)
 
 acceptedExt = [
     '.php', '.php3', '.php4', '.php5', '.php7', '.phtml',
@@ -22,7 +28,7 @@ acceptedExt = [
     '.do', '.action', ''
 ]
 
-ignoreParams = config.ignoreParams
+ignoreParams = ['submit', '_', '_t', 'rand', 'hash']
 
 logoutParams = [
     'logout',
@@ -51,6 +57,10 @@ DEFAULT_COOKIE_DELIMITER = ';'
 # Default delimiter in GET/POST values
 DEFAULT_GET_POST_DELIMITER = '&'
 
+# Regular expression used for detecting Array-like POST data
+ARRAY_LIKE_RECOGNITION_REGEX = r"(\A|%s)(\w+)\[\]=.+%s\2\[\]=" % (
+    DEFAULT_GET_POST_DELIMITER, DEFAULT_GET_POST_DELIMITER)
+
 # Regular expression for XML POST data
 XML_RECOGNITION_REGEX = r"(?s)\A\s*<[^>]+>(.+>)?\s*\Z"
 
@@ -62,10 +72,6 @@ JSON_LIKE_RECOGNITION_REGEX = r"(?s)\A(\s*\[)*\s*\{.*'[^']+'\s*:\s*('[^']+'|\d+)
 
 # Regular expression used for detecting multipart POST data
 MULTIPART_RECOGNITION_REGEX = r"(?i)Content-Disposition:[^;]+;\s*name="
-
-# Regular expression used for detecting Array-like POST data
-ARRAY_LIKE_RECOGNITION_REGEX = r"(\A|%s)(\w+)\[\]=.+%s\2\[\]=" % (
-    DEFAULT_GET_POST_DELIMITER, DEFAULT_GET_POST_DELIMITER)
 
 notAcceptedExt = [
     ".css",
@@ -184,4 +190,4 @@ XSS_EVAL_ATTITUDES = ['onbeforeonload', 'onsubmit', 'ondragdrop', 'oncommand', '
                       'onlosecapture',
                       'onplaying', 'onfocus', 'onrowsdelete']
 
-TOP_RISK_GET_PARAMS = config.TOP_RISK_GET_PARAMS
+TOP_RISK_GET_PARAMS = {"id", 'action', 'type', 'm', 'callback', 'cb'}

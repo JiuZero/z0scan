@@ -18,11 +18,10 @@ from lib.parse.cmdparse import cmd_line_parser
 from lib.core.data import logger, conf, KB
 from lib.core.option import init
 
-
 def version_check():
     if sys.version.split()[0][0] == "2":
         logger.error(
-            "incompatible Python version detected ('{}'). To successfully run sqlmap you'll have to use version >= 3.6 (visit 'https://www.python.org/downloads/')".format(
+            "incompatible Python version detected ('{}'). To successfully run z0scan you'll have to use version >= 3.6 (visit 'https://www.python.org/downloads/')".format(
                 sys.version.split()[0]))
         sys.exit()
 
@@ -87,7 +86,7 @@ def main():
             scanner.join(0.1)
             threading.Thread(target=baseproxy.shutdown, daemon=True).start()
             deinit()
-            print("\n[\033[1;34m%s\033[0m] [\033[33mWARNING\033[0m] User QUIT." %datetime.utcnow().strftime('%H:%M:%S'))
+            logger.warning("User QUIT.")
         baseproxy.server_close()
 
 

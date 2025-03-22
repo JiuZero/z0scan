@@ -13,7 +13,6 @@ import re
 import string
 import sys
 from urllib.parse import urlparse, urljoin, quote, urlunparse
-
 import requests
 from colorama.ansi import code_to_chars
 
@@ -26,16 +25,16 @@ def dataToStdout(data, bold=False):
     """
     Writes text to the stdout (console) stream
     """
-
+    os.write(sys.stdout.fileno(), data.encode())
+    '''
     sys.stdout.write(data)
 
     try:
         sys.stdout.flush()
     except IOError:
         pass
-
+    '''
     return
-
 
 def get_parent_paths(path, domain=True):
     '''
@@ -147,26 +146,26 @@ def prepare_url(url, params):
     return r.url
 
 
-def paramToDict(parameters, place=PLACE.GET, hint=POST_HINT.NORMAL) -> dict:
+def paramToDict(parameters, place=PLACE.PARAM, hint=POST_HINT.NORMAL) -> dict:
     """
     Split the parameters into names and values, check if these parameters
     are within the testable parameters and return in a dictionary.
     """
 
     testableParameters = {}
-    if place == PLACE.COOKIE:
+    if place == PLACE.HEADER:
         splitParams = parameters.split(DEFAULT_COOKIE_DELIMITER)
         for element in splitParams:
             parts = element.split("=")
             if len(parts) >= 2:
                 testableParameters[parts[0]] = ''.join(parts[1:])
-    elif place == PLACE.GET:
+    elif place == PLACE.PARAM:
         splitParams = parameters.split(DEFAULT_GET_POST_DELIMITER)
         for element in splitParams:
             parts = element.split("=")
             if len(parts) >= 2:
                 testableParameters[parts[0]] = ''.join(parts[1:])
-    elif place == PLACE.POST:
+    elif place == PLACE.DATA:
         if hint == POST_HINT.NORMAL:
             splitParams = parameters.split(DEFAULT_GET_POST_DELIMITER)
             for element in splitParams:
@@ -186,6 +185,11 @@ def paramToDict(parameters, place=PLACE.GET, hint=POST_HINT.NORMAL) -> dict:
                         testableParameters[key].append(value)
                     else:
                         testableParameters[key] = value
+        elif hint == POST_HINT.JSON:
+            try:
+                testableParameters = json.loads(parameters)
+            except json.JSONDecodeError:
+                testableParameters = {}
     return testableParameters
 
 
@@ -239,9 +243,8 @@ def generateResponse(resp: requests.Response):
     response_raw += resp.text
     return response_raw
 
-
+'''
 def createGithubIssue(errMsg, excMsg):
-    '''
     _ = re.sub(r"'[^']+'", "''", excMsg)
     _ = re.sub(r"\s+line \d+", "", _)
     _ = re.sub(r'File ".+?/(\w+\.py)', r"\g<1>", _)
@@ -252,7 +255,7 @@ def createGithubIssue(errMsg, excMsg):
 
     key = hashlib.md5(_.encode()).hexdigest()[:8]
 
-    msg = "\ndo you want to automatically create a new (anonymized) issue "
+    msg = "\nDo you want to automatically create a new (anonymized) issue "
     msg += "with the unhandled exception information at "
     msg += "the official Github repository? [y/N] "
     try:
@@ -264,7 +267,7 @@ def createGithubIssue(errMsg, excMsg):
 
     try:
         req = requests.get("https://api.github.com/search/issues?q={}".format(
-            quote("repo:w-digital-scanner/z0scan Unhandled exception (#{})".format(key))))
+            quote("repo:JiuZero/z0scan Unhandled exception (#{})".format(key))))
     except Exception as e:
         return False
     _ = json.loads(req.text)
@@ -295,14 +298,11 @@ def createGithubIssue(errMsg, excMsg):
         return False
     issueUrl = re.search(r"https://github\.com/JiuZero/z0scan/issues/\d+", r.text)
     if issueUrl:
-        infoMsg = "created Github issue can been found at the address '%s'" % issueUrl.group(0)
+        infoMsg = "Created Github issue can been found at the address '%s'" % issueUrl.group(0)
         dataToStdout('\r' + "[*] {}".format(infoMsg) + '\n\r')
         return True
     return False
-    会影响输出
-    '''
-    pass
-
+'''
 
 
 def ltrim(text, left):
@@ -416,16 +416,16 @@ def random_colorama(text: str, length=4):
     return new_text
 
 
-def url_dict2str(d: dict, position=PLACE.GET):
+def url_dict2str(d: dict, position=PLACE.PARAM):
     if isinstance(d, str):
         return d
     temp = ""
     urlsafe = "!$%'()*+,/:;=@[]~"
-    if position == PLACE.GET or position == PLACE.POST:
+    if position == PLACE.PARAM or position == PLACE.DATA:
         for k, v in d.items():
             temp += "{}={}{}".format(k, quote(v, safe=urlsafe), DEFAULT_GET_POST_DELIMITER)
         temp = temp.rstrip(DEFAULT_GET_POST_DELIMITER)
-    elif position == PLACE.COOKIE:
+    elif position == PLACE.HEADER:
         for k, v in d.items():
             temp += "{}={}{} ".format(k, quote(v, safe=urlsafe), DEFAULT_COOKIE_DELIMITER)
         temp = temp.rstrip(DEFAULT_COOKIE_DELIMITER)

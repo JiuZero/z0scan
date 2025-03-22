@@ -6,28 +6,19 @@
 import re
 from difflib import SequenceMatcher
 from functools import reduce
+import six
 
-from six import unichr
 
-
-def getFilteredPageContent(page, onlyText=True, split=" "):
-    """
-    Returns filtered page content without script, style and/or comments
-    or all HTML tags
-    >>> getFilteredPageContent(u'<html><title>foobar</title><body>test</body></html>')
-    u'foobar test'
-    """
-
+def getFilteredPageContent(page, onlyText=True, split="\n"):
     retVal = page
 
     # only if the page's charset has been successfully identified
-    retVal = re.sub(
-        r"(?si)<script.+?</script>|<!--.+?-->|<style.+?</style>%s" % (r"|<[^>]+>|\t|\n|\r" if onlyText else ""),
-        split, page)
-    while retVal.find(2 * split) != -1:
-        retVal = retVal.replace(2 * split, split)
-    retVal = htmlunescape(retVal.strip().strip(split))
-
+    if isinstance(page, six.text_type):
+        retVal = re.sub(r"(?si)<script.+?</script>|<!--.+?-->|<style.+?</style>%s" % (r"|<[^>]+>|\t|\n|\r" if onlyText else ""), split, page)
+        retVal = htmlunescape(retVal.strip().strip(split))
+        retVal = re.sub(r"%s{2,}" % split, split, retVal)
+        # retVal = re.sub(r'\r?\n+', "\n", retVal)
+        retVal = re.sub(r'\s+', ' ', retVal).strip()
     return retVal
 
 
@@ -58,23 +49,10 @@ def htmlunescape(value):
     codes = (('&lt;', '<'), ('&gt;', '>'), ('&quot;', '"'), ('&nbsp;', ' '), ('&amp;', '&'))
     retVal = reduce(lambda x, y: x.replace(y[0], y[1]), codes, retVal)
     try:
-        retVal = re.sub(r"&#x([^ ;]+);", lambda match: unichr(int(match.group(1), 16)), retVal)
+        retVal = re.sub(r"&#x([^ ;]+);", lambda match: six.unichr(int(match.group(1), 16)), retVal)
     except ValueError:
         pass
     return retVal
-
-
-def GetRatio(firstPage, secondPage):
-    """
-    Prints words appearing in two different response pages
-    对比文本相似度，会去掉html标签
-    """
-    firstPage = getFilteredPageContent(firstPage)
-    secondPage = getFilteredPageContent(secondPage)
-
-    match = SequenceMatcher(None, firstPage, secondPage).ratio()
-    return match
-
 
 def split_by_sep(seq):
     """
@@ -243,8 +221,7 @@ def findDynamicContent(firstPage, secondPage):
 
 def removeDynamicContent(page, dynamicMarkings):
     """
-    Removing dynamic content from supplied page basing removal on
-    precalculated dynamic markings
+    根据预先计算的动态标记从提供的页面中删除动态内容
     """
 
     if page:
@@ -266,7 +243,7 @@ def removeDynamicContent(page, dynamicMarkings):
 
 def trimAlphaNum(value):
     """
-    Trims alpha numeric characters from start and ending of a given value
+    从给定值的开头和结尾剪裁字母数字字符
 
     >>> trimAlphaNum('AND 1>(2+3)-- foobar')
     ' 1>(2+3)-- '

@@ -1,37 +1,36 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @Author  : w8ay
+# w8ay
+# JiuZero 2025/3/2
 
 from urllib.parse import urlparse
-
 import requests
 
-from lib.core.common import random_str, generateResponse
-from lib.core.enums import VulType, PLACE
-from lib.core.plugins import PluginBase
-from lib.core.data import conf
+from api import random_str, generateResponse, VulType, PLACE, Type, PluginBase, conf
 from lib.helper.helper_sensitive import sensitive_page_error_message_check
 
 
 class Z0SCAN(PluginBase):
-    name = '错误暴露信息'
-    desc = '''访问一个不存在的错误页面，可以从这个页面中获取一些信息'''
-
+    name = "ErrorPage"
+    desc = 'Leak information in Error Page'
+    
+    def condition(self):
+        if 4 in conf.level:
+            return True
+        return False
+        
     def audit(self):
-        if conf.level == 3:
+        if self.condition():
             headers = self.requests.headers
             p = urlparse(self.requests.url)
-
             domain = "{}://{}/".format(p.scheme, p.netloc) + random_str(6) + ".jsp"
             r = requests.get(domain, headers=headers)
             messages = sensitive_page_error_message_check(r.text)
             if messages:
                 result = self.new_result()
-                result.init_info(self.requests.url, "敏感的报错信息", VulType.SENSITIVE)
+                result.init_info(Type.REQUEST, self.requests.hostname, r.url, VulType.SENSITIVE, PLACE.URL)
                 for m in messages:
                     text = m["text"]
                     _type = m["type"]
-                    result.add_detail("payload请求", r.reqinfo, generateResponse(r),
-                                    "匹配组件:{} 匹配正则:{}".format(_type, text), "", "", PLACE.GET)
-
+                    result.add_detail("Request", r.reqinfo, generateResponse(r), "Match 组件:{} Match 正则:{}".format(_type, text))
                 self.success(result)

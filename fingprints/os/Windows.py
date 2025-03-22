@@ -24,4 +24,5 @@ def fingerprint(headers, content):
     _ = False
     if 'server' in headers.keys():
         for _ in keys:
-            if search(r"Win32|Win64", headers["server"], I): return OS.WINDOWS
+            if search(_, headers["server"], I): return OS.WINDOWS, None
+    return None, None

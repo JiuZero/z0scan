@@ -4,7 +4,7 @@
 
 from re import search, I, compile, error
 from lib.core.enums import WEB_SERVER
-from lib.core.data import KB
+from api import KB
 
 def _prepare_pattern(pattern):
     """
@@ -18,12 +18,11 @@ def _prepare_pattern(pattern):
         return compile(r'(?!x)x')
 
 def fingerprint(headers, content):
+    version = None
     _ = False
     if 'server' in headers.keys():
-        _ = search(r"nginx(?:/([\d.]+))?\;version:\1", headers["server"], I) is not None
+        _ = search(r"nginx(?:/([\d.]+))?\;version:\1", headers["server"], I)
     if _:
         _ = _.group(1) if _ else ""
-        KB["SERVER_VERSION"][WEB_SERVER.NGINX] = _
-        return WEB_SERVER.NGINX
-    else:
-        KB["SERVER_VERSION"][WEB_SERVER.NGINX] = None
+        return WEB_SERVER.NGINX, version
+    return None, None

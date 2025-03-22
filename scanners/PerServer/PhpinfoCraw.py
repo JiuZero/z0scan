@@ -1,23 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @Time    : 2019/7/11 4:27 PM
-# @Author  : w8ay
+# w8ay 2019/7/11
+# JiuZero 2025/3/4
 
 import requests
 
-from lib.core.common import generateResponse
-from lib.core.data import conf
-from lib.core.enums import WEB_PLATFORM, VulType, PLACE
-from lib.core.plugins import PluginBase
+from api import generateResponse, conf, WEB_PLATFORM, VulType, PLACE, PluginBase, Type
 from lib.helper.helper_phpinfo import get_phpinfo
 
 
 class Z0SCAN(PluginBase):
-    desc = '''查看此目录下是否存在phpinfo文件'''
-    name = 'phpinfo遍历'
-
+    name = "PhpInfoCraw"
+    desc = 'Phpinfo Finder'
+    
+    def condition(self):
+        for k, v in self.response.programing.items():
+            if k == WEB_PLATFORM.PHP and 4 in conf.level:
+                return True
+        return False
+        
     def audit(self):
-        if WEB_PLATFORM.PHP in self.response.programing and conf.level >= 2:
+        if self.condition():
             headers = self.requests.headers
             variants = [
                 "phpinfo.php",
@@ -35,7 +38,6 @@ class Z0SCAN(PluginBase):
                 if flag in r.text:
                     info = get_phpinfo(r.text)
                     result = self.new_result()
-                    result.init_info(self.requests.url, "phpinfo发现", VulType.SENSITIVE)
-                    result.add_detail("payload请求", r.reqinfo, generateResponse(r),
-                                      '\n'.join(info), "", "", PLACE.GET)
+                    result.init_info(Type.REQUEST, self.requests.hostname, r.url, VulType.SENSITIVE, PLACE.URL)
+                    result.add_detail("Request", r.reqinfo, generateResponse(r), '\n'.join(info))
                     self.success(result)

@@ -1,22 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @Time    : 2019/7/12 5:19 PM
-# @Author  : w8ay
+# w8ay 2019/7/12
+# JiuZero 2025/3/4
 # refer:https://www.t00ls.net/viewthread.php?tid=47698&highlight=%E5%A4%87%E4%BB%BD
 # refer:https://www.t00ls.net/viewthread.php?tid=45430&highlight=%E5%A4%87%E4%BB%BD
 
 import os
-
 import requests
-from lib.core.data import conf
-from lib.core.common import generateResponse
-from lib.core.enums import VulType, PLACE
-from lib.core.plugins import PluginBase
+
+from api import conf, generateResponse, VulType, PLACE, Type, PluginBase
 
 
 class Z0SCAN(PluginBase):
-    name = '常见备份文件'
-    desc = '''扫描每个目录下的常见备份文件,以及以当前目录名命名的备份文件'''
+    name = "BackupFolder"
+    desc = 'Backup File Of Each Folder'
 
     def _check(self, content):
         """
@@ -42,9 +39,14 @@ class Z0SCAN(PluginBase):
             if content.startswith(i):
                 return True
         return False
-
+    
+    def condition(self):
+        if 2 in conf.level:
+            return True
+        return False
+        
     def audit(self):
-        if conf.level >= 2:
+        if self.condition():
             file_dic = ['bak.rar', 'bak.zip', 'backup.rar', 'backup.zip', 'www.zip', 'www.rar', 'web.rar', 'web.zip',
                         'wwwroot.rar',
                         'wwwroot.zip', 'log.zip', 'log.rar']
@@ -69,7 +71,6 @@ class Z0SCAN(PluginBase):
 
                     rarsize = int(r.headers.get('Content-Length')) // 1024 // 1024
                     result = self.new_result()
-                    result.init_info(self.requests.url, "备份文件下载", VulType.BRUTE_FORCE)
-                    result.add_detail("payload请求", r.reqinfo, content.decode(errors='ignore'),
-                                    "备份文件大小:{}M".format(rarsize), "", "", PLACE.GET)
+                    result.init_info(Type.REQUEST, self.requests.hostname, r.url, VulType.SENSITIVE, msg="File Sizes {}M".format(rarsize))
+                    result.add_detail("Request", r.reqinfo, content.decode(errors='ignore'), "File Sizes {}M".format(rarsize))
                     self.success(result)
