@@ -16,8 +16,8 @@
 <p align="center">
   <a href="https://www.gnu.org/licenses/gpl-2.0.en.html">
       <img src="https://img.shields.io/badge/License-GPL2-_red.svg">
-  <a href="https://www.gnu.org/software/bash/">
-      <img src="https://img.shields.io/badge/Language-Bash-blue.svg" alt="Bash">
+  <a href="https://www.python.org/">
+      <img src="https://img.shields.io/badge/Language-Python3-yellow.svg">
   <a href="https://github.com/JiuZero/z0scan">
       <img src="https://img.shields.io/pypi/v/z0scan">
   </a>

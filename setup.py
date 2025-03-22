@@ -7,6 +7,7 @@ from lib.core.settings import VERSION, SITE
 import shutil
 import tempfile
 
+
 current_dir = os.path.abspath(os.path.dirname(__file__))
 with io.open(os.path.join(current_dir, "README.md"), encoding="utf-8") as fd:
     desc = fd.read()
@@ -16,8 +17,7 @@ with io.open(os.path.join(current_dir, "requirements.txt"), encoding="utf-8") as
 
 env_dir = tempfile.mkdtemp(prefix="z0scan-install-")
 shutil.copytree(os.path.abspath(os.getcwd()), os.path.join(env_dir, "z0scan"))
-# os.chdir(env_dir)
-
+os.chdir(env_dir)
 
 setuptools.setup(
     name='z0scan',
@@ -28,8 +28,8 @@ setuptools.setup(
     long_description=desc,
     packages=setuptools.find_packages(),
     entry_points={"console_scripts": ["z0scan=z0scan.z0scan:main"]},
-    package_data={"z0scan": ["*", "data/*"]},
     include_package_data=True,
+    package_data={"z0scan": ["*", "data/*"]},
     long_description_content_type='text/markdown',
     keywords='z0scan, security, scanner, web, python3',
     platforms=['any'],
@@ -39,6 +39,9 @@ setuptools.setup(
     classifiers=(
         "Topic :: Security",
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: GNU General Public License v2 (GPLv2)"
+        "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
     )
 )
+
+dist_dir = os.path.join(env_dir, "dist")
+shutil.move(dist_dir, os.path.join(current_dir, "dist"))
