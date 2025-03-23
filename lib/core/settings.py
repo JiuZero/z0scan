@@ -4,7 +4,7 @@
 from lib.core.enums import WEB_SERVER
 from lib.core.data import logger
 
-VERSION = '2025.3.25'
+VERSION = '2025.3.21'
 SITE = 'https://github.com/JiuZero/z0scan'
 DEFAULT_USER_AGENT = "z0scan/#v%s (%s)" % (VERSION, SITE)
 

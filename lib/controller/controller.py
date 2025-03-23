@@ -3,7 +3,7 @@
 # w8ay 2019/6/28
 # JiuZero 2025/3/1
 
-import copy, threading, time, traceback, config, colorlog
+import copy, threading, time, traceback, config
 
 from lib.core.common import dataToStdout
 from lib.core.data import KB, logger, conf
