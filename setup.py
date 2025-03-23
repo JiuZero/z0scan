@@ -29,7 +29,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     entry_points={"console_scripts": ["z0scan=z0scan.z0scan:main"]},
     include_package_data=True,
-    package_data={"z0scan": ["*", "data/*"]},
+    package_data={"z0scan": ["*", "data/*", "certs/*", "output/*"]},
     long_description_content_type='text/markdown',
     keywords='z0scan, security, scanner, web, python3',
     platforms=['any'],
