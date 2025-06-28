@@ -1,0 +1,14 @@
+.log
+.log.txt
+.logs
+.logs.txt
+web.log
+log.txt
+log.xml
+test.log
+logs.txt
+server.log
+change.log
+config.log
+access.log
+admin.log
