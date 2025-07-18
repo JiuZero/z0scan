@@ -5,6 +5,7 @@
 import os
 import re
 import sys
+import platform
 import subprocess
 from shutil import which, copytree, copy2
 from pathlib import Path
@@ -23,6 +24,31 @@ def find_nuitka():
     if nuitka_path:
         return [nuitka_path]
     return [sys.executable, '-m', 'nuitka']
+
+def get_platform_specific_args():
+    """返回平台特定的Nuitka编译参数"""
+    args = []
+    system = platform.system().lower()
+    
+    # Windows特定参数
+    if system == 'windows':
+        args.extend([
+            '--windows-icon-from-ico=doc/logo.png',
+        ])
+    
+    # macOS特定参数
+    elif system == 'darwin':
+        args.extend([
+            '--macos-app-icon=doc/logo.png',
+        ])
+    
+    # Linux特定参数
+    elif system == 'linux':
+        args.extend([
+            '--linux-onefile-icon=doc/logo.png'
+        ])
+    
+    return args
 
 def get_actual_module_name(pkg_name):
     """更可靠的模块名检测方案"""
@@ -90,18 +116,37 @@ def verify_import(pkg_name, actual_name):
 
 def build():
     nuitka_cmd = find_nuitka()
-    nuitka_cmd.extend([
+    
+    # 基础编译参数
+    base_args = [
+        # '--lto=yes' if platform.system().lower() != 'darwin' else '--lto=no',  # macOS下禁用LTO
         '--lto=no',
-        '--output-dir=build',
+        '--output-dir=dist', 
         '--standalone',
         '--onefile',
-        '--python-flag=-u', 
-        '--nofollow-import-to=config',
+        '--remove-output', 
+        '--python-flag=-u',
+        '--nofollow-import-to=*.tests,*.test',
         '--include-package=lib',
         '--include-package=api',
         "--include-data-file=doc/tld-patch/effective_tld_names.dat.txt=tld/res/effective_tld_names.dat.txt",
-    ])
+    ]
+    
+    # 添加平台特定参数
+    platform_args = get_platform_specific_args()
+    
+    # 设置输出文件名（与release.yml中的命名约定一致）
+    system = platform.system().lower()
+    arch = platform.machine().lower()
+    output_name = f"z0scan-{system}-{arch}"
+    if system == 'windows':
+        output_name += '.exe'
+    
+    nuitka_cmd.extend(base_args)
+    nuitka_cmd.extend(platform_args)
+    nuitka_cmd.append(f"--output-filename={output_name}")
 
+    # 依赖处理（与release.yml配合）
     if not os.path.isfile("requirements.txt"):
         print("Error: requirements.txt not found!")
         sys.exit(1)
@@ -113,50 +158,51 @@ def build():
             if line:
                 pkg_name = re.split(r'[=<>~\[\]]', line)[0]
                 actual_name = get_actual_module_name(pkg_name)
-                # 验证模块是否可以导入
+                
                 if not verify_import(pkg_name, actual_name):
                     missing_modules.append(f"{pkg_name} -> {actual_name}")
                     continue
-                # 添加包含指令
+                
+                # 添加包含指令（优化插件支持）
                 nuitka_cmd.extend([
                     f"--include-module={actual_name}",
                     f"--include-package={actual_name}",
                 ])
 
     if missing_modules:
-        print("\n:: Warning: The following modules cannot be imported, please check the installation.")
+        print("\n:: Warning: Missing modules detected (will continue for CI):")
         for mod in missing_modules:
             print(f"  - {mod}")
-        print("\n:: It is recommended to try again after executing the command: pip install " + " ".join(m.split(' -> ')[0] for m in missing_modules))
-        if input("Continue compiling? (y/n): ").lower() != 'y':
-            sys.exit(1)
+        if not os.getenv('CI'):  # 非CI环境才询问
+            if input("Continue compiling? (y/n): ").lower() != 'y':
+                sys.exit(1)
 
     nuitka_cmd.append('z0.py')
-    print('\n:: CMD :', ' '.join(nuitka_cmd))
+    
+    # 在CI环境中显示完整命令
+    if os.getenv('CI'):
+        print('\n:: NUITKA COMMAND :', ' '.join(nuitka_cmd))
     
     try:
         subprocess.run(nuitka_cmd, check=True)
     except subprocess.CalledProcessError as e:
-        print(f'\n:: ERROR (CODE {e.returncode}) :')
+        print(f'\n:: BUILD FAILED (CODE {e.returncode})')
         sys.exit(1)
 
 def setup_build_directory():
-    # 定义需要复制的文件/文件夹列表
-    items_to_copy = ['scanners', 'config', 'fingerprints', 'data']  # 根据实际情况修改
+    """优化资源文件处理，与release.yml配合"""
+    # 需要复制的资源文件
+    resource_dirs = ['scanners', 'config', 'fingerprints', 'data']
     
-    # 创建build和output目录
-    build_dir = Path('build')
-    output_dir = build_dir / 'output'
-    certs_dir = build_dir / 'certs'
-    
-    try:
-        # 创建目录（exist_ok=True表示如果目录已存在不会报错）
-        build_dir.mkdir(exist_ok=True)
-        output_dir.mkdir(exist_ok=True)
-        certs_dir.mkdir(exist_ok=True)
+    # 在CI环境中跳过资源复制（由release.yml处理）
+    if os.getenv('CI'):
+        return
         
-        # 复制文件/文件夹
-        for item in items_to_copy:
+    build_dir = Path('dist')
+    try:
+        build_dir.mkdir(exist_ok=True)
+        
+        for item in resource_dirs:
             src = Path(item)
             dst = build_dir / item
             
@@ -164,14 +210,18 @@ def setup_build_directory():
                 if src.is_file():
                     copy2(src, dst)
                 elif src.is_dir():
-                    copytree(src, dst, dirs_exist_ok=True)       
+                    copytree(src, dst, dirs_exist_ok=True)
+                    
     except Exception as e:
-        print(f"\n:: ERROR (CODE {e.returncode}) :{e}")
+        print(f"\n:: RESOURCE COPY ERROR: {str(e)}")
+        if not os.getenv('CI'):  # CI环境中忽略资源错误
+            sys.exit(1)
 
 if __name__ == '__main__':
     try:
         build()
         setup_build_directory()
+        print("\n:: BUILD SUCCESS ::")
     except KeyboardInterrupt:
-        print("\n:: Stop...")
+        print("\n:: BUILD INTERRUPTED ::")
         sys.exit(1)
