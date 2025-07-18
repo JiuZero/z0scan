@@ -1,17 +1,21 @@
 ![z0scan](https://socialify.git.ci/JiuZero/z0scan/image?description=1&font=Raleway&language=1&name=1&owner=1&pattern=Solid&theme=Auto)
 
 <h4 align="center" dir="auto">
-  Chinese | <a href="https://github.com/JiuZero/z0scan/blob/master/README.MD">English</a> | <a href="https://jiuzero.github.io/tags/z0scan/">Documentation</a>
+  <a href="https://github.com/JiuZero/z0scan/blob/master/README.zh-CN.MD">Chinese</a> | English | <a href="https://jiuzero.github.io/tags/z0scan/">Documentation</a>
 </p>
 
 <p align="center">
   <a href="https://www.python.org/">
-      <img src="https://img.shields.io/badge/Language-Python3-yellow.svg">
+    <img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white">
+  </a>
   <a href="https://github.com/JiuZero/z0scan">
-      <img src="https://img.shields.io/pypi/v/z0scan">
+    <img src="https://img.shields.io/github/last-commit/JiuZero/z0scan?style=flat&logo=github">
+  </a>
+  <a href="https://github.com/JiuZero/z0scan">
+    <img src="https://img.shields.io/github/stars/JiuZero/z0scan?style=flat&logo=github&color=yellow">
+  </a>
   <a href="https://www.gnu.org/licenses/gpl-2.0.en.html">
-      <img src="https://img.shields.io/badge/License-GPL2-_red.svg">
-      <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/jiuzero/z0scan">
+    <img src="https://img.shields.io/badge/License-GPL2-red?style=flat&logo=gnu">
   </a>
 </p>
 
@@ -29,23 +33,31 @@
 4. Open-source Python3-based solution with cross-platform support
 5. Supports IPV6 domain resolution (Beta)
 
-## 🔧 Installation
+## 🔧 Installation  
 
-Install via **Pypi**
-```bash
-pip install z0scan
-z0
-```
+### Recommended  
 
-Install via **GitHub** clone
-```bash
-git clone https://github.com/JiuZero/z0scan
-cd z0scan
-pip install -r requirements.txt
-python3 z0.py
-```
+Get the **release version** (**compiled with Nuitka for significantly improved speed & performance**): [Download](https://gitee.com/JiuZero/z0scan/releases)  
 
-- For **special environment installations** (Such as Termux), please refer to: [Documentation](https://jiuzero.github.io/tags/z0scan/)  
+- Want to build an executable tailored to your environment? See: [Documentation](https://jiuzero.github.io/tags/z0scan/)  
+
+### Not Recommended  
+
+Install via **PyPI**:  
+```bash  
+pip install z0scan  
+z0  
+```  
+
+Install via **GitHub** (clone):  
+```bash  
+git clone https://github.com/JiuZero/z0scan  
+cd z0scan  
+pip install -r requirements.txt  
+python3 z0.py  
+```  
+
+- For **special environment installations** (e.g., Termux), see: [Documentation](https://jiuzero.github.io/tags/z0scan/)
 
 ## 🚀 Usage Examples
 

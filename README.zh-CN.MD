@@ -1,17 +1,21 @@
 ![z0scan](https://socialify.git.ci/JiuZero/z0scan/image?description=1&font=Raleway&language=1&name=1&owner=1&pattern=Solid&theme=Auto)
 
 <h4 align="center" dir="auto">
-  中文 | <a href="https://github.com/JiuZero/z0scan/blob/master/README.MD">English</a> | <a href="https://jiuzero.github.io/tags/z0scan/">文档</a>
+  中文 | <a href="https://github.com/JiuZero/z0scan/blob/master/README.MD">英文</a> | <a href="https://jiuzero.github.io/tags/z0scan/">文档</a>
 </p>
 
 <p align="center">
   <a href="https://www.python.org/">
-      <img src="https://img.shields.io/badge/Language-Python3-yellow.svg">
+    <img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white">
+  </a>
   <a href="https://github.com/JiuZero/z0scan">
-      <img src="https://img.shields.io/pypi/v/z0scan">
+    <img src="https://img.shields.io/github/last-commit/JiuZero/z0scan?style=flat&logo=github">
+  </a>
+  <a href="https://github.com/JiuZero/z0scan">
+    <img src="https://img.shields.io/github/stars/JiuZero/z0scan?style=flat&logo=github&color=yellow">
+  </a>
   <a href="https://www.gnu.org/licenses/gpl-2.0.en.html">
-      <img src="https://img.shields.io/badge/License-GPL2-_red.svg">
-      <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/jiuzero/z0scan">
+    <img src="https://img.shields.io/badge/License-GPL2-red?style=flat&logo=gnu">
   </a>
 </p>
 
@@ -30,6 +34,14 @@
 5. 支持IPV6解析域名（Beta）
 
 ## 🔧 安装
+
+### 推荐
+
+获取发行版本（**由nuitka编译构建，速度&性能显著提升**）：[获取](https://gitee.com/JiuZero/z0scan/releases)
+
+- 想构建适合自己环境的可执行文件？，请见：[文档](https://jiuzero.github.io/tags/z0scan/)
+
+### 不推荐
 
 通过**Pypi**安装
 ```bash
@@ -51,7 +63,7 @@ python3 z0.py
 
 ### 被动扫描
 
-默认配置下`被动扫描`（浏览器转发流量到5920端口）
+默认配置下**被动扫描**（浏览器转发流量到5920端口）
 ```
 z0 scan -s 127.0.0.1:5920
 ```
@@ -65,7 +77,7 @@ z0 scan -s 127.0.0.1:5920 --risk 0,1,2,3 --level 2 --disable cmdi,unauth
 
 ### 主动扫描
 
-默认配置下`主动扫描`
+默认配置下**主动扫描**
 ```
 # 由Burp/Yakit发起请求流量的主动检测（推荐）
 z0 scan -s 127.0.0.1:5920
