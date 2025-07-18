@@ -45,7 +45,7 @@ def get_platform_specific_args():
     # Linux特定参数
     elif system == 'linux':
         args.extend([
-            '--linux-onefile-icon=doc/logo.png'
+            '--linux-icon=doc/logo.png'
         ])
     
     return args
@@ -199,8 +199,12 @@ def setup_build_directory():
         return
         
     build_dir = Path('dist')
+    output_dir = build_dir / 'output'
+    certs_dir = build_dir / 'certs'
     try:
         build_dir.mkdir(exist_ok=True)
+        output_dir.mkdir(exist_ok=True)
+        certs_dir.mkdir(exist_ok=True)
         
         for item in resource_dirs:
             src = Path(item)
