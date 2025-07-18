@@ -76,17 +76,17 @@ jobs:
           if [ "${{ matrix.build_universal }}" = "true" ]; then
             python ${{ env.BUILD_SCRIPT }}
             ARCH=arm64 python ${{ env.BUILD_SCRIPT }}
-            lipo -create -output dist/z0scan-macos-universal \
-              dist/z0scan-darwin-x86_64 \
-              dist/z0scan-darwin-arm64
+            lipo -create -output dist/z0-macos-universal \
+              dist/z0-darwin-x86_64 \
+              dist/z0-darwin-arm64
           fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: z0scan-${{ matrix.artifact_suffix }}
+          name: z0-${{ matrix.artifact_suffix }}
           path: |
-            dist/z0scan-*
+            dist/z0-*
             scanners/
             fingerprints/
             data/
@@ -104,18 +104,18 @@ jobs:
       - name: Prepare release assets
         run: |
           mkdir -p release-assets
-          cp artifacts/z0scan-linux-amd64 release-assets/
-          cp artifacts/z0scan-linux-arm64 release-assets/
-          cp artifacts/z0scan-windows-amd64.exe release-assets/
-          cp artifacts/z0scan-macos-amd64 release-assets/
-          [ -f artifacts/z0scan-macos-universal ] && cp artifacts/z0scan-macos-universal release-assets/
+          cp artifacts/z0-linux-amd64 release-assets/
+          cp artifacts/z0-linux-arm64 release-assets/
+          cp artifacts/z0-windows-amd64.exe release-assets/
+          cp artifacts/z0-macos-amd64 release-assets/
+          [ -f artifacts/z0-macos-universal ] && cp artifacts/z0-macos-universal release-assets/
           
           for dir in scanners fingerprints data; do
             [ -d "artifacts/$dir" ] && cp -r "artifacts/$dir" release-assets/
           done
           
-          chmod +x release-assets/z0scan-linux-*
-          chmod +x release-assets/z0scan-macos-*
+          chmod +x release-assets/z0-linux-*
+          chmod +x release-assets/z0-macos-*
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -126,11 +126,11 @@ jobs:
             ### Platform Build Matrix
             | Platform  | Arch      | File                      |
             |-----------|-----------|---------------------------|
-            | Linux     | x86_64    | `z0scan-linux-amd64`      |
-            | Linux     | ARM64     | `z0scan-linux-arm64`      |
-            | Windows   | x86_64    | `z0scan-windows-amd64.exe`|
-            | macOS     | x86_64    | `z0scan-macos-amd64`      |
-            | macOS     | Universal | `z0scan-macos-universal`  |
+            | Linux     | x86_64    | `z0-linux-amd64`      |
+            | Linux     | ARM64     | `z0-linux-arm64`      |
+            | Windows   | x86_64    | `z0-windows-amd64.exe`|
+            | macOS     | x86_64    | `z0-macos-amd64`      |
+            | macOS     | Universal | `z0-macos-universal`  |
           files: release-assets/*
           draft: false
           prerelease: ${{ github.event.inputs.is_prerelease }}

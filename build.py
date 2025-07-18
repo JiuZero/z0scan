@@ -138,7 +138,7 @@ def build():
     # 设置输出文件名（与release.yml中的命名约定一致）
     system = platform.system().lower()
     arch = platform.machine().lower()
-    output_name = f"z0scan-{system}-{arch}"
+    output_name = f"z0-{system}-{arch}"
     if system == 'windows':
         output_name += '.exe'
     
