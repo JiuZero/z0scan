@@ -266,6 +266,7 @@ def init(root, cmdline):
             sys.exit(0)
     _set_conf()
     initKb()
+    logger.info(f"Current WorkDir: {path.root}")
     initPlugins()
     _init_stdout()
     patch_all()

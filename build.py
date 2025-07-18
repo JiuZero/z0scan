@@ -16,6 +16,7 @@ except ImportError:
     get_distribution = None
 import importlib
 import pkgutil
+import zipfile
 
 
 def find_nuitka():
@@ -124,27 +125,19 @@ def build():
         '--output-dir=dist', 
         '--standalone',
         '--onefile',
-        '--remove-output', 
-        '--python-flag=-u',
-        '--nofollow-import-to=*.tests,*.test',
+        '--python-flag=-u', 
         '--include-package=lib',
+        '--nofollow-import-to=config',
         '--include-package=api',
         "--include-data-file=doc/tld-patch/effective_tld_names.dat.txt=tld/res/effective_tld_names.dat.txt",
+        '--remove-output', 
+        '--nofollow-import-to=*.tests,*.test', 
     ]
+    nuitka_cmd.extend(base_args)
     
     # 添加平台特定参数
     platform_args = get_platform_specific_args()
-    
-    # 设置输出文件名（与release.yml中的命名约定一致）
-    system = platform.system().lower()
-    arch = platform.machine().lower()
-    output_name = f"z0-{system}-{arch}"
-    if system == 'windows':
-        output_name += '.exe'
-    
-    nuitka_cmd.extend(base_args)
     nuitka_cmd.extend(platform_args)
-    nuitka_cmd.append(f"--output-filename={output_name}")
 
     # 依赖处理（与release.yml配合）
     if not os.path.isfile("requirements.txt"):
@@ -215,11 +208,29 @@ def setup_build_directory():
                     copy2(src, dst)
                 elif src.is_dir():
                     copytree(src, dst, dirs_exist_ok=True)
-                    
     except Exception as e:
         print(f"\n:: RESOURCE COPY ERROR: {str(e)}")
         if not os.getenv('CI'):  # CI环境中忽略资源错误
             sys.exit(1)
+
+    # Create zip archive
+    system = platform.system().lower()
+    arch = platform.machine().lower()
+    zip_filename = f"z0scan-{system}-{arch}.zip"
+    
+    try:
+        with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for file in build_dir.rglob('*'):
+                if file.is_file():
+                    arcname = file.relative_to(build_dir.parent)
+                    zipf.write(file, arcname)
+        
+        print(f"\n:: CREAT SUCCESS : {zip_filename}")
+        return True
+    
+    except Exception as e:
+        print(f"\n:: RESOURCE ZIP ERROR: {e}")
+        return False
 
 if __name__ == '__main__':
     try:
