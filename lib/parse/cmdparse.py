@@ -54,7 +54,12 @@ def cmd_line_parser(argv=None):
     reverse_parser.set_defaults(reverse=True)
     list_parser = subparsers.add_parser('list', help='Make a list of plugins and lists')
     list_parser.set_defaults(list=True)
-    
+    console_parser = subparsers.add_parser('console', help='Console command')
+    console_parser.set_defaults(console=True)
+    dbcmd_parser = subparsers.add_parser('dbcmd', help='Database command')
+    dbcmd_parser.set_defaults(dbcmd=True)
+
+    ## z0 scan
     # Proxy options
     proxy = scan_parser.add_argument_group('Proxy', 'Passive Agent Mode Options')
     proxy.add_argument("-s", "--server-addr", dest="server_addr", help="Server addr format:(ip:port) ")
@@ -86,9 +91,14 @@ def cmd_line_parser(argv=None):
     optimization.add_argument("-iw", '--ignore-waf', dest='ignore_waf', action="store_true", default=False, help="Ignore the WAF during detection")
     optimization.add_argument("-if", '--ignore-fingerprint', dest='ignore_fingerprint', action="store_true", default=False, help="Ignore fingerprint element scanning")
     optimization.add_argument("-sc", '--scan-cookie', dest='scan_cookie', action="store_true", default=False, help="Scan cookie during detection")
+    optimization.add_argument("-z", "--zmq-port", dest="zmq_port", help="ZeroMQServer port (Default {})".format(config.ZMQ_PORT), default=config.ZMQ_PORT)
     optimization.add_argument('--disable', dest='disable', type=str_list, default=config.DISABLE, help="Disable some scanners.")
     optimization.add_argument('--able', dest='able', type=str_list, default=config.ABLE, help="Only enable scanners")
     optimization.add_argument("--debug", dest="debug", type=int, choices=list(range(1, 4)), help="Show programs's exception: 1-3")
+
+    ## z0 console
+    client = console_parser.add_argument_group('Client', 'Client Options')
+    client.add_argument("-z", "--zmq-port", dest="zmq_port", help="ZeroMQClient port (Default {})".format(config.ZMQ_PORT), default=config.ZMQ_PORT)
 
     args = parser.parse_args()
     if not hasattr(args, 'version'):
@@ -97,6 +107,10 @@ def cmd_line_parser(argv=None):
         args.reverse = False
     if not hasattr(args, 'list'):
         args.list = False
+    if not hasattr(args, 'console'):
+        args.console = False
+    if not hasattr(args, 'dbcmd'):
+        args.dbcmd = False
     dd = args.__dict__
     
     # Check if scan command is used and has required arguments
@@ -106,7 +120,7 @@ def cmd_line_parser(argv=None):
         parser.error(errMsg)
         
     # Check version & reverse flag
-    if not (dd.get("version") or dd.get("reverse") or dd.get("list")) and not dd.get("command"):
+    if not (dd.get("version") or dd.get("reverse") or dd.get("dbcmd") or dd.get("list") or dd.get("console")) and not dd.get("command"):
         errMsg = "missing a command or option. Use -h for help\n"
         parser.error(errMsg)
         

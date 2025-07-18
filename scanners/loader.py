@@ -5,11 +5,11 @@
 
 from urllib.parse import urlparse
 from copy import deepcopy
-import requests, re, os
+import requests, re, os, json
 from lib.controller.controller import task_push
 from lib.core.common import isListLike, get_parent_paths, get_links
 from lib.core.data import conf, KB
-from lib.core.log import logger, colors
+from lib.core.log import logger
 from lib.core.wafDetector import detector
 from lib.core.enums import HTTPMETHOD
 from lib.core.plugins import PluginBase
@@ -32,42 +32,32 @@ class Z0SCAN(PluginBase):
         for rule in conf.excludes:
             if rule in self.requests.hostname:
                 logger.info("Skip Domain: {}".format(url))
-                return
-            
-        # 跳过前台的同一功能页（通常为文章页）
-        itemdates = self.generateItemdatas()
-        params = ""
-        _url = re.sub(r'([/_?&=-])(\d+)', "0", url).split('?')[0]
-        _params = {}
-        if not len(itemdates) > 6:
-            for _ in itemdates:
-                k, v, position = _
-                if str(v).isdigit():
-                    v = "0"
-                _params[k] = v
-            params = str(sorted(_params.items())).replace('\'', '"')
-            history = selectdb("CACHE", "HOSTNAME", where="URL='{}' AND PARAMS='{}'".format(_url, params))
-            if history and conf.skip_similar_url:
-                logger.info("Skip URL: {}".format(url))
                 return True
-            if params:
-                cv = {
-                    'HOSTNAME': self.requests.hostname,
-                    'URL': _url,
-                    'PARAMS': params,
-                }
-            else:
-                cv = {
-                    'HOSTNAME': self.requests.hostname,
-                    'URL': _url,
-                    'PARAMS': '',
-                }
-            insertdb("CACHE", cv)
-        logger.debug(itemdates, origin='iterdatas', level=1)
+            
+        # 去重
+        _raw = self.requests.raw
+        if isinstance(_raw, bytes):
+            raw_str = _raw.decode('utf-8', errors='ignore')
+        else:
+            raw_str = _raw
+        replaced_str = re.sub(r'\d+', '0', raw_str)
+        history = selectdb("cache", "requestsRaw", where="hostname='{}'".format(self.requests.hostname))
+        replaced_str = re.sub(r'[\s\n\r]+', '', replaced_str)
+        if history == replaced_str and conf.skip_similar_request:
+            logger.info("Skip URL: {}".format(url))
+            return True
+        if history != replaced_str:
+            cv = {
+                'hostname': self.requests.hostname,
+                'requestsRaw': replaced_str
+            }
+            insertdb("cache", cv)
         return False
 
 
     def audit(self):
+        if KB.pause:
+            return
         headers = deepcopy(self.requests.headers)
         url = deepcopy(self.requests.url)
         hostname = deepcopy(self.requests.hostname)
@@ -81,7 +71,7 @@ class Z0SCAN(PluginBase):
         
         if self.skip(url):
             return
-        
+
         lower_headers = {k.lower(): v.lower() for k, v in self.response.headers.items()}
         for name, values in KB["fingerprint"].items():
             if not getattr(self.fingerprints, name):
@@ -96,7 +86,34 @@ class Z0SCAN(PluginBase):
                             _result.append(m)
                     if _result:
                         setattr(self.fingerprints, name, _result)
-        # TODO: 对domain指纹进行动态补充
+        '''
+        history = selectdb("info", "fingerprint", where="hostname='{}'".format(hostname))
+        if history:
+            parts = [p for p in history.split('|') if p]
+            for part in parts:
+                if '=' in part:
+                    name, value_str = part.split('=', 1)
+                    try:
+                        _result = json.loads(value_str)
+                        if not isinstance(_result, list):
+                            _result = [_result]
+                    except json.JSONDecodeError:
+                        pass
+                    f = list(getattr(self.fingerprints, name, [])) + _result
+                    setattr(self.fingerprints, name, _result)
+        _result = []
+        for name in dir(self.fingerprints):
+            if not name.startswith('_') and not callable(getattr(self.fingerprints, name)):
+                value = getattr(self.fingerprints, name, [])
+                value_str = json.dumps(value)
+                _result.append(f"|{name}={value_str}|")
+        _result = str(''.join(_result).replace("||", "|"))
+        '''
+        cv = {
+            'hostname': self.requests.hostname,
+            'fingerprint': _result
+        }
+        insertdb("info", cv)
 
         # PerFile
         if not self.requests.suffix in notAcceptedExt:

@@ -3,13 +3,10 @@
 # w8ay 2019/7/4
 # JiuZero 2025/6/14
 
-import copy
 import random
 import re
 from urllib.parse import quote
 from lib.core.settings import acceptedExt
-from lib.core.log import logger
-from lib.api.dnslog import DnsLogApi
 from lib.api.reverse_api import reverseApi
 from api import generateResponse, random_str, conf, PLACE, VulType, POST_HINT, Type, PluginBase, Threads
 

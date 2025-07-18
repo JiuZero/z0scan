@@ -9,7 +9,6 @@ pyjsparser
 pyOpenSSL
 requests
 requests-toolbelt
-setuptools
 six
 tld
 tldextract

@@ -36,7 +36,7 @@ class Twig(php.Php):
                 'call': 'execute',
                 'evaluate': """php -r '$d="%(code_b64)s";eval(base64_decode(str_pad(strtr($d,"-_","+/"),strlen($d)%%4,"=",STR_PAD_RIGHT)));'""",
                 'test_os' : 'echo PHP_OS;',
-                'test_os_expected': '^[\w-]+$'
+                'test_os_expected': '^[\\w-]+$'
             },
             'execute' : {
                 'call': 'render',

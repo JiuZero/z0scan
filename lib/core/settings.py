@@ -5,7 +5,7 @@
 from lib.core.log import colors
 
 # z0scan version
-VERSION = '0.1.2.2'
+VERSION = '0.1.3.5'
 TYPE = " beta " # 'stable'
 SITE = 'https://github.com/JiuZero/z0scan'
 DEFAULT_USER_AGENT = "z0scan/#v%s (%s)" % (VERSION, SITE)
@@ -14,7 +14,6 @@ banner = r"""
 {cy}__  _     
 {cy} / (.\     {m}~ Z0SCAN {y}{t} {b}{v} ~
 {cy}/_  \_) {g}{s}{e}
-
 """.format(s=SITE, v=VERSION, t=TYPE, m=colors.m, y=colors.y, cy=colors.cy, g=colors.g, b=colors.b, e=colors.e)
 
 ignoreParams = ['submit', '_', '_t', 'rand', 'hash']

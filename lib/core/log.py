@@ -3,15 +3,28 @@
 # JiuZero 2025/5/22
  
 from colorama import Fore, Style
-import time, os, sys, threading
+import time, sys
 from lib.core.data import conf
+import concurrent.futures
+from functools import wraps
 
+_executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
 
-def dataToStdout(data, enter=True):
-    os.write(sys.stdout.fileno(), b'\r')
-    os.write(sys.stdout.fileno(), b'\x1b[2K')
-    os.write(sys.stdout.fileno(), data.encode())
-    return
+sys.stdout.reconfigure(line_buffering=False, write_through=True)
+
+def non_blocking_delay(delay=0.01):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            future = _executor.submit(func, *args, **kwargs)
+            time.sleep(delay)
+            return future
+        return wrapper
+    return decorator
+
+@non_blocking_delay(0.01)
+def dataToStdout(data):
+    print(data, flush=False)
 
 
 class colors:
@@ -31,40 +44,32 @@ class logger:
         return time.strftime('%H:%M:%S', time.localtime(time.time()))
  
     @staticmethod
-    def warning(value):
-        _time = logger._get_time()
+    def warning(value, showtime=True):
+        _time = f"[{colors.b}{logger._get_time()}{colors.e}] " if showtime else ""
         dataToStdout(
-            f"[{colors.b}{_time}{colors.e}] [{colors.y}WAN{colors.e}] {value}\n"
+            f"{_time}[{colors.y}WAN{colors.e}] {value}"
         )
  
     @staticmethod
-    def error(value, origin=None):
-        _time = logger._get_time()
-        if origin:
-            dataToStdout(
-                f"[{colors.b}{_time}{colors.e}] [{colors.r}ERR{colors.e}] [{colors.cy}{origin}{colors.e}] {value}\n"
-            )
-        else:
-            dataToStdout(
-                f"[{colors.b}{_time}{colors.e}] [{colors.r}ERR{colors.e}] {value}\n"
-            )
+    def error(value, origin=None, showtime=True):
+        _time = f"[{colors.b}{logger._get_time()}{colors.e}] " if showtime else ""
+        _origin = f"[{colors.cy}{origin}{colors.e}] " if origin else ""
+        dataToStdout(
+            f"{_time}[{colors.r}ERR{colors.e}] {_origin}{value}"
+        )
  
     @staticmethod
-    def info(value):
-        _time = logger._get_time()
+    def info(value, showtime=True):
+        _time = f"[{colors.b}{logger._get_time()}{colors.e}] " if showtime else ""
         dataToStdout(
-            f"[{colors.b}{_time}{colors.e}] [{colors.g}INF{colors.e}] {value}\n"
+            f"{_time}[{colors.g}INF{colors.e}] {value}"
         )
  
     @staticmethod
     def debug(value, origin=None, level=1):
+        _origin = f"[{colors.cy}{origin}{colors.e}] " if origin else ""
         if conf.debug and conf.debug >= level:
             _time = logger._get_time()
-            if origin:
-                dataToStdout(
-                    f"[{colors.b}{_time}{colors.e}] [{colors.m}DBUG{colors.e}] [{colors.cy}{origin}{colors.e}] {value}\n"
-                )
-            else:
-                dataToStdout(
-                    f"[{colors.b}{_time}{colors.e}] [{colors.m}DBUG{colors.e}] {value}\n"
-                )
+            dataToStdout(
+                f"[{colors.b}{_time}{colors.e}] [{colors.m}DBUG{colors.e}] {_origin}{value}"
+            )

@@ -33,16 +33,39 @@ def version_check():
 
 def modulePath():
     """
-    This will get us the program's directory, even if we are frozen
-    using py2exe
+    Get the program's directory, works in:
+    - Normal Python execution
+    - PyInstaller/Py2exe frozen bundles
+    - Nuitka onefile/standalone builds
+    - Edge cases where __file__ might not be available
     """
-
+    if getattr(sys, 'frozen', False):
+        # For PyInstaller, py2exe etc.
+        return os.path.dirname(os.path.abspath(sys.executable))
+    
+    if hasattr(sys, '_MEIPASS'):
+        # PyInstaller onefile mode
+        return os.path.abspath(sys._MEIPASS)
+    
+    if '__compiled__' in globals():
+        # Nuitka compilation
+        if getattr(sys, 'frozen', False) and hasattr(sys, '_nuitka_onefile_temp_dir'):
+            # Nuitka onefile mode
+            return os.path.dirname(os.path.abspath(sys.executable))
+        else:
+            # Nuitka standalone mode
+            return os.path.dirname(os.path.abspath(sys.argv[0]))
+    
     try:
-        _ = sys.executable if hasattr(sys, "frozen") else __file__
+        # Normal Python execution
+        return os.path.dirname(os.path.abspath(__file__))
     except NameError:
-        _ = inspect.getsourcefile(modulePath)
-
-    return os.path.dirname(os.path.realpath(_))
+        try:
+            # Fallback for interactive environments
+            return os.path.dirname(os.path.abspath(sys.argv[0]))
+        except:
+            # Ultimate fallback
+            return os.path.dirname(os.path.abspath(inspect.getsourcefile(modulePath)))
 
 
 def main():

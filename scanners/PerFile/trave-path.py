@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # w8ay 2019/7/8
-# JiuZero 2025/5/8
+# JiuZero 2025/7/5
 
 import re
 from urllib.parse import unquote
@@ -12,7 +12,7 @@ from lib.core.settings import DEFAULT_GET_POST_DELIMITER, DEFAULT_COOKIE_DELIMIT
 class Z0SCAN(PluginBase):
     name = "trave-path"
     desc = 'Path Traversal'
-    version = "2025.5.8"
+    version = "2025.7.6"
     risk = 2
 
     def condition(self, iterdatas):
@@ -65,7 +65,19 @@ class Z0SCAN(PluginBase):
             r"Warning: fopen\(",
             r"open_basedir restriction in effect",
             r'/bin/(bash|sh)[^\r\n<>]*[\r\n]',
-            r'\[boot loader\][^\r\n<>]*[\r\n]'
+            r'\[boot loader\][^\r\n<>]*[\r\n]',
+            # 新增的规则
+            r'java\.io\.FileNotFoundException:',
+            r'java\.lang\.Exception:',
+            r'java\.lang\.IllegalArgumentException:',
+            r'java\.net\.MalformedURLException:',
+            r'The server encountered an internal error \(.*\) that prevented it from fulfilling this request\.',
+            r'fread\(\):',
+            r"for inclusion '\(include_path=",
+            r'Failed opening required',
+            r'&lt;b&gt;Warning&lt;/b&gt;:  file\(',
+            r'&lt;b&gt;Warning&lt;/b&gt;:  file_get_contents\(',
+            r'No such file or directory',
         ]
         payloads = self.generate_payloads()
         z0thread = Threads(name="trave-path")

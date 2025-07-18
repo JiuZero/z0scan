@@ -32,7 +32,7 @@ setuptools.setup(
     include_package_data=True,
     package_data={"z0scan": ["*", "lib/data/*", "certs/*", "output/README", "data/*", "doc/*"]},
     long_description_content_type='text/markdown',
-    keywords='z0scan, security, scanner, web, python3, pentesting,
+    keywords='z0scan, security, scanner, web, python3, pentesting',
     platforms=['any'],
     url=SITE,
     project_urls={

@@ -16,25 +16,40 @@ class Z0SCAN(PluginBase):
             return
         raw_request = self.requests.raw
         modified_request = re.sub(r"Host: .*?\r\n", "Host: z0scan.com\r\n", raw_request, 1)
-        if self.requests.scheme == "https":
-            r = self.send_request(modified_request, ssl=True)
-        else:
-            r = self.send_request(modified_request)
+        try:
+            if self.requests.scheme == "https":
+                r = self.send_request(modified_request, ssl=True)
+            else:
+                r = self.send_request(modified_request)
+        except Exception as e:
+            logger.error(f"Request failed: {e}", origin=self.name)
+            return
+        
         if not r:
             return
+        
         success = False
+        # 检查Location头
         if "Location" in r.headers and "z0scan.com" in r.headers["Location"]:
             self.report(r, "Redirect in headers")
             success = True
+        
+        # 检查响应体中的重定向
         if not success:
+            try:
+                response_body = r.read().decode('utf-8', errors='ignore')
+            except Exception as e:
+                logger.error(f"Failed to read response: {e}", origin=self.name)
+                return
+            
             patterns = [
                 r"<meta[^>]*?url[\s]*?=[\s'\"]*?([^>]*?)['\"]?>",
                 r"href[\s]*?=[\s]*?['\"](.*?)['\"]",
                 r"window.open\(['\"](.*?)['\"]\)", 
                 r"window.navigate\(['\"](.*?)['\"]\)"
             ]
+            
             for pattern in patterns:
-                response_body = r.read().decode('utf-8', errors='ignore')
                 matches = re.findall(pattern, response_body, re.I)
                 for match in matches:
                     if match.strip() and "z0scan" in match:
@@ -57,25 +72,55 @@ class Z0SCAN(PluginBase):
                         response = ssock.recv(8192)
             else:
                 with socket.create_connection((self.requests.hostname, self.requests.port)) as sock:
-                    sock.sendall(request_data.encode('utf-8')) 
+                    if isinstance(request_data, str):
+                        request_data = request_data.encode('utf-8')
+                    sock.sendall(request_data) 
                     response = sock.recv(8192)        
             return self.parse_response(response)
         except Exception as e:
             logger.error(f"Request failed: {e}", origin=self.name)
-            raise
             return None
     
     def parse_response(self, raw_response):
-        """解析原始响应为Response对象"""
+        """解析原始响应为Response对象，处理无效状态行"""
         from io import BytesIO
-        from http.client import HTTPResponse
-        class FakeSocket(BytesIO):
-            def makefile(self, *args, **kwargs):
-                return self   
-        fake_sock = FakeSocket(raw_response)
-        response = HTTPResponse(fake_sock)
-        response.begin()
-        return response
+        from http.client import HTTPResponse, BadStatusLine
+        
+        # 自定义响应类用于处理无效HTTP响应
+        class SimpleResponse:
+            def __init__(self, data):
+                self.headers = {}
+                self.msg = self  # 兼容旧接口
+                self._data = data
+                self._read = False
+                
+            def read(self, amt=None):
+                if self._read:
+                    return b''
+                self._read = True
+                return self._data
+                
+            def getheader(self, name, default=None):
+                return default
+                
+            def __getitem__(self, name):
+                return None
+        
+        try:
+            class FakeSocket(BytesIO):
+                def makefile(self, *args, **kwargs):
+                    return self
+                    
+            fake_sock = FakeSocket(raw_response)
+            response = HTTPResponse(fake_sock)
+            response.begin()
+            return response
+        except BadStatusLine:
+            # 处理无效状态行，返回包含原始数据的响应
+            return SimpleResponse(raw_response)
+        except Exception as e:
+            logger.error(f"Parse response failed: {e}", origin=self.name)
+            return SimpleResponse(raw_response)
     
     def report(self, response, detail):
         """生成报告"""

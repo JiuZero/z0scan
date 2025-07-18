@@ -51,13 +51,12 @@ def run_threads(num_threads, thread_function, args: tuple = ()):
 
     except KeyboardInterrupt as ex:
         KB['continue'] = False
-        raise
 
     except Exception as ex:
         logger.error("thread {0}: {1}".format(threading.currentThread().getName(), str(ex)))
         traceback.print_exc()
     finally:
-        dataToStdout('\n')
+        dataToStdout('')
 
 
 def start():
@@ -72,7 +71,6 @@ def task_run():
             KB.running_plugins[poc_module_name] = 0
         KB.running_plugins[poc_module_name] += 1
         KB.lock.release()
-        printProgress()
         poc_module = copy.deepcopy(KB["registered"][poc_module_name])
         poc_module.execute(request, response)
         KB.lock.acquire()
@@ -82,16 +80,6 @@ def task_run():
         if KB.running_plugins[poc_module_name] == 0:
             del KB.running_plugins[poc_module_name]
         KB.lock.release()
-        printProgress()
-    printProgress()
-
-
-def printProgress():
-    if conf.scan_status:
-        KB.lock.acquire()
-        dataToStdout(f'{colors.g}{KB.output.count():d}{colors.e} SUCCESS | {colors.g}{KB.running:d}{colors.e} RUNNING | {colors.g}{KB.task_queue.qsize():d}{colors.e} REMAIN | {colors.g}{KB.finished:d}{colors.e} SCANNED IN {time.time()-KB.start_time:.2f}s')
-        KB.lock.release()
-
 
 def task_push(plugin_type, request, response):
     for _ in KB["registered"].keys():

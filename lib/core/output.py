@@ -72,7 +72,7 @@ class OutPut(object):
         if self.ishtml:
             # 写入html
             if not os.path.exists(self.html_filename):
-                with open(os.path.join(path.root, "lib", "data", "report.template"), encoding='utf-8') as f:
+                with open(os.path.join(path.root, "data", "report.template"), encoding='utf-8') as f:
                     with open(self.html_filename, 'w', encoding='utf-8') as f2:
                         content = f.read()
                         content = content.replace('^z0scan_version^', VERSION)

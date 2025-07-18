@@ -5,7 +5,7 @@
 
 import re
 
-from config.others.jsSensi import rules
+from config.others.JsSensi import rules
 from api import VulType, PLACE, Type, PluginBase, conf
 
 

@@ -23,10 +23,30 @@ class Z0SCAN(PluginBase):
                 'XPath evaluation exception',
                 'Invalid XPath expression',
                 'Failed to evaluate XPath expression',
+                'A closing bracket expected in',
+                'An operand in Union Expression does not produce a node-set',
+                'Cannot convert expression to a number',
+                'Document Axis does not allow any context Location Steps',
+                'Empty Path Expression',
+                'DOMXPath::Empty Relative Location Path',
+                'Empty Union Expression',
+                "Expected ')' in",
+                'Expected node test or name specification after axis operator',
+                'Incompatible XPath key',
+                'Incorrect Variable Binding',
+                'libxml2 library function failed',
+                'xmlsec library function',
+                'Invalid predicate',
+                'Invalid expression',
+                'A document must contain exactly one root element.',
+                "Expected token ']'",
+                'msxml4.dll',
+                'msxml3.dll',
+                '4005 Notes error: Query is not understandable'
             ],
             'regex': [
-                r"XPath(?:EvalError|Syntax\s+Error|Compile\s+Error|Syntax\s+Error|Compile\s+Error)\b",
-                r"XPath(?:Exception|Error|EvalError|EvalException):\s*['\"](?P<detail>.+?)['\"]",
+                r"XPath(?:EvalError|Syntax\s+Error|Compile\s+Error)\b",
+                r"XPath(?:Exception|Error|EvalException):\s*['\"](?P<detail>.+?)['\"]",
                 r"XPath\s+[Ee]rror\s*:\s*(?P<detail>.+?)(?:\n|$)",
                 r"XPathEvalError:\s*(?P<detail>.+?)(?:\n|$)",
                 r"Line\s+\d+:\s*(?:Invalid|Illegal)\s+XPath\s+expression",
@@ -39,7 +59,14 @@ class Z0SCAN(PluginBase):
                 r"XPath\s+syntax\s+error\s*(?:[:]\s*(?P<detail>.+?))?(?:\n|$)",
                 r"Invalid\s+XPath\s+syntax\s+near\s+['\"](?P<token>.+?)['\"]",
                 r"XPath\s+query\s+failed:\s*(?P<detail>.+?)(?:\n|$)",
-                r"Failed\s+to\s+execute\s+XPath:\s*(?P<detail>.+?)(?:\n|$)"
+                r"Failed\s+to\s+execute\s+XPath:\s*(?P<detail>.+?)(?:\n|$)",
+                r"&lt;font\s[^&]+&gt;Expression must evaluate to a node-set",
+                r"&lt;p&gt;msxml[34]\.dll",
+                r"libxml2\b.*?\bfailed",
+                r"xmlsec\b.*?\bfailed",
+                r"DOMXPath::\w+\s+error",
+                r"error\s+'80004005'",
+                r"Notes\s+error:\s+Query\s+is\s+not\s+understandable"
             ]
         }
         if not response_text:
@@ -68,9 +95,7 @@ class Z0SCAN(PluginBase):
         rand_num = random.randint(1000, 9999)
         _payloads = [
             # 基础闭合测试
-            "\"')", "<!--",
-            # 特殊字符组合
-            "]]>", "*/*", "]["
+            "d'z\\\"0", "&lt;!--", "*][/*"
         ]
         if conf.level == 3:
             _payloads += [

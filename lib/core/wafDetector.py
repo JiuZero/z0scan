@@ -6,16 +6,16 @@ from lib.core.data import conf, KB
 from lib.core.log import logger, colors
 from lib.core.db import insertdb, selectdb
 from config.others.WafFingers import rules
-import requests, random, string, difflib, re
+import requests, random, string, re
 from urllib.parse import quote
 
 def detector(self):
     KB.limit = True
 
-    where = "HOSTNAME='{}'".format(self.requests.hostname)
-    history1 = selectdb("WAFHISTORY", "WAFNAME", where=where)
-    where = "HOSTNAME='{}'".format(self.requests.hostname)
-    history2 = selectdb("CACHE", "HOSTNAME", where=where)
+    where = "hostname='{}'".format(self.requests.hostname)
+    history1 = selectdb("info", "waf", where=where)
+    where = "hostname='{}'".format(self.requests.hostname)
+    history2 = selectdb("cache", "hostname", where=where)
     
     # 存在WAF且本次启动后有检测过
     if history1 and history2:
@@ -59,8 +59,8 @@ def detector(self):
         if r.status_code in (404, 403, 503) or r.status_code >= 500:
             logger.warning("<{}{}{}> Abnormal response (HTTP {}), possible WAF detected".format(colors.m, self.requests.hostname, colors.e, r.status_code))
             self.fingerprints.waf = "UNKNOW"
-            cv = {"HOSTNAME": self.requests.hostname,"WAFNAME": "UNKNOW"}
-            insertdb("WAFHISTORY", cv)
+            cv = {"hostname": self.requests.hostname,"waf": "UNKNOW"}
+            insertdb("info", cv)
             return
         '''
         # 3. 关键字符
@@ -70,7 +70,7 @@ def detector(self):
     except (TimeoutError, ConnectionError, Exception) as e:
         logger.warning("<{}{}{}> An error occurred during the request, possible WAF detected".format(colors.m, self.requests.hostname, colors.e))
         self.fingerprints.waf = "UNKNOW"
-        cv = {"HOSTNAME": self.requests.hostname,
-              "WAFNAME": "UNKNOW"}
-        insertdb("WAFHISTORY", cv)
+        cv = {"hostname": self.requests.hostname,
+              "waf": "UNKNOW"}
+        insertdb("info", cv)
         return

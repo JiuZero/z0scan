@@ -17,7 +17,7 @@ class Java(Plugin):
                 'test_cmd': bash.echo % { 's1': rand.randstrings[2] },
                 'test_cmd_expected': rand.randstrings[2],
                 'test_os' : """uname""",
-                'test_os_expected': '^[\w-]+$'
+                'test_os_expected': '^[\\w-]+$'
             },
         
             'read' : {

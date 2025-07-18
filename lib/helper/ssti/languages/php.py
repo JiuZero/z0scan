@@ -39,7 +39,7 @@ class Php(Plugin):
                 'call': 'render',
                 'evaluate': """%(code)s""",
                 'test_os' : 'echo PHP_OS;',
-                'test_os_expected': '^[\w-]+$'
+                'test_os_expected': '^[\\w-]+$'
             },
             'execute' : {
                 'call': 'evaluate',

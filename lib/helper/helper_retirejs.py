@@ -119,7 +119,7 @@ class scan(object):
 
 
     def _replace_version(self, jsRepoJsonAsText):
-        return re.sub(r'[.0-9]*', '[0-9][0-9.a-z_\-]+', jsRepoJsonAsText)
+        return re.sub(r'[.0-9]*', '[0-9][0-9.a-z_\\-]+', jsRepoJsonAsText)
 
 
     def scan_url(self, url):

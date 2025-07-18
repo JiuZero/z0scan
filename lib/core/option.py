@@ -4,7 +4,7 @@
 # JiuZero 2025/6/17
 
 import os, sys
-import threading
+import threading, asyncio
 import time
 from queue import Queue
 from config import config
@@ -14,7 +14,7 @@ from lib.core.data import path, KB, conf
 from lib.core.log import dataToStdout, logger, colors
 from lib.core.exection import PluginCheckError
 from lib.core.loader import load_file_to_module
-from lib.core.db import initdb
+from lib.core.db import initdb, execute_sqlite_command
 from lib.core.output import OutPut
 from lib.core.settings import banner, DEFAULT_USER_AGENT
 from lib.core.spiderset import SpiderSet
@@ -22,6 +22,7 @@ from thirdpart.console import getTerminalSize
 from lib.patch.requests_patch import patch_all
 from lib.patch.ipv6_patch import ipv6_patch
 from prettytable import PrettyTable
+from lib.core.zmq import ZeroMQClient, BackgroundZeroMQServer
 
 def setPaths(root):
     path.root = root
@@ -30,7 +31,7 @@ def setPaths(root):
     path.lists = os.path.join("config", "lists")
     path.others = os.path.join("config", "others")
     path.scanners = os.path.join(root, 'scanners')
-    path.fingprints = os.path.join(root, "fingprints")
+    path.fingprints = os.path.join(root, "fingerprints")
     path.output = os.path.join(root, "output")
 
 
@@ -50,6 +51,8 @@ def initKb():
     KB["running"] = 0  # 正在运行数量
 
     KB.limit = False
+    KB.pause = False
+    KB.text = "|插件名称|插件描述|"
 
 def _list():
     """列出所有已注册的插件信息"""
@@ -111,6 +114,10 @@ def initPlugins():
                     setattr(mod, 'type', plugin_type)
                 if getattr(mod, 'path', None) is None:
                     setattr(mod, 'path', relative_path)
+                if conf.smartscan_selector:
+                    name = getattr(mod, "name", "N/A")
+                    desc = getattr(mod, "desc", "N/A")
+                    KB.text += f"\n|{name}|{desc}|"
                 KB["registered"][plugin] = mod
             except PluginCheckError as e:
                 logger.error('Not "{}" attribute in the plugin: {}'.format(e, filename))
@@ -118,7 +125,7 @@ def initPlugins():
                 logger.error('Filename: {} not class "{}", Reason: {}'.format(filename, 'Z0SCAN', e))
                 raise
     if not conf.list:
-        logger.info(f'Load Scanner  : {colors.y}{len(KB["registered"])-1}{colors.e}')
+        logger.info(f'Load scanner plugins: {colors.y}{len(KB["registered"])-1}{colors.e}')
     
     # 加载指纹识别插件
     num = 0
@@ -138,7 +145,7 @@ def initPlugins():
             KB["fingerprint"][name].append(mod)
             num += 1
     if not conf.list:
-        logger.info(f'Load Finger   : {colors.y}{num}{colors.e}')
+        logger.info(f'Load fingerprint plugins: {colors.y}{num}{colors.e}')
     
     # 加载模糊字典并储存为列表
     conf.lists = dict()
@@ -208,34 +215,60 @@ def _set_conf():
 
 
 def _init_stdout():
-    logger.info(f"Threads       : {colors.y}{conf.threads} / {conf.plugin_threads}{colors.e}")
-    logger.info(f"Level         : {colors.y}[#{conf.level}]{colors.e}")
-    logger.info(f"Risk          : {colors.y}{conf.risk}{colors.e}")
+    logger.info(f"Number of threads: {conf.threads} / {conf.plugin_threads}")
+    logger.info(f"Scan Level: [#{conf.level}]")
+    logger.info(f"Scan Risk: {conf.risk}")
     if conf.ignore_waf:
-        logger.info('IGNORE WAF    : True')
+        logger.info(f'Ignore the WAF status: True')
     if conf.ignore_fingerprint:
-        logger.info('IGNORE FINGERS: True')
+        logger.info(f'Ignore the WAF status: True')
     # 不扫描网址
     if len(conf["excludes"]):
-        logger.info("SKIP SCAN     : {}".format(repr(conf["excludes"])))
+        logger.info("Skip scan: {}".format(repr(conf["excludes"])))
     # 指定扫描插件
     if conf.disable:
-        logger.info("DIS PLUGINS   : {}".format(repr(conf.disable)))
+        logger.info("Disable plugins: {}".format(repr(conf.disable)))
     if conf.able:
-        logger.info("ABLE PLUGINS  : {}".format(repr(conf.able)))
+        logger.info("Able Plugins: {}".format(repr(conf.able)))
     if conf.html:
-        logger.info("HTML PATH     : {}".format(KB.output.get_html_filename()))
-    logger.info("JSON PATH     : {}".format(KB.output.get_filename()))
+        logger.info("HTML report path: {}".format(KB.output.get_html_filename()))
+    logger.info("JSON report path: {}".format(KB.output.get_filename()))
 
 def init(root, cmdline):
     cinit(autoreset=True)
     setPaths(root)
     dataToStdout(banner)
     _merge_options(cmdline)
+    port = conf.zmq_port
+    if conf.console:
+        try:
+            client = ZeroMQClient(port=port)
+            while True:
+                msg = input(f"[{colors.m}CMD{colors.e}] Send to server >> ")
+                if msg.lower() == 'exit':
+                    sys.exit(0)
+                response = client.send_message(msg)
+                if response:
+                    logger.info(f"{colors.br}{response}{colors.e}\n", showtime=False)
+        except:
+            client.close()
+            sys.exit(0)
+    initdb(root)
+    if conf.dbcmd:
+        try:
+            while True:
+                cmd = input(f"[{colors.m}CMD{colors.e}] SQL Command ('exit' to quit) >> ")
+                if cmd.lower() == 'exit':
+                    sys.exit(0)
+                logger.info(f"{colors.br}{execute_sqlite_command(cmd)}{colors.e}\n", showtime=False)
+        except Exception as e:
+            logger.error(e, showtime=False)
+            sys.exit(0)
     _set_conf()
     initKb()
     initPlugins()
-    initdb(root)
     _init_stdout()
     patch_all()
     ipv6_patch()
+    if conf.server_addr:
+        server = BackgroundZeroMQServer(port=port).start()
