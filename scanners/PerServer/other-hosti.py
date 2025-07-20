@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # JiuZero 2025/6/7
 
-from api import generateResponse, VulType, Type, PluginBase, conf, logger
+from api import generateResponse, VulType, Type, PluginBase, conf, logger, KB
 import re, socket
 
 class Z0SCAN(PluginBase):
@@ -12,7 +12,7 @@ class Z0SCAN(PluginBase):
     risk = 1
     
     def audit(self):
-        if conf.level == 0 or not 1 in conf.risk:
+        if conf.level == 0 or not self.risk in conf.risk or self.name in KB.disable:
             return
         raw_request = self.requests.raw
         modified_request = re.sub(r"Host: .*?\r\n", "Host: z0scan.com\r\n", raw_request, 1)

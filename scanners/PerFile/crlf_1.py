@@ -1,22 +1,21 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# JiuZero 2025/6/16
-
 import re
-import copy, random, string
-from api import generateResponse, VulType, PLACE, Type, PluginBase, conf, Threads
+import random
+import string
+from api import generateResponse, VulType, PLACE, Type, PluginBase, conf, Threads, KB
 
 class Z0SCAN(PluginBase):
     name = "crlf_1"
     desc = 'CRLF Injection'
-    version = "2025.6.16"
+    version = "2025.7.19"
     risk = 2
 
     def _check_response(self, resp, test_header):
+        # 检查响应头
         if test_header['header_name'] in resp.headers:
             return True, "headers"
+        # 检查响应体
         body_pattern = re.compile(
-            rf"{test_header['header_name']}\s*:\s*{test_header['header_value']}", 
+            rf"(?<!\w){test_header['header_name']}\s*:\s*{test_header['header_value']}", 
             re.I | re.M
         )
         if body_pattern.search(resp.text):
@@ -24,7 +23,7 @@ class Z0SCAN(PluginBase):
         return False, None
 
     def audit(self):
-        if conf.level == 0 or not 2 in conf.risk or self.fingerprints.waf:
+        if conf.level == 0 or not self.risk in conf.risk or self.fingerprints.waf or self.name in KB.disable:
             return
         _payloads = [
             # 基础换行组合
@@ -46,10 +45,10 @@ class Z0SCAN(PluginBase):
                 '%u000d%u000a', # UNICODE
                 '%25250a', # 三次URL编码
             ]
-        rand_str = ''.join(random.choices(string.hexdigits, k=6)).lower()
+        rand_str = ''.join(random.choices(string.hexdigits, k=8)).lower()
         test_header = {
-            'header_name': f"X-{rand_str}",
-            'header_value': f"{rand_str}"
+            'header_name': f"NAME-{rand_str}",
+            'header_value': f"VALUE-{rand_str}"
         }
         iterdatas = self.generateItemdatas()
         z0thread = Threads(name="crlf_1")
@@ -60,29 +59,31 @@ class Z0SCAN(PluginBase):
         if position in [PLACE.JSON_DATA, PLACE.XML_DATA, PLACE.MULTIPART_DATA, PLACE.ARRAY_LIKE_DATA, PLACE.SOAP_DATA]:
             return
         for _payload in _payloads:
-            _payload = f"{_payload}{test_header['header_name']}: {test_header['header_value']}"
-            payload = self.insertPayload({
+            payload = f"{_payload}{test_header['header_name']}:{test_header['header_value']}"
+            injected = self.insertPayload({
                 "key": k,
                 "position": position,
-                "payload": _payload,
+                "payload": payload,
             })
-            r = self.req(position, payload)
+            r = self.req(position, injected)
             is_vuln, location = self._check_response(r, test_header)
             if not is_vuln:
                 continue
             result = self.generate_result()
             result.main({
                 "type": Type.REQUEST,
-                "url": self.requests.url,
+                "url": self.requests.url, 
                 "vultype": VulType.CRLF,
                 "show": {
-                    "Payload": payload
+                    "Position": f"{position} >> {k}",
+                    "Payload": str(payload),
+                    "Desc": f"Confirmed CRLF via {location}"
                 }
             })
-            result.step("Request1", {
+            result.step("Request", {
                 "request": r.reqinfo,
                 "response": generateResponse(r),
-                "desc": f"Find {test_header['header_name']} in {location}"
+                "desc": f"Confirmed CRLF via {location}"
             })
             self.success(result)
             return

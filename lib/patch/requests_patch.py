@@ -38,6 +38,9 @@ def session_request(self, method, url,
         "User-Agent": conf.agent,
         "Connection": "close"
     }
+    params=params or ""
+    if isinstance(params, dict):
+        params = "?" + "&".join(f"{k}={v}" for k, v in params.items())
     req = Request(
         method=method.upper(),
         url=url,
@@ -45,12 +48,13 @@ def session_request(self, method, url,
         files=files,
         data=data or {},
         json=json,
-        params=params or {},
+        # params=params or {},
         auth=auth,
         cookies=merged_cookies,
         hooks=hooks,
     )
     prep = self.prepare_request(req)
+    prep.url += params
 
     raw = ''
     p = urlparse(url)

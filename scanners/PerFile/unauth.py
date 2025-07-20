@@ -5,7 +5,7 @@
 
 from copy import deepcopy
 import difflib
-from api import generateResponse, VulType, PLACE, PluginBase, Type, conf
+from api import generateResponse, VulType, PLACE, PluginBase, Type, conf, KB
 
 class Z0SCAN(PluginBase):
     name = "unauth"
@@ -17,7 +17,7 @@ class Z0SCAN(PluginBase):
     SIMILAR_MIN = 0.90
 
     def condition(self):
-        if conf.level == 0 or not 2 in conf.risk:
+        if conf.level == 0 or not 2 in conf.risk or self.name in KB.disable:
             return False
         for k, v in self.requests.headers.items():
             if k.lower() in ["cookie", "token", "auth"]:

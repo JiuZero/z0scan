@@ -3,7 +3,7 @@
 # JiuZero 2025/6/14
 
 import re
-from api import VulType, Type, PluginBase, conf, logger, generateResponse
+from api import VulType, Type, PluginBase, conf, logger, generateResponse, KB
 
 class Z0SCAN(PluginBase):
     name = "captcha-bypass"
@@ -12,7 +12,7 @@ class Z0SCAN(PluginBase):
     risk = 0
         
     def audit(self):
-        if not 0 in conf.risk:
+        if not self.risk in conf.risk or self.name in KB.disable:
             return
 
         # 基于前端的验证码绕过(生成代码在前端)

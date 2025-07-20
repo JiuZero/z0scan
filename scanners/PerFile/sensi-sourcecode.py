@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # JiuZero 2025/6/7
 
-from api import generateResponse, VulType, Type, PluginBase, conf, logger
+from api import generateResponse, VulType, Type, PluginBase, conf, KB
 import os
 import re, requests
 from urllib import parse
@@ -15,7 +15,7 @@ class Z0SCAN(PluginBase):
     risk = 1
 
     def audit(self):
-        if not 1 in conf.risk or conf.level == 0:
+        if not self.risk in conf.risk or conf.level == 0 or self.name in KB.disable:
             return
         accepted_ext = ["php", "php3", "php4", "php5", "asp", "aspx", "jsp", "cfm", "pl", "shtml"]
         if not self.requests.suffix.lower().lstrip('.') in accepted_ext:

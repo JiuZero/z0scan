@@ -6,7 +6,7 @@
 from urllib.parse import urlparse
 import requests
 
-from api import random_str, generateResponse, VulType, PLACE, Type, PluginBase, conf
+from api import random_str, generateResponse, VulType, KB, Type, PluginBase, conf
 from lib.helper.helper_sensitive import sensitive_page_error_message_check
 
 
@@ -17,7 +17,7 @@ class Z0SCAN(PluginBase):
     risk = 0
     
     def audit(self):
-        if not conf.level == 0 and 0 in conf.risk:
+        if not conf.level == 0 and 0 in conf.risk and not self.name in KB.disable:
             headers = self.requests.headers.copy()
             p = urlparse(self.requests.url)
             domain = "{}://{}/".format(p.scheme, p.netloc) + random_str(6)

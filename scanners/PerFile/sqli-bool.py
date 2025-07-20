@@ -6,8 +6,9 @@
 import difflib
 import requests
 
-from api import generateResponse, VulType, HTTPMETHOD, Type, PluginBase, conf, Threads
+from api import generateResponse, VulType, HTTPMETHOD, Type, PluginBase, conf, Threads, KB
 from lib.helper.diifpage import findDynamicContent, getFilteredPageContent, removeDynamicContent
+from lib.helper.paramanalyzer import is_sql_injection
 
 
 class Z0SCAN(PluginBase):
@@ -108,7 +109,7 @@ class Z0SCAN(PluginBase):
             return False
 
     def audit(self):
-        if not (2 in conf.risk or conf.level != 0):
+        if not (self.risk in conf.risk or conf.level != 0) or self.name in KB.disable:
             return
         count = 0
         ratio = 0
@@ -138,6 +139,8 @@ class Z0SCAN(PluginBase):
     
     def process(self, _):
         k, v, position = _
+        if not is_sql_injection(k, v):
+            return
         # ["true", "false"]
         payloads = [
             ["'-'0", "'-'10000"],

@@ -16,6 +16,7 @@ from lib.core.common import generateResponse, random_str, random_num, md5, split
 from lib.parse.parse_request import FakeReq
 from lib.parse.parse_response import FakeResp
 from lib.controller.controller import task_push_from_name, task_push, start
+from lib.core.aichat import chat
 from z0 import modulePath
 
 
@@ -23,7 +24,7 @@ __all__ = [
     'isJavaObjectDeserialization', 'isPHPObjectDeserialization', 'isPythonObjectDeserialization', 
     'PluginBase', 'conf', 'KB', 'md5', 'splitUrlPath', 'url_dict2str', 
     'path', 'logger', 'PLACE', 'HTTPMETHOD', 'VulType', 'generateResponse', 'task_push_from_name', 'task_push', 'random_str', 'start', 'Type',
-    'random_num', 'POST_HINT', 'Threads'
+    'random_num', 'POST_HINT', 'Threads', 'chat'
 ]
 
 

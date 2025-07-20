@@ -3,8 +3,7 @@
 # JiuZero 2025/3/1
 
 import requests
-from urllib.parse import urlparse
-from api import VulType, PLACE, HTTPMETHOD, Type, PluginBase, KB, generateResponse, conf
+from api import VulType, Type, PluginBase, KB, generateResponse, conf
 
 class Z0SCAN(PluginBase):
     name = "sensi-iis-shortname"
@@ -13,7 +12,7 @@ class Z0SCAN(PluginBase):
     risk = 0
     
     def audit(self):
-        if not "IIS" in self.fingerprints.webserver and 0 in conf.risk and conf.level != 0:
+        if not "IIS" in self.fingerprints.webserver and self.risk in conf.risk and conf.level != 0 and not self.name in KB.disable:
             existed_path = '/*~1*/a.aspx'
             not_existed_path = '/JiuZer0~1*/a.aspx'
             r1 = requests.get(self.requests.netloc + existed_path)
@@ -48,7 +47,7 @@ class Z0SCAN(PluginBase):
                 result.main({
                     "type": Type.REQUEST, 
                     "url": r1.url, 
-                    "vultype": VulType.SENSITIVE
+                    "vultype": VulType.OTHER
                     })
                 result.step("Request1", {
                     "request": r1.reqinfo, 

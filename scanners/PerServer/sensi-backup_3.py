@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 import requests
 from tld import parse_tld
 
-from api import conf, generateResponse, VulType, PLACE, PluginBase, Type
+from api import conf, generateResponse, VulType, KB, PluginBase, Type
 
 
 class Z0SCAN(PluginBase):
@@ -42,7 +42,7 @@ class Z0SCAN(PluginBase):
         return False
 
     def audit(self):
-        if not conf.level == 0 and 1 in conf.risk:
+        if not conf.level == 0 and self.risk in conf.risk and not self.name in KB.disable:
             headers = self.requests.headers.copy()
             url = self.requests.url
             p = urlparse(url)

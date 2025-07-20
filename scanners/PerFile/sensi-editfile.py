@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # JiuZero 2025/6/7
-from api import generateResponse, VulType, Type, PluginBase, conf, logger, random_str
+from api import generateResponse, VulType, Type, PluginBase, conf, logger, random_str, KB
 import os
 import difflib, requests
 from urllib.parse import urlparse
@@ -16,7 +16,7 @@ class Z0SCAN(PluginBase):
     def audit(self):
         if self.requests.suffix.lower() not in {".php", ".jsp", ".asp", ".aspx", ".html", ".htm", ".py", ".rb"}:
             return
-        if not 1 in conf.risk or conf.level == 0:
+        if not self.risk in conf.risk or conf.level == 0 or self.name in KB.disable:
             return
         parsed = urlparse(self.requests.url)
         dirname, basename = os.path.dirname(parsed.path), os.path.basename(parsed.path)

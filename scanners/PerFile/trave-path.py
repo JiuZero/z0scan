@@ -6,7 +6,6 @@
 import re
 from urllib.parse import unquote
 from api import generateResponse, conf, KB, VulType, PluginBase, Type, Threads
-from lib.core.settings import DEFAULT_GET_POST_DELIMITER, DEFAULT_COOKIE_DELIMITER
 
 
 class Z0SCAN(PluginBase):
@@ -16,7 +15,7 @@ class Z0SCAN(PluginBase):
     risk = 2
 
     def condition(self, iterdatas):
-        if conf.level == 0 or not 2 in conf.risk or self.fingerprints.waf:
+        if conf.level == 0 or not self.risk in conf.risk or self.fingerprints.waf or self.name in KB.disable:
             return False
         for _ in iterdatas:
             key, value, position = _

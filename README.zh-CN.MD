@@ -1,4 +1,4 @@
-![z0scan](https://socialify.git.ci/JiuZero/z0scan/image?description=1&font=Raleway&language=1&name=1&owner=1&pattern=Solid&theme=Auto)
+![z0scan](https://socialify.git.ci/JiuZero/z0scan/image?description=1&font=Raleway&language=1&logo=+https%3A%2F%2Fraw.githubusercontent.com%2FJiuZero%2Fz0scan%2Frefs%2Fheads%2Fmain%2Fdoc%2Flogo.png&owner=1&pattern=Solid&theme=Auto)
 
 <h4 align="center" dir="auto">
   中文 | <a href="https://github.com/JiuZero/z0scan/blob/master/README.MD">英文</a> | <a href="https://jiuzero.github.io/tags/z0scan/">文档</a>
@@ -32,6 +32,7 @@
 3. 以SQLite3提供扫描记录等数据储存支持
 4. 基于Python3开源并提供全平台支持
 5. 支持IPV6解析域名（Beta）
+6. 交互式动态调整被动扫描参数
 
 ## 🔧 安装
 
@@ -43,10 +44,15 @@
 
 ### 不推荐
 
-通过**Pypi**安装
+> 自2025.7.19起已不再提交pypi更新
+
+**pip**快捷安装
 ```bash
-pip install z0scan
-z0
+# GitHub
+pip install git+https://github.com/JiuZero/z0scan
+# Gitee
+pip install git+https://gitee.com/JiuZero/z0scan
+z0 help
 ```
 
 通过**GitHub**克隆安装
@@ -54,7 +60,7 @@ z0
 git clone https://github.com/JiuZero/z0scan
 cd z0scan
 pip install -r requirements.txt
-python3 z0.py
+python3 z0.py help
 ```
 
 - 部分**特殊环境安装**（如Termux），请见：[文档](https://jiuzero.github.io/tags/z0scan/)

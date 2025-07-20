@@ -11,7 +11,7 @@ class Z0SCAN(PluginBase):
     risk = 1
     
     def audit(self):
-        if not 1 in conf.risk:
+        if not self.risk in conf.risk or self.name in KB.disable:
             return
         headers = self.requests.headers.copy()
         if "access-control-allow-origin" in headers and headers["access-control-allow-origin"] == "*":

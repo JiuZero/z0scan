@@ -5,7 +5,7 @@
 import re, requests
 import copy, random, string
 from urllib.parse import quote
-from api import generateResponse, VulType, PLACE, Type, PluginBase, conf, Threads
+from api import generateResponse, VulType, KB, Type, PluginBase, conf, Threads
 
 class Z0SCAN(PluginBase):
     name = "crlf_3"
@@ -39,7 +39,7 @@ class Z0SCAN(PluginBase):
         
 
     def audit(self):
-        if conf.level == 0 or not 2 in conf.risk or self.fingerprints.waf:
+        if conf.level == 0 or not self.risk in conf.risk or self.fingerprints.waf or self.name in KB.disable:
             return
         _payloads = [
             # 基础换行组合

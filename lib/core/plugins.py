@@ -334,45 +334,48 @@ class PluginBase(object):
         sess.keep_alive = False'
         '''
         r = False
+        parsed = urlsplit(copy.deepcopy(self.requests.url))
+        url = urlunsplit((parsed.scheme, parsed.netloc, parsed.path, "", ""))
+
+        if not PLACE.URL:
+            payload = {
+                k: str(v).encode("utf-8")
+                for k, v in payload.items()
+            }
+        
+        params = copy.deepcopy(self.requests.params)
+        params = "?" + "&".join(f"{k}={v}" for k, v in params.items())
+        
+        data = copy.deepcopy(self.requests.post_data)
+        if data is not None:
+            data = {
+                k: str(v).encode("utf-8")
+                for k, v in data.items()
+            }
+
         if position == PLACE.PARAM:
-            url, payload = self.merged_params_requests(self.requests.url, payload)
             r = requests.get(url, params=payload, data=self.requests.post_data, headers=self.requests.headers, allow_redirects=allow_redirects)
-        elif position == PLACE.NORMAL_DATA:
-            r = requests.post(self.requests.url, params=self.requests.params, data=payload, headers=self.requests.headers, allow_redirects=allow_redirects)
+        
+        if position == PLACE.NORMAL_DATA:
+            r = requests.post(url, params=params, data=payload, headers=self.requests.headers, allow_redirects=allow_redirects)
         elif position == PLACE.JSON_DATA:
-            r = requests.post(self.requests.url, params=self.requests.params, data=payload, headers=self.requests.headers, allow_redirects=allow_redirects)
+            r = requests.post(url, params=params, data=payload, headers=self.requests.headers, allow_redirects=allow_redirects)
         elif position == PLACE.XML_DATA:
-            r = requests.post(self.requests.url, params=self.requests.params, data=payload, headers=self.requests.headers, allow_redirects=allow_redirects)
+            r = requests.post(url, params=params, data=payload, headers=self.requests.headers, allow_redirects=allow_redirects)
         elif position == PLACE.MULTIPART_DATA:
-            r = requests.post(self.requests.url, params=self.requests.params, data=payload, headers=self.requests.headers, allow_redirects=allow_redirects)
+            r = requests.post(url, params=params, data=payload, headers=self.requests.headers, allow_redirects=allow_redirects)
         elif position == PLACE.COOKIE:
             if self.requests.method == HTTPMETHOD.GET:
-                r = requests.get(self.requests.url, params=self.requests.params, data=self.requests.post_data, headers=payload, allow_redirects=allow_redirects)
+                r = requests.get(url, params=params, data=self.requests.post_data, headers=payload, allow_redirects=allow_redirects)
             elif self.requests.method == HTTPMETHOD.POST:
-                r = requests.post(self.requests.url, params=self.requests.params, data=self.requests.post_data, headers=payload, allow_redirects=allow_redirects)
+                r = requests.post(url, params=params, data=data, headers=payload, allow_redirects=allow_redirects)
         elif position == PLACE.URL:
             if self.requests.method == HTTPMETHOD.GET:
-                r = requests.get(payload, params=self.requests.params, data=self.requests.post_data, headers=self.requests.headers, allow_redirects=allow_redirects)
+                r = requests.get(payload, params=params, data=self.requests.post_data, headers=self.requests.headers, allow_redirects=allow_redirects)
             elif self.requests.method == HTTPMETHOD.POST:
-                r = requests.post(payload, params=self.requests.params, data=self.requests.post_data, headers=self.requests.headers, allow_redirects=allow_redirects)
+                r = requests.post(payload, params=params, data=self.requests.post_data, headers=self.requests.headers, allow_redirects=allow_redirects)
         # sess.close()
         return r
-    
-    def merged_params_requests(self, url, payload):
-        # HPP问题：合并原URL中的GET参数与包含注入数据的GET参数
-        url_parts = urlsplit(url)
-        original_query = parse_qs(url_parts.query)
-        payload_query = {}
-        for key, value in payload.items():
-            if isinstance(value, list):
-                payload_query[key] = value
-            else:
-                payload_query[key] = [value]
-        merged_query = original_query.copy()
-        merged_query.update(payload_query)
-        new_url_parts = url_parts._replace(query=None)
-        new_url = urlunsplit(new_url_parts)
-        return new_url, merged_query
     
     def execute(self, request: FakeReq, response: FakeResp):
         self.requests = request

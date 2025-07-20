@@ -4,8 +4,9 @@
 # JiuZero 2025/3/13
 
 from config.others.SqlError import rules
-from api import generateResponse, random_num, random_str, VulType, Type, PluginBase, conf, logger, Threads
+from api import generateResponse, random_num, random_str, VulType, Type, PluginBase, conf, logger, Threads, KB
 from lib.helper.helper_sensitive import sensitive_page_error_message_check
+from lib.helper.paramanalyzer import is_sql_injection
 import re
 
 class Z0SCAN(PluginBase):
@@ -15,7 +16,7 @@ class Z0SCAN(PluginBase):
     risk = 2
         
     def audit(self):
-        if not self.fingerprints.waf and 2 in conf.risk and conf.level != 0:
+        if not self.fingerprints.waf and self.risk in conf.risk and conf.level != 0 and not self.name in KB.disable:
             _payloads = [
                 r"'\")",
                 ## 宽字节
@@ -58,6 +59,8 @@ class Z0SCAN(PluginBase):
     
     def process(self, _, _payloads):
         k, v, position = _
+        if not is_sql_injection(k, v):
+            return
         for _payload in _payloads:
             payload = self.insertPayload({
                 "key": k, 

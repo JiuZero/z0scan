@@ -4,7 +4,7 @@
 # JiuZero 2025/3/4
 
 from lib.core.common import get_middle_text, generateResponse
-from api import conf, VulType, Type, PluginBase, Threads
+from api import conf, VulType, Type, PluginBase, Threads, KB
 
 
 class Z0SCAN(PluginBase):
@@ -14,7 +14,7 @@ class Z0SCAN(PluginBase):
     risk = 0
         
     def audit(self):
-        if conf.level == 0 or not 0 in conf.risk or conf.level == 0:
+        if conf.level == 0 or not self.risk in conf.risk or self.name in KB.disable:
             return
         if not "PHP" in self.fingerprints.programing:
             iterdatas = self.generateItemdatas()

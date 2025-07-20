@@ -36,21 +36,21 @@ class Z0SCAN(PluginBase):
         return
     
     def test_reflect_origin(self):
-        module_name = inspect.stack()[0][3].replace('test_','');
+        module_name = inspect.stack()[0][3].replace('test_','')
         test_url = self.requests.url
         test_origin = self.requests.scheme + "://" + "evil.com"
         msg = self.is_cors_permissive(test_origin, test_url)
         self.cors_result(module_name, msg, "")
 
     def test_prefix_match(self):
-        module_name = inspect.stack()[0][3].replace('test_','');
+        module_name = inspect.stack()[0][3].replace('test_','')
         test_url = self.requests.url
         test_origin = self.requests.scheme + "://" + self.netloc_split_port + ".evil.com"
         msg = self.is_cors_permissive(test_origin, test_url)
         self.cors_result(module_name, msg, "")
             
     def test_suffix_match(self):
-        module_name = inspect.stack()[0][3].replace('test_','');
+        module_name = inspect.stack()[0][3].replace('test_','')
         test_url = self.requests.url
         sld = tldextract.extract(test_url.strip()).registered_domain
         test_origin = self.requests.scheme + "://" + "evil" + sld
@@ -58,14 +58,14 @@ class Z0SCAN(PluginBase):
         self.cors_result(module_name, msg, "")
 
     def test_trust_null(self):
-        module_name = inspect.stack()[0][3].replace('test_','');
+        module_name = inspect.stack()[0][3].replace('test_','')
         test_url = self.requests.url
         test_origin = "null"
         msg = self.is_cors_permissive(test_origin, test_url)
         self.cors_result(module_name, msg, "")
 
     def test_include_match(self):
-        module_name = inspect.stack()[0][3].replace('test_','');
+        module_name = inspect.stack()[0][3].replace('test_','')
         test_url = self.requests.url
         sld = tldextract.extract(test_url.strip()).registered_domain
         test_origin = self.requests.scheme + "://" + sld[1:]
@@ -73,7 +73,7 @@ class Z0SCAN(PluginBase):
         self.cors_result(module_name, msg, "")
 
     def test_not_escape_dot(self):
-        module_name = inspect.stack()[0][3].replace('test_','');
+        module_name = inspect.stack()[0][3].replace('test_','')
         test_url = self.requests.url
         sld = tldextract.extract(test_url.strip()).registered_domain
         domain = self.netloc_split_port
@@ -82,14 +82,14 @@ class Z0SCAN(PluginBase):
         self.cors_result(module_name, msg, "")
 
     def test_trust_any_subdomain(self):
-        module_name = inspect.stack()[0][3].replace('test_','');
+        module_name = inspect.stack()[0][3].replace('test_','')
         test_url = self.requests.url
         test_origin = self.requests.scheme + "://" + "evil." + self.netloc_split_port
         msg = self.is_cors_permissive(test_origin, test_url)
         self.cors_result(module_name, msg, "")
 
     def test_https_trust_http(self):
-        module_name = inspect.stack()[0][3].replace('test_','');
+        module_name = inspect.stack()[0][3].replace('test_','')
         test_url = self.requests.url
         if self.requests.scheme != "https":
             return
@@ -98,7 +98,7 @@ class Z0SCAN(PluginBase):
         self.cors_result(module_name, msg, "")
 
     def test_custom_third_parties(self):
-        module_name = inspect.stack()[0][3].replace('test_','');
+        module_name = inspect.stack()[0][3].replace('test_','')
         test_url = self.requests.url
         sld = tldextract.extract(test_url.strip()).registered_domain
         domain = self.netloc_split_port
@@ -109,7 +109,7 @@ class Z0SCAN(PluginBase):
         self.cors_result(module_name, is_cors_perm, "")
     
     def test_special_characters_bypass(self):
-        module_name = inspect.stack()[0][3].replace('test_','');
+        module_name = inspect.stack()[0][3].replace('test_','')
         test_url = self.requests.url
         special_characters = ['_','-','"','{','}','+','^','%60','!','~','`',';','|','&',"'",'(',')','*',',','$','=','+',"%0b"]
         origins = []
@@ -123,7 +123,7 @@ class Z0SCAN(PluginBase):
         self.cors_result(module_name, is_cors_perm, "")
     
     def audit(self):
-        if not 2 in conf.risk or conf.level == 0:
+        if not self.risk in conf.risk or conf.level == 0 or self.name in KB.disable:
             return
         self.netloc_split_port = urlparse(self.requests.url).netloc.split(':')[0]
         functions = [

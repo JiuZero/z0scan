@@ -3,19 +3,13 @@
 # w8ay 2019/7/15
 # JiuZero 2025/6/16
 
-import copy
-import html
-import random
 import re
 import string
 from urllib.parse import unquote
 
 import requests
 
-from lib.core.common import random_str, generateResponse, url_dict2str
-from lib.core.data import conf
-from lib.core.enums import HTTPMETHOD, PLACE, VulType, Type
-from lib.core.plugins import PluginBase
+from api import random_str, generateResponse, HTTPMETHOD, PLACE, VulType, Type, conf, PluginBase, KB
 from lib.core.settings import XSS_EVAL_ATTITUDES, TOP_RISK_GET_PARAMS
 from lib.helper.htmlparser import SearchInputInResponse, random_upper, getParamsFromHtml
 from lib.helper.jscontext import SearchInputInScript
@@ -31,7 +25,7 @@ class Z0SCAN(PluginBase):
         self.result = self.generate_result()
 
     def audit(self):
-        if conf.level == 0 or not 1 in conf.risk or self.fingerprints.waf:
+        if conf.level == 0 or not self.risk in conf.risk or self.fingerprints.waf or self.name in KB.disable:
             return
         parse_params = set(getParamsFromHtml(self.response.text))
         resp = self.response.text

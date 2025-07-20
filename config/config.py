@@ -15,7 +15,12 @@ SKIP_WAF_RECHECK = True # 是否跳过曾经检测到WAF但在本次启动后的
 IPV6 = False # 需网络支持ipv6（使用此参数优先ipv6地址，ipv6无记录再使用ipv4地址）
 SKIP_SIMILAR_REQUEST = True # 是否跳过相似请求的扫描
 PSEUDO_STATIC_KEYWORDS = ['id', 'pid', 'cid', 'user', 'page', 'category', 'column_id', 'tty'] # 伪静态关键点参数（忽略大小写）
-SMARTSCAN_SELECTOR = True # 智能动态漏洞检测插件调度器
+SMARTSCAN_SELECTOR = {
+    "enable": False, 
+    "apiurl": "https://free.v36.cm/v1/",
+    "model": "gpt-3.5-turbo", 
+    "apikey": "", 
+} # AI智能插件优化（支持所有openai库所能调用的模型）
 AUTO_SPIDER = False # 一级深度的二级主动扫描
 MAX_DIR = 2 # PerFolder插件的扫描深度(目录深度)
 ZMQ_PORT = 9331 # console交互通信端口
@@ -32,8 +37,8 @@ PROXY_CONFIG = {
 """
 插件配置
 """
-ABLE = []  # 允许使用的插件
-DISABLE = []  # 不允许使用的插件
+LOAD = []  # 需要加载的插件
+DISLOAD = []  # 不加载的插件
 PLUGIN_THREADS = 2 # 插件内线程（针对多参数情况）
 # sqli-time
 SQLi_TIME = 4 # SQLi插件延时时间

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # 2025/5/26 JiuZero
 
-from api import VulType, Type, PLACE, PluginBase, generateResponse, conf
+from api import VulType, Type, KB, PluginBase, generateResponse, conf
 from viewstate import ViewState
 import re
 
@@ -28,7 +28,7 @@ class Z0SCAN(PluginBase):
         return list(set(found))
     
     def audit(self):
-        if not 0 in conf.risk or not "ASP" in self.fingerprints.programing:
+        if not self.risk in conf.risk or not "ASP" in self.fingerprints.programing or self.name in KB.disable:
             return
         viewstate_list = self.find_viewstate()
         

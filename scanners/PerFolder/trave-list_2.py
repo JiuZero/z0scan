@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # JiuZero 2025/5/11
 
-import re, requests
-from api import VulType, PLACE, PluginBase, Type, conf, generateResponse
+import re
+from api import VulType, KB, PluginBase, Type, conf, generateResponse
 
 
 class Z0SCAN(PluginBase):
@@ -15,7 +15,7 @@ class Z0SCAN(PluginBase):
     def audit(self):
         if self.requests.url.count("/") > int(conf.max_dir) + 2:
             return
-        if not 2 in conf.risk or conf.level == 0:
+        if not self.risk in conf.risk or conf.level == 0 or self.name in KB.disable:
             return
         resp_str = self.response.text
         flag_list = [

@@ -8,7 +8,7 @@ import re
 from urllib.parse import quote
 from lib.core.settings import acceptedExt
 from lib.api.reverse_api import reverseApi
-from api import generateResponse, random_str, conf, PLACE, VulType, POST_HINT, Type, PluginBase, Threads
+from api import generateResponse, random_str, conf, PLACE, VulType, POST_HINT, Type, PluginBase, Threads, KB
 
 class Z0SCAN(PluginBase):
     name = "cmdi"
@@ -18,7 +18,7 @@ class Z0SCAN(PluginBase):
         
     def audit(self):
         url = self.requests.url
-        if conf.level == 0 or not 3 in conf.risk:
+        if conf.level == 0 or not self.risk in conf.risk or self.name in KB.disable:
             return
         if not self.fingerprints.waf and self.requests.suffix in acceptedExt:
             randint = random.randint(1000, 9000)

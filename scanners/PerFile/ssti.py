@@ -3,7 +3,7 @@
 # JiuZero 2025/6/24
 
 from lib.helper.ssti.importssti import importssti
-from api import generateResponse, random_num, random_str, VulType, Type, PluginBase, conf, logger, Threads
+from api import generateResponse, VulType, Type, PluginBase, conf, KB, Threads
 
 class Z0SCAN(PluginBase):
     name = "ssti"
@@ -16,7 +16,7 @@ class Z0SCAN(PluginBase):
         self.ssti_payloads = importssti()
         
     def audit(self):
-        if not 3 in conf.risk or conf.level == 0:
+        if not self.risk in conf.risk or conf.level == 0 or self.name in KB.disable:
             return
         if self.requests.suffix.lower() not in ["", "php", "do", "action"]:
             return

@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # JiuZero 2025/6/26
 
-import re, requests
-from api import VulType, PLACE, PluginBase, Type, conf, generateResponse
+import requests
+from api import VulType, PluginBase, Type, conf, generateResponse, KB
 
 
 class Z0SCAN(PluginBase):
@@ -13,7 +13,7 @@ class Z0SCAN(PluginBase):
     risk = 2
 
     def audit(self):
-        if 2 in conf.risk and conf.level == 3:
+        if self.risk in conf.risk and conf.level == 3 and not self.name in KB.disable:
             r = requests.request("GET", self.requests.url.rstrip("/") + "/.listing", allow_redirects=True, verify=False)
             # 判断写得有些草率…后面再改
             if r.status_code == 200:

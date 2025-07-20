@@ -8,6 +8,7 @@ import sys
 import threading
 import requests
 from colorama import deinit
+from urllib.parse import urlparse
 
 from lib.controller.controller import start, task_push_from_name
 from lib.core.enums import HTTPMETHOD

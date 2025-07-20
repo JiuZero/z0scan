@@ -84,7 +84,7 @@ class Z0SCAN(PluginBase):
         return False, None
 
     def audit(self):
-        if conf.level == 0 or not 2 in conf.risk or self.fingerprints.waf:
+        if conf.level == 0 or not self.risk in conf.risk or self.fingerprints.waf or self.name in KB.disable:
             return
         iterdatas = self.generateItemdatas()
         z0thread = Threads(name="xpathi-error")

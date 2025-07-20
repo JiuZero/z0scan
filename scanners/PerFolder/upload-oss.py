@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # JiuZero 2025/5/31
 
-from api import VulType, Type, PLACE, PluginBase, generateResponse, random_str, random_num, conf
+from api import VulType, Type, KB, PluginBase, generateResponse, random_str, random_num, conf
 import requests
 
 class Z0SCAN(PluginBase):
@@ -36,7 +36,7 @@ class Z0SCAN(PluginBase):
     def audit(self):
         if self.requests.url.count("/") > int(conf.max_dir) + 2:
             return
-        if not "OSS" in self.fingerprints.webserver and 3 in conf.risk and conf.level != 0:
+        if not "OSS" in self.fingerprints.webserver and self.risk in conf.risk and conf.level != 0 and not self.name in KB.disable:
             test_methods = ["PUT"] if conf.level <= 2 else ["PUT", "POST"]
             for method in test_methods:
                 if r := self._test_upload(method):

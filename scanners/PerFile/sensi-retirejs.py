@@ -3,7 +3,7 @@
 # JiuZero 2025/6/21
 
 from lib.helper.helper_retirejs import main_scanner, js_extractor
-from api import VulType, Type, PLACE, PluginBase, generateResponse, conf
+from api import VulType, Type, PLACE, PluginBase, generateResponse, conf, KB
 
 
 class Z0SCAN(PluginBase):
@@ -13,7 +13,7 @@ class Z0SCAN(PluginBase):
     risk = -1
 
     def audit(self):
-        if -1 in conf.risk:
+        if self.risk in conf.risk and not self.name in KB.disable:
             js_links = js_extractor(self.response.raw)
             ret = main_scanner(self.requests.url, self.response.raw)
             if ret:

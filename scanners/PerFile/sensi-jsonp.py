@@ -12,7 +12,7 @@ import json
 import re
 from copy import deepcopy
 
-from api import random_str, VulType, PLACE, Type, PluginBase, conf, POST_HINT
+from api import random_str, VulType, PLACE, Type, PluginBase, conf, POST_HINT, KB
 from lib.helper.helper_sensitive import sensitive_bankcard, sensitive_idcard, sensitive_phone, sensitive_email
 from lib.helper.jscontext import analyse_Literal
 
@@ -74,7 +74,7 @@ class Z0SCAN(PluginBase):
         return result
 
     def audit(self):
-        if not (1 in conf.risk or self.requests.post_hint == POST_HINT.JSON):
+        if not self.risk in conf.risk or not self.requests.post_hint == POST_HINT.JSON or self.name in KB.disable:
             return
         callbaks = ["callback", "cb", "json"]
         params = deepcopy(self.requests.params)

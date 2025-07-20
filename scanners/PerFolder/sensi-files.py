@@ -5,7 +5,7 @@
 import re
 import requests
 from config.others.SensiFile import rules
-from api import conf, generateResponse, VulType, PLACE, PluginBase, Type, Threads
+from api import conf, generateResponse, VulType, KB, PluginBase, Type, Threads
 
 
 class Z0SCAN(PluginBase):
@@ -17,7 +17,7 @@ class Z0SCAN(PluginBase):
     def audit(self):
         if self.requests.url.count("/") > int(conf.max_dir) + 2:
             return
-        if 1 in conf.risk and conf.level != 0:
+        if 1 in conf.risk and conf.level != 0 and not self.name in KB.disable:
             z0thread = Threads(name="sensi-files")
             z0thread.submit(self.process, rules)
 

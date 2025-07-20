@@ -212,12 +212,13 @@ class Command:
     help      - Show this help message
     pause     - Pause current operation
     set       - Set parameter (format: set key=value)
-        Allowed parameters: level, timeout, retry, risk
+        Allowed parameters: level, timeout, retry, risk, disable
     env       - Show current configuration
     status    - Scan status
     
     Examples:
     set level=3
+    set disable=sqli-error,sqli-bool
     pause"""
             return help_text
             
@@ -234,15 +235,20 @@ class Command:
                 key = key.strip()
                 value = value.strip()
                 
-                if key not in ["level", "timeout", "retry", "risk"]:
+                if key not in ["level", "timeout", "retry", "risk", "disable"]:
                     return f"Error: Not allowed to set parameter '{key}'"
                     
-                if key == "risk" and value.startswith('[') and value.endswith(']'):
+                if key == "risk":
                     try:
                         # Convert string list to actual list of floats
-                        value = [int(x.strip()) for x in value[1:-1].split(',')]
+                        value = [int(x.strip()) for x in value.split(',')]
                     except ValueError as e:
                         return f"Error: Invalid risk list values ({str(e)})"
+                if key == "disable":
+                    try:
+                        value = [str(x.strip()) for x in value.split(',')]
+                    except ValueError as e:
+                        return f"Error: Invalid disable list values ({str(e)})"
                 if key in ["level", "retry"]:
                     value = int(value)
                 elif key in ["timeout"]:
@@ -257,7 +263,7 @@ class Command:
         elif cmd == "env":
             env_info = "\n".join(
                 f"{k}: {getattr(conf, k, 'N/A')}"
-                for k in ["level", "timeout", "retry", "risk"]
+                for k in ["level", "timeout", "retry", "risk", "disable"]
             )
             return f"Current Configuration:\n{env_info}"
         

@@ -5,7 +5,7 @@
 
 import requests
 from requests import Request, Session
-from api import VulType, Type, PLACE, PluginBase, generateResponse, conf
+from api import VulType, Type, PLACE, PluginBase, generateResponse, conf, KB
 
 class Z0SCAN(PluginBase):
     name = 'other-smuggling'
@@ -14,7 +14,7 @@ class Z0SCAN(PluginBase):
     risk = 3
 
     def audit(self):
-        if not 3 in conf.risk or conf.level == 0:
+        if not self.risk in conf.risk or conf.level == 0 or self.name in KB.disable:
             return
         # bug太多了 后面再修吧
         # https://github.com/w-digital-scanner/w13scan/issues/459

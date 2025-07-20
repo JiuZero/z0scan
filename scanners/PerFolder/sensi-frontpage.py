@@ -3,7 +3,7 @@
 # JiuZero 2025/6/26
 
 import requests
-from api import generateResponse, VulType, PLACE, HTTPMETHOD, PluginBase, conf, KB, Type
+from api import generateResponse, VulType, PluginBase, conf, KB, Type
 
 class Z0SCAN(PluginBase):
     name = "sensi-frontpage"
@@ -14,7 +14,7 @@ class Z0SCAN(PluginBase):
     def audit(self):
         if self.requests.url.count("/") > int(conf.max_dir) + 2:
             return
-        if not 1 in conf.risk or conf.level == 0:
+        if not self.risk in conf.risk or conf.level == 0 or self.name in KB.disable:
             return
         url = self.requests.url.rstrip("/") + "/_vti_inf.html"
         r = requests.get(url)

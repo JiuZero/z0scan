@@ -6,7 +6,7 @@ import dns.resolver
 import dns.zone
 import dns.exception
 from lib.core.common import is_ipaddr
-from api import generateResponse, VulType, PLACE, HTTPMETHOD, PluginBase, conf, KB, Type
+from api import generateResponse, VulType, PluginBase, conf, KB, Type
 
 
 class Z0SCAN(PluginBase):
@@ -16,7 +16,7 @@ class Z0SCAN(PluginBase):
     risk = 1
     
     def audit(self):
-        if not (conf.level == 0 or is_ipaddr(self.requests.hostname)) and 1 in conf.risk:
+        if not conf.level == 0 and is_ipaddr(self.requests.hostname) and self.risk in conf.risk or self.name in KB.disable:
             domains = self.split_domain_and_check(self.requests.hostname)
             if domains:
                 for domain in domains:

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # JiuZero 2025/6/15
 
-from api import VulType, Type, PluginBase, conf
+from api import VulType, Type, PluginBase, conf, KB
 import re
 
 class Z0SCAN(PluginBase):
@@ -12,7 +12,7 @@ class Z0SCAN(PluginBase):
     risk = -1
 
     def audit(self):
-        if not -1 in conf.risk or not hasattr(self.response, 'headers'):
+        if not self.risk in conf.risk or not hasattr(self.response, 'headers') or self.name in KB.disable:
             return
         headers_lower = {k.lower(): v for k, v in self.response.headers.items()}
         protection_rules = {

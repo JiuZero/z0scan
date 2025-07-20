@@ -4,7 +4,7 @@
 # JiuZero 2025/3/4
 
 from copy import deepcopy
-from api import PluginBase, VulType, isJavaObjectDeserialization, isPHPObjectDeserialization, isPythonObjectDeserialization, Type, PLACE, conf
+from api import PluginBase, VulType, isJavaObjectDeserialization, isPHPObjectDeserialization, isPythonObjectDeserialization, Type, PLACE, conf, KB
 
 
 class Z0SCAN(PluginBase):
@@ -42,7 +42,7 @@ class Z0SCAN(PluginBase):
             self.success(result)
 
     def audit(self):
-        if not 3 in conf.risk or conf.level == 0:
+        if not self.risk in conf.risk or conf.level == 0 or self.name in KB.disable:
             return
         params = deepcopy(self.requests.params)
         data = deepcopy(self.requests.post_data)

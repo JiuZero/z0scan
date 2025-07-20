@@ -23,6 +23,7 @@ from lib.patch.requests_patch import patch_all
 from lib.patch.ipv6_patch import ipv6_patch
 from prettytable import PrettyTable
 from lib.core.zmq import ZeroMQClient, BackgroundZeroMQServer
+from lib.core.aichat import chat
 
 def setPaths(root):
     path.root = root
@@ -52,7 +53,7 @@ def initKb():
 
     KB.limit = False
     KB.pause = False
-    KB.text = "|插件名称|插件描述|"
+    KB.disable = list()
 
 def _list():
     """列出所有已注册的插件信息"""
@@ -98,9 +99,9 @@ def initPlugins():
         files = filter(lambda x: not x.startswith("__") and x.endswith(".py"), files)
         for _ in files:
             q = os.path.splitext(_)[0]
-            if conf.able and q not in conf.able and q != 'loader':
+            if conf.load and q not in conf.load and q != 'loader':
                 continue
-            if conf.disable and q in conf.disable:
+            if conf.disload and q in conf.disload:
                 continue
             filename = os.path.join(root, _)
             mod = load_file_to_module(filename)
@@ -114,10 +115,6 @@ def initPlugins():
                     setattr(mod, 'type', plugin_type)
                 if getattr(mod, 'path', None) is None:
                     setattr(mod, 'path', relative_path)
-                if conf.smartscan_selector:
-                    name = getattr(mod, "name", "N/A")
-                    desc = getattr(mod, "desc", "N/A")
-                    KB.text += f"\n|{name}|{desc}|"
                 KB["registered"][plugin] = mod
             except PluginCheckError as e:
                 logger.error('Not "{}" attribute in the plugin: {}'.format(e, filename))
@@ -226,10 +223,10 @@ def _init_stdout():
     if len(conf["excludes"]):
         logger.info("Skip scan: {}".format(repr(conf["excludes"])))
     # 指定扫描插件
-    if conf.disable:
-        logger.info("Disable plugins: {}".format(repr(conf.disable)))
-    if conf.able:
-        logger.info("Able Plugins: {}".format(repr(conf.able)))
+    if conf.disload:
+        logger.info("Disload plugins: {}".format(repr(conf.disload)))
+    if conf.load:
+        logger.info("Load Plugins: {}".format(repr(conf.load)))
     if conf.html:
         logger.info("HTML report path: {}".format(KB.output.get_html_filename()))
     logger.info("JSON report path: {}".format(KB.output.get_filename()))
@@ -271,5 +268,11 @@ def init(root, cmdline):
     _init_stdout()
     patch_all()
     ipv6_patch()
+    if conf.smartscan_selector["enable"]:
+        message = chat("API validity verification: If you can receive this message, please reply 'OK'")
+        if message is None:
+            sys.exit(0)
+        else:
+            logger.info("Connect to AI model: {}[OK]".format(conf.smartscan_selector["model"]))
     if conf.server_addr:
         server = BackgroundZeroMQServer(port=port).start()

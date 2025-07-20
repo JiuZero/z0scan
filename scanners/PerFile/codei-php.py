@@ -5,7 +5,7 @@
 
 import random
 import re
-from api import VulType, md5, generateResponse, conf, PluginBase, Type, logger, Threads, PLACE
+from api import VulType, md5, generateResponse, conf, PluginBase, Type, logger, Threads, PLACE, KB
 from lib.helper.helper_sensitive import sensitive_page_error_message_check
 
 
@@ -16,7 +16,7 @@ class Z0SCAN(PluginBase):
     risk = 3
             
     def audit(self):
-        if conf.level == 0 or not 3 in conf.risk or self.fingerprints.waf:
+        if conf.level == 0 or not self.risk in conf.risk or self.fingerprints.waf or self.name in KB.disable:
             return
         if not "PHP" in self.fingerprints.programing:
             randint = random.randint(10120, 10240)

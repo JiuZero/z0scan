@@ -6,7 +6,7 @@
 import os
 import requests
 
-from api import generateResponse, VulType, PLACE, HTTPMETHOD, PluginBase, conf, KB, Type
+from api import generateResponse, VulType, PluginBase, conf, KB, Type
 
 
 class Z0SCAN(PluginBase):
@@ -41,7 +41,7 @@ class Z0SCAN(PluginBase):
         return False
 
     def audit(self):
-        if conf.level == 0 and not 1 in conf.level:
+        if conf.level == 0 or not self.risk in conf.risk or self.name in KB.disable:
             return
         headers = self.requests.headers
         url = self.requests.url

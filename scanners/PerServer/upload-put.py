@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # JiuZero 2025/5/7
 
-from api import VulType, Type, PLACE, PluginBase, generateResponse, random_str, random_num, conf
+from api import VulType, Type, PLACE, PluginBase, generateResponse, random_str, random_num, conf, KB
 import requests
 
 class Z0SCAN(PluginBase):
@@ -29,7 +29,7 @@ class Z0SCAN(PluginBase):
         return None
     
     def audit(self):
-        if conf.level == 0 or not 3 in conf.risk:
+        if conf.level == 0 or not self.risk in conf.risk or self.name in KB.disable:
             return
         if r := self._put_upload():
             r1, r2 = r

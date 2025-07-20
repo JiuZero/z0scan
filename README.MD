@@ -1,4 +1,4 @@
-![z0scan](https://socialify.git.ci/JiuZero/z0scan/image?description=1&font=Raleway&language=1&name=1&owner=1&pattern=Solid&theme=Auto)
+![z0scan](https://socialify.git.ci/JiuZero/z0scan/image?description=1&font=Raleway&language=1&logo=+https%3A%2F%2Fraw.githubusercontent.com%2FJiuZero%2Fz0scan%2Frefs%2Fheads%2Fmain%2Fdoc%2Flogo.png&owner=1&pattern=Solid&theme=Auto)
 
 <h4 align="center" dir="auto">
   <a href="https://github.com/JiuZero/z0scan/blob/master/README.zh-CN.MD">Chinese</a> | English | <a href="https://jiuzero.github.io/tags/z0scan/">Documentation</a>
@@ -41,20 +41,25 @@ Get the **release version** (**compiled with Nuitka for significantly improved s
 
 - Want to build an executable tailored to your environment? See: [Documentation](https://jiuzero.github.io/tags/z0scan/)  
 
-### Not Recommended  
+### Not Recommended
 
-Install via **PyPI**:  
-```bash  
-pip install z0scan  
-z0  
-```  
+> **PyPI updates are no longer supported since July 19, 2025.**  
+
+**Quick Install via pip**  
+```bash
+# GitHub  
+pip install git+https://github.com/JiuZero/z0scan  
+# Gitee  
+pip install git+https://gitee.com/JiuZero/z0scan  
+z0 help  
+```
 
 Install via **GitHub** (clone):  
 ```bash  
 git clone https://github.com/JiuZero/z0scan  
 cd z0scan  
 pip install -r requirements.txt  
-python3 z0.py  
+python3 z0.py help
 ```  
 
 - For **special environment installations** (e.g., Termux), see: [Documentation](https://jiuzero.github.io/tags/z0scan/)

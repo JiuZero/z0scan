@@ -4,7 +4,7 @@
 # JiuZero 2025/5/8
 
 import requests
-from api import generateResponse, random_num, PLACE, VulType, Type, PluginBase, conf
+from api import generateResponse, random_num, PLACE, VulType, Type, PluginBase, conf, KB
 
 
 class Z0SCAN(PluginBase):
@@ -14,7 +14,7 @@ class Z0SCAN(PluginBase):
     risk = 1
 
     def audit(self):
-        if conf.level == 0 or not 1 in conf.risk:
+        if conf.level == 0 or not self.risk in conf.risk or self.name in KB.disable:
             return False
         if self.requests.suffix.lower() == '.js':
             new_url = self.requests.url + ".map"

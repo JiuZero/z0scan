@@ -3,8 +3,9 @@
 # Evi1ran November 17, 2020
 # JiuZero 2025/5/11
 
-import time, re, string, random
-from api import generateResponse, random_num, PLACE, VulType, Type, PluginBase, conf
+import time
+from lib.helper.paramanalyzer import is_sql_injection
+from api import generateResponse, random_num, VulType, Type, PluginBase, conf, KB
 
 
 class Z0SCAN(PluginBase):
@@ -23,7 +24,7 @@ class Z0SCAN(PluginBase):
         return payload1, payload0
     
     def audit(self):
-        if self.fingerprints.waf or not 2 in conf.risk or conf.level == 0:
+        if self.fingerprints.waf or not self.risk in conf.risk or conf.level == 0 or self.name in KB.disable:
             return
         num = random_num(4)
         sql_times = {
@@ -55,6 +56,8 @@ class Z0SCAN(PluginBase):
         # 为了避免参数1的时间延迟干扰到参数2的检验，不做参数多线程
         for _ in iterdatas:
             k, v, position = _
+            if not is_sql_injection(k, v):
+                return
             for dbms_type, _payloads in sql_times.items():
                 for payloadTemplate in _payloads:
                     r1 = r0 = None

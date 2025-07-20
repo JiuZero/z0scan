@@ -92,8 +92,8 @@ def cmd_line_parser(argv=None):
     optimization.add_argument("-if", '--ignore-fingerprint', dest='ignore_fingerprint', action="store_true", default=False, help="Ignore fingerprint element scanning")
     optimization.add_argument("-sc", '--scan-cookie', dest='scan_cookie', action="store_true", default=False, help="Scan cookie during detection")
     optimization.add_argument("-z", "--zmq-port", dest="zmq_port", help="ZeroMQServer port (Default {})".format(config.ZMQ_PORT), default=config.ZMQ_PORT)
-    optimization.add_argument('--disable', dest='disable', type=str_list, default=config.DISABLE, help="Disable some scanners.")
-    optimization.add_argument('--able', dest='able', type=str_list, default=config.ABLE, help="Only enable scanners")
+    optimization.add_argument('--disload', dest='disload', type=str_list, default=config.DISLOAD, help="Disload some scanners.")
+    optimization.add_argument('--load', dest='load', type=str_list, default=config.LOAD, help="Only load scanners")
     optimization.add_argument("--debug", dest="debug", type=int, choices=list(range(1, 4)), help="Show programs's exception: 1-3")
 
     ## z0 console

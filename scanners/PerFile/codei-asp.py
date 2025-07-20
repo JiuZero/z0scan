@@ -5,7 +5,7 @@
 
 import random
 
-from api import PluginBase, conf, VulType, generateResponse, Type, logger, Threads, PLACE
+from api import PluginBase, conf, VulType, generateResponse, Type, logger, Threads, PLACE, KB
 
 
 class Z0SCAN(PluginBase):
@@ -15,7 +15,7 @@ class Z0SCAN(PluginBase):
     risk = 3
         
     def audit(self):
-        if conf.level == 0 or not 3 in conf.risk or self.fingerprints.waf:
+        if conf.level == 0 or not self.risk in conf.risk or self.fingerprints.waf or self.name in KB.disable:
             return
         if not "ASP" in self.fingerprints.programing:
             randint1 = random.randint(10000, 90000)
