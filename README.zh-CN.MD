@@ -38,7 +38,7 @@
 
 ### 推荐
 
-获取发行版本（**由nuitka编译构建，速度&性能显著提升**）：[获取](https://gitee.com/JiuZero/z0scan/releases)
+获取发行版本（**由nuitka编译构建，速度&性能显著提升**）：[获取](https://github.com/JiuZero/z0scan/releases)
 
 - 想构建适合自己环境的可执行文件？，请见：[文档](https://jiuzero.github.io/tags/z0scan/)
 

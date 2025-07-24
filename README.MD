@@ -37,7 +37,7 @@
 
 ### Recommended  
 
-Get the **release version** (**compiled with Nuitka for significantly improved speed & performance**): [Download](https://gitee.com/JiuZero/z0scan/releases)  
+Get the **release version** (**compiled with Nuitka for significantly improved speed & performance**): [Download](https://github.com/JiuZero/z0scan/releases)  
 
 - Want to build an executable tailored to your environment? See: [Documentation](https://jiuzero.github.io/tags/z0scan/)  
 
