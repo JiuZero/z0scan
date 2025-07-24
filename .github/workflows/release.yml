@@ -88,7 +88,7 @@ jobs:
           # 复制各平台ZIP文件
           cp artifacts/z0scan-linux-amd64.zip release-assets/
           cp artifacts/z0scan-linux-arm64.zip release-assets/
-          cp artifacts/z0scan-windows-amd64.exe.zip release-assets/
+          cp artifacts/z0scan-windows-amd64.zip release-assets/
           cp artifacts/z0scan-macos-amd64.zip release-assets/
 
       - name: Create GitHub Release
