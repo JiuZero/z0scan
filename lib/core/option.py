@@ -24,16 +24,19 @@ from lib.patch.ipv6_patch import ipv6_patch
 from prettytable import PrettyTable
 from lib.core.zmq import ZeroMQClient, BackgroundZeroMQServer
 from lib.core.aichat import chat
+from pathlib import Path
 
 def setPaths(root):
     path.root = root
     path.certs = os.path.join(root, 'certs')
+    Path(path.certs).mkdir(exist_ok=True)
     path.config = os.path.join(root, 'config')
     path.lists = os.path.join("config", "lists")
     path.others = os.path.join("config", "others")
     path.scanners = os.path.join(root, 'scanners')
     path.fingprints = os.path.join(root, "fingerprints")
     path.output = os.path.join(root, "output")
+    Path(path.output).mkdir(exist_ok=True)
 
 
 def initKb():

@@ -24,6 +24,7 @@ SMARTSCAN_SELECTOR = {
 AUTO_SPIDER = False # 一级深度的二级主动扫描
 MAX_DIR = 2 # PerFolder插件的扫描深度(目录深度)
 ZMQ_PORT = 9331 # console交互通信端口
+HIDDEN_VUL_REMINDER = True # 漏洞隐患提醒
 
 """
 下游代理配置
