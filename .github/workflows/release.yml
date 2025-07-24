@@ -32,10 +32,10 @@ jobs:
             setup_arm: true
           - os: windows-latest
             arch: x86_64
-            artifact_suffix: windows-amd64.exe
+            artifact_suffix: windows-amd64
           - os: macos-latest
-            arch: x86_64
-            artifact_suffix: macos-amd64
+            arch: arm64
+            artifact_suffix: darwin-arm64
 
     steps:
       - name: Checkout code
@@ -94,11 +94,11 @@ jobs:
             | Linux     | x86_64    | `z0scan-linux-amd64.zip`      |
             | Linux     | ARM64     | `z0scan-linux-arm64.zip`      |
             | Windows   | x86_64    | `z0scan-windows-amd64.zip`    |
-            | macOS     | x86_64    | `z0scan-macos-amd64.zip`      |
+            | macOS     | ARM64     | `z0scan-darwin-arm64.zip`     |
           files: |
             z0scan-linux-amd64.zip
             z0scan-linux-arm64.zip
             z0scan-windows-amd64.zip
-            z0scan-macos-amd64.zip
+            z0scan-darwin-arm64.zip
           draft: false
           prerelease: ${{ github.event.inputs.is_prerelease }}
