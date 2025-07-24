@@ -14,10 +14,10 @@ on:
         default: false
 
 env:
-  PYTHON_VERSION: "3.9"
+  PYTHON_VERSION: "3.11"
   BUILD_SCRIPT: "build.py"
 
-jobs:
+jobs:  
   build:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -25,21 +25,13 @@ jobs:
         include:
           - os: ubuntu-latest
             arch: x86_64
-            artifact_suffix: linux-amd64
-          - os: ubuntu-latest
-            arch: arm64
-            artifact_suffix: linux-arm64
-            setup_arm: true
+            artifact_suffix: linux-x86_64
           - os: windows-latest
-            arch: x86_64
-            artifact_suffix: windows-amd64.exe
+            arch: amd64
+            artifact_suffix: windows-amd64
           - os: macos-latest
-            arch: x86_64
-            artifact_suffix: macos-amd64
-          - os: macos-latest
-            arch: universal
-            artifact_suffix: macos-universal
-            build_universal: true
+            arch: arm64
+            artifact_suffix: darwin-arm64
 
     steps:
       - name: Checkout code
@@ -50,20 +42,21 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install system dependencies
+      - name: Install Linux dependencies
         run: |
-          if [ "${{ runner.os }}" = "Linux" ]; then
-            sudo apt-get update
-            sudo apt-get install -y patchelf
-            if [ "${{ matrix.setup_arm }}" = "true" ]; then
-              sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-            fi
-          fi
+          sudo apt-get update
+          sudo apt-get install -y patchelf gcc ccache
+        if: runner.os == 'Linux'
+        
+      - name: Install macOS dependencies
+        run: |
+          brew install ccache
+        if: runner.os == 'macOS'
     
       - name: Install Nuitka and build tools
         run: |
           python -m pip install --upgrade pip
-          pip install nuitka zstandard
+          pip install nuitka zstandard imageio
           pip install -r requirements.txt
     
 
@@ -72,65 +65,43 @@ jobs:
           TARGET_ARCH: ${{ matrix.arch }}
         run: |
           python ${{ env.BUILD_SCRIPT }}
-          
-          if [ "${{ matrix.build_universal }}" = "true" ]; then
-            python ${{ env.BUILD_SCRIPT }}
-            ARCH=arm64 python ${{ env.BUILD_SCRIPT }}
-            lipo -create -output dist/z0-macos-universal \
-              dist/z0-darwin-x86_64 \
-              dist/z0-darwin-arm64
-          fi
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: z0-${{ matrix.artifact_suffix }}
-          path: |
-            dist/z0-*
-            scanners/
-            fingerprints/
-            data/
+          name: z0scan-${{ matrix.artifact_suffix }}.zip
+          path: z0scan-${{ matrix.artifact_suffix }}.zip
           if-no-files-found: error
 
   create-release:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
-
-      - name: Prepare release assets
-        run: |
-          mkdir -p release-assets
-          cp artifacts/z0-linux-amd64 release-assets/
-          cp artifacts/z0-linux-arm64 release-assets/
-          cp artifacts/z0-windows-amd64.exe release-assets/
-          cp artifacts/z0-macos-amd64 release-assets/
-          [ -f artifacts/z0-macos-universal ] && cp artifacts/z0-macos-universal release-assets/
-          
-          for dir in scanners fingerprints data; do
-            [ -d "artifacts/$dir" ] && cp -r "artifacts/$dir" release-assets/
-          done
-          
-          chmod +x release-assets/z0-linux-*
-          chmod +x release-assets/z0-macos-*
+          pattern: z0scan-*.zip
+          merge-multiple: true
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.version }}
+          overwrite: true
           release_name: Release ${{ github.event.inputs.version }}
           body: |
             ### Platform Build Matrix
             | Platform  | Arch      | File                      |
             |-----------|-----------|---------------------------|
-            | Linux     | x86_64    | `z0-linux-amd64`      |
-            | Linux     | ARM64     | `z0-linux-arm64`      |
-            | Windows   | x86_64    | `z0-windows-amd64.exe`|
-            | macOS     | x86_64    | `z0-macos-amd64`      |
-            | macOS     | Universal | `z0-macos-universal`  |
-          files: release-assets/*
+            | Linux     | x86_64    | `z0scan-linux-x86_64.zip`     |
+            | Windows   | x86_64    | `z0scan-windows-amd64.zip`    |
+            | macOS     | ARM64     | `z0scan-darwin-arm64.zip`     |
+          files: |
+            artifacts/z0scan-linux-x86_64.zip
+            artifacts/z0scan-windows-amd64.zip
+            artifacts/z0scan-darwin-arm64.zip
           draft: false
           prerelease: ${{ github.event.inputs.is_prerelease }}

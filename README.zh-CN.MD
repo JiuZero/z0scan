@@ -46,18 +46,10 @@
 
 > 自2025.7.19起已不再提交pypi更新
 
-**pip**快捷安装
-```bash
-# GitHub
-pip install git+https://github.com/JiuZero/z0scan
-# Gitee
-pip install git+https://gitee.com/JiuZero/z0scan
-z0 help
-```
-
-通过**GitHub**克隆安装
+通过**GitHub/Gitee**克隆安装
 ```bash
 git clone https://github.com/JiuZero/z0scan
+# https://gitee.com/JiuZero/z0scan
 cd z0scan
 pip install -r requirements.txt
 python3 z0.py help
