@@ -132,6 +132,7 @@ def build():
         "--include-data-file=doc/tld-patch/effective_tld_names.dat.txt=tld/res/effective_tld_names.dat.txt",
         '--remove-output', 
         '--nofollow-import-to=*.tests,*.test', 
+        '--assume-yes-for-downloads',
     ]
     nuitka_cmd.extend(base_args)
     
