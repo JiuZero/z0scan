@@ -15,6 +15,7 @@ class GitExposurePlugin(PluginBase):
     def audit(self):
         if self.name in self.KB.disable:
             return
+            
         # Only scan if URL path is not empty
         if not self.requests.path or self.requests.path == "/":
             # Check for exposed .git directory
@@ -49,5 +50,5 @@ class GitExposurePlugin(PluginBase):
                     "URL": git_config_url
                 }
             })
-            
+
             self.success(result)
