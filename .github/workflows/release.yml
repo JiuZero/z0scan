@@ -49,8 +49,13 @@ jobs:
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y patchelf gcc
+          sudo apt-get install -y patchelf gcc ccache
         if: runner.os == 'Linux'
+        
+      - name: Install macOS dependencies
+        run: |
+          brew install ccache
+        if: runner.os == 'macOS'
     
       - name: Install Nuitka and build tools
         run: |
