@@ -122,7 +122,7 @@ def build():
     base_args = [
         # '--lto=yes' if platform.system().lower() != 'darwin' else '--lto=no',  # macOS下禁用LTO
         '--lto=no',
-        '--output-dir=dist', 
+        '--output-dir=z0scan', 
         '--standalone',
         '--onefile',
         '--python-flag=-u', 
@@ -187,11 +187,7 @@ def setup_build_directory():
     # 需要复制的资源文件
     resource_dirs = ['scanners', 'config', 'fingerprints', 'data']
     
-    # 在CI环境中跳过资源复制（由release.yml处理）
-    if os.getenv('CI'):
-        return
-        
-    build_dir = Path('dist')
+    build_dir = Path('z0scan')
     output_dir = build_dir / 'output'
     certs_dir = build_dir / 'certs'
     try:
