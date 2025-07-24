@@ -1,42 +1,87 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/7/20
+# JiuZero 2025/7/22
 
 import re
+from lib.core.data import conf
+from lib.core.log import logger
 
-def is_sql_injection(key, value):
-    non_sql_key_patterns = [
-        r'^(theme|color|font|lang|ui|sidebar)',  # 前端UI（含colorScheme, fontSize等）
-        r'(token|session|auth|oauth|sso)',       # 认证相关（含csrfToken, access_token等）
-        r'(file|path|dir|upload|download|mime|ext|filename)',  # 文件操作（含filePath, uploadDir等）
-        r'(js|css|img|icon|favicon|asset|cdn|static)',  # 静态资源
-        r'(user[ _-]agent|referrer|content[ _-]type)',  # HTTP头
-        r'(time|date|zone|locale|format|timestamp)',     # 时间/本地化
-        r'(api[ _-]?key|recaptcha|secret|nonce)',       # 第三方密钥
-        r'(debug|log|trace|verbose|test|mock)',         # 调试日志
-    ]
-
-    non_sql_value_patterns = [
-        r'^[a-f0-9]{32}$',               # MD5（不区分大小写）
-        r'^[a-f0-9]{64}$',               # SHA-256
-        r'^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$',  # UUID
-        r'^(true|false|null|undefined)$', # 固定字面量
-        r'^data:[a-z0-9/+-]+;base64,',   # Base64数据URI
-    ]
-
-    # 检查键是否匹配非SQL模式（不区分大小写）
-    key_matched = any(
-        re.search(pattern, key, re.IGNORECASE) 
-        for pattern in non_sql_key_patterns
-    )
-
-
-    # 检查值是否匹配非SQL模式
-    value_matched = any(
-        re.fullmatch(pattern, value, re.IGNORECASE) 
-        for pattern in non_sql_value_patterns
-    )
-
-    if key_matched or value_matched:
+class VulnDetector():
+    def __init__(self, url):
+        super().__init__()
+        if conf.hidden_vul_reminder:
+            self.remind = True
+        self.url = url
+            
+    def is_sql_injection(self, key, value):
+        """SQL注入检测"""
+        safe_keys = [
+            r'^(theme|color|font|lang|ui|sidebar)\b',
+            r'\b(token|session|auth|oauth|sso)\b',
+            r'\b(file|path|dir|upload|download|mime|ext)\b',
+            r'\b(js|css|img|icon|favicon|asset|cdn|static)\b',
+            r'\b(useragent|referrer|contenttype)\b',
+            r'\b(time|date|zone|locale|format|timestamp)\b',
+            r'\b(apikey|recaptcha|secret|nonce)\b',
+            r'\b(debug|log|trace|verbose|test|mock)\b'
+        ]
+        
+        safe_values = [
+            r'^[a-f0-9]{32,64}$',
+            r'^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$',
+            r'^(true|false|null|undefined)$',
+        ]
+        if conf.level == 3:
+            return True
+        key_safe = any(re.search(p, key, re.IGNORECASE) for p in safe_keys)
+        value_safe = any(re.fullmatch(p, value, re.IGNORECASE) for p in safe_values)
+        if not (key_safe or value_safe):
+            if self.remind:
+                logger.info(f"Suspected interactive Database: {self.url} => {key}")
+            return True
         return False
-    return True
+    
+    def is_redirect(self, key, value):
+        """重定向检测"""
+        redirect_keys = [
+            r'^redirect[a-z0-9]*$',
+            r'^(url|jump|to|link|domain)[a-z0-9]*$',
+            r'^callbackurl$'
+        ]
+        if conf.level == 3:
+            return True
+        if (any(re.fullmatch(p, key, re.IGNORECASE) for p in redirect_keys)) or re.match(r'^(http|https|ftp|javascript):', value, re.IGNORECASE):
+            if self.remind:
+                logger.info(f"Suspected Redirect param: {self.url} => {key}")
+            return True
+        return False
+        
+    def is_file_access(self, key, _):
+        """文件操作检测"""
+        patterns = [
+            r'^(file|path|name)[a-z0-9]*$',
+            r'^(metainf|webinf)$',
+            r'^(topic|attach|download)[a-z0-9]*$'
+        ]
+        if conf.level == 3:
+            return True
+        if any(re.fullmatch(p, key, re.IGNORECASE) for p in patterns):
+            if self.remind:
+                logger.info(f"Suspected File operations: {self.url} => {key}")
+            return True
+        return False
+    
+    def is_ssrf(self, key, value):
+        """SSRF检测"""
+        ssrf_keys = [
+            r'^(url|link|src|source)[a-z0-9]*$',
+            r'^(api|service|endpoint)[a-z0-9]*$',
+            r'^image(url|uri|src)$'
+        ]
+        if conf.level == 3:
+            return True
+        if (any(re.fullmatch(p, key, re.IGNORECASE) for p in ssrf_keys)) or re.search(r'(127\.|192\.168|10\.|172\.(1[6-9]|2\d|3[01]))', value):
+            if self.remind:
+                logger.info(f"Suspected SSRF param: {self.url} => {key}")
+            return True
+        return False

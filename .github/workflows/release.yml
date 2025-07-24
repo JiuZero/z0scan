@@ -14,7 +14,7 @@ on:
         default: false
 
 env:
-  PYTHON_VERSION: "3.9"
+  PYTHON_VERSION: "3.11"
   BUILD_SCRIPT: "build.py"
 
 jobs:
@@ -36,10 +36,6 @@ jobs:
           - os: macos-latest
             arch: x86_64
             artifact_suffix: macos-amd64
-          - os: macos-latest
-            arch: universal
-            artifact_suffix: macos-universal
-            build_universal: true
 
     steps:
       - name: Checkout code
@@ -55,9 +51,7 @@ jobs:
           if [ "${{ runner.os }}" = "Linux" ]; then
             sudo apt-get update
             sudo apt-get install -y patchelf
-            if [ "${{ matrix.setup_arm }}" = "true" ]; then
-              sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-            fi
+            sudo apt-get install -y gcc
           fi
     
       - name: Install Nuitka and build tools
@@ -72,24 +66,13 @@ jobs:
           TARGET_ARCH: ${{ matrix.arch }}
         run: |
           python ${{ env.BUILD_SCRIPT }}
-          
-          if [ "${{ matrix.build_universal }}" = "true" ]; then
-            python ${{ env.BUILD_SCRIPT }}
-            ARCH=arm64 python ${{ env.BUILD_SCRIPT }}
-            lipo -create -output dist/z0-macos-universal \
-              dist/z0-darwin-x86_64 \
-              dist/z0-darwin-arm64
-          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: z0-${{ matrix.artifact_suffix }}
+          name: z0scan-${{ matrix.artifact_suffix }}.zip
           path: |
-            dist/z0-*
-            scanners/
-            fingerprints/
-            data/
+            dist/z0scan-*.zip
           if-no-files-found: error
 
   create-release:
@@ -104,18 +87,11 @@ jobs:
       - name: Prepare release assets
         run: |
           mkdir -p release-assets
-          cp artifacts/z0-linux-amd64 release-assets/
-          cp artifacts/z0-linux-arm64 release-assets/
-          cp artifacts/z0-windows-amd64.exe release-assets/
-          cp artifacts/z0-macos-amd64 release-assets/
-          [ -f artifacts/z0-macos-universal ] && cp artifacts/z0-macos-universal release-assets/
-          
-          for dir in scanners fingerprints data; do
-            [ -d "artifacts/$dir" ] && cp -r "artifacts/$dir" release-assets/
-          done
-          
-          chmod +x release-assets/z0-linux-*
-          chmod +x release-assets/z0-macos-*
+          # 复制各平台ZIP文件
+          cp artifacts/z0scan-linux-amd64.zip release-assets/
+          cp artifacts/z0scan-linux-arm64.zip release-assets/
+          cp artifacts/z0scan-windows-amd64.exe.zip release-assets/
+          cp artifacts/z0scan-macos-amd64.zip release-assets/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -126,11 +102,14 @@ jobs:
             ### Platform Build Matrix
             | Platform  | Arch      | File                      |
             |-----------|-----------|---------------------------|
-            | Linux     | x86_64    | `z0-linux-amd64`      |
-            | Linux     | ARM64     | `z0-linux-arm64`      |
-            | Windows   | x86_64    | `z0-windows-amd64.exe`|
-            | macOS     | x86_64    | `z0-macos-amd64`      |
-            | macOS     | Universal | `z0-macos-universal`  |
-          files: release-assets/*
+            | Linux     | x86_64    | `z0scan-linux-amd64.zip`      |
+            | Linux     | ARM64     | `z0scan-linux-arm64.zip`      |
+            | Windows   | x86_64    | `z0scan-windows-amd64.zip`    |
+            | macOS     | x86_64    | `z0scan-macos-amd64.zip`      |
+          files: |
+            release-assets/z0scan-linux-amd64.zip
+            release-assets/z0scan-linux-arm64.zip
+            release-assets/z0scan-windows-amd64.zip
+            release-assets/z0scan-macos-amd64.zip
           draft: false
           prerelease: ${{ github.event.inputs.is_prerelease }}

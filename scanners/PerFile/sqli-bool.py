@@ -8,7 +8,7 @@ import requests
 
 from api import generateResponse, VulType, HTTPMETHOD, Type, PluginBase, conf, Threads, KB
 from lib.helper.diifpage import findDynamicContent, getFilteredPageContent, removeDynamicContent
-from lib.helper.paramanalyzer import is_sql_injection
+from lib.helper.paramanalyzer import VulnDetector
 
 
 class Z0SCAN(PluginBase):
@@ -139,7 +139,7 @@ class Z0SCAN(PluginBase):
     
     def process(self, _):
         k, v, position = _
-        if not is_sql_injection(k, v):
+        if not VulnDetector(self.requests.url).is_sql_injection(k, v):
             return
         # ["true", "false"]
         payloads = [

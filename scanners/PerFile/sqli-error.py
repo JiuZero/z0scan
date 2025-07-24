@@ -6,7 +6,7 @@
 from config.others.SqlError import rules
 from api import generateResponse, random_num, random_str, VulType, Type, PluginBase, conf, logger, Threads, KB
 from lib.helper.helper_sensitive import sensitive_page_error_message_check
-from lib.helper.paramanalyzer import is_sql_injection
+from lib.helper.paramanalyzer import VulnDetector
 import re
 
 class Z0SCAN(PluginBase):
@@ -59,7 +59,7 @@ class Z0SCAN(PluginBase):
     
     def process(self, _, _payloads):
         k, v, position = _
-        if not is_sql_injection(k, v):
+        if not VulnDetector(self.requests.url).is_sql_injection(k, v):
             return
         for _payload in _payloads:
             payload = self.insertPayload({

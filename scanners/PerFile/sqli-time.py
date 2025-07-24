@@ -4,7 +4,7 @@
 # JiuZero 2025/5/11
 
 import time
-from lib.helper.paramanalyzer import is_sql_injection
+from lib.helper.paramanalyzer import VulnDetector
 from api import generateResponse, random_num, VulType, Type, PluginBase, conf, KB
 
 
@@ -56,7 +56,7 @@ class Z0SCAN(PluginBase):
         # 为了避免参数1的时间延迟干扰到参数2的检验，不做参数多线程
         for _ in iterdatas:
             k, v, position = _
-            if not is_sql_injection(k, v):
+            if not VulnDetector(self.requests.url).is_sql_injection(k, v):
                 return
             for dbms_type, _payloads in sql_times.items():
                 for payloadTemplate in _payloads:
