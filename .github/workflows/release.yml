@@ -17,7 +17,7 @@ env:
   PYTHON_VERSION: "3.11"
   BUILD_SCRIPT: "build.py"
 
-jobs:
+jobs:  
   build:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -74,23 +74,27 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: z0scan-${{ matrix.artifact_suffix }}.zip
-          path: |
-            z0scan-*.zip
+          path: z0scan-${{ matrix.artifact_suffix }}.zip
           if-no-files-found: error
 
   create-release:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+          pattern: z0scan-*.zip
+          merge-multiple: true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.event.inputs.version }}
+          overwrite: true
           release_name: Release ${{ github.event.inputs.version }}
           body: |
             ### Platform Build Matrix
