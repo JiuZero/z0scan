@@ -82,15 +82,6 @@ jobs:
         with:
           path: artifacts
 
-      - name: Prepare release assets
-        run: |
-          mkdir -p release-assets
-          # 复制各平台ZIP文件
-          cp artifacts/z0scan-linux-amd64.zip release-assets/
-          cp artifacts/z0scan-linux-arm64.zip release-assets/
-          cp artifacts/z0scan-windows-amd64.zip release-assets/
-          cp artifacts/z0scan-macos-amd64.zip release-assets/
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
@@ -105,9 +96,9 @@ jobs:
             | Windows   | x86_64    | `z0scan-windows-amd64.zip`    |
             | macOS     | x86_64    | `z0scan-macos-amd64.zip`      |
           files: |
-            release-assets/z0scan-linux-amd64.zip
-            release-assets/z0scan-linux-arm64.zip
-            release-assets/z0scan-windows-amd64.zip
-            release-assets/z0scan-macos-amd64.zip
+            z0scan-linux-amd64.zip
+            z0scan-linux-arm64.zip
+            z0scan-windows-amd64.zip
+            z0scan-macos-amd64.zip
           draft: false
           prerelease: ${{ github.event.inputs.is_prerelease }}
