@@ -24,49 +24,54 @@
 <div><table frame=void>
 	<tr>
     <td align="center">
-        <img src="https://images.weserv.nl/?url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/1.jpg&mask=circle&w=60&h=60"alt="威零安全"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/1.jpg"alt="威零安全"/>
         <br>
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzg4Mzg4OTIyMA====&scene=124#wechat_redirect"><sub>威零安全</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/2.jpg&mask=circle&w=60&h=60"alt="蓝剑安全"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/2.jpg"alt="蓝剑安全"/>
         <br>
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzkxMzI5NzI5Mg==&scene=124#wechat_redirect"><sub>蓝剑实验室</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/3.jpg&mask=circle&w=60&h=60"alt="HackTwo"/>
-        <br>
-        <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzg3ODE2MjkxMQ==&scene=124#wechat_redirect"><sub>HackTwo</sub></a>
-    </td>
-    <td align="center">
-        <img src="https://images.weserv.nl/?url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/4.jpg&mask=circle&w=60&h=60"alt="ZAC安全"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/4.jpg"alt="ZAC安全"/>
         <br>
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzkzMjIxMDU5OA==&scene=124#wechat_redirect"><sub>ZAC安全</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/5.jpg&mask=circle&w=60&h=60"alt="奉天安全"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/5.jpg"alt="奉天安全"/>
         <br>
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzk0NjQ2NzQ0Ng==&scene=124#wechat_redirect"><sub>奉天安全</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/6.jpg&mask=circle&w=60&h=60"alt="神农Sec"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/10.png"alt="隼目安全"/>
+        <br>
+        <a href="https://www.cn-fnst.top"><sub>隼目安全</sub></a>
+    </td>
+    <td align="center">
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/3.jpg"alt="HackTwo"/>
+        <br>
+        <a href="https://mp.weixin.qq.com/s/XvCq_kBAY-aDUH0uE3-oOQ"><sub>HackTwo</sub></a>
+    </td>
+    <td align="center">
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/6.jpg"alt="神农Sec"/>
         <br>
         <a href="https://xz.aliyun.com/users/141291/"><sub>神农Sec</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/7.jpg&mask=circle&w=60&h=60"alt="棉花糖"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/7.jpg"alt="棉花糖"/>
         <br>
         <a href="javascript:void(0)"><sub>棉花糖</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/8.jpg&mask=circle&w=60&h=60"alt="风铃Sec"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/8.jpg"alt="风铃Sec"/>
         <br>
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzk0MjY1ODE5Mg==&scene=124#wechat_redirect"><sub>风铃Sec</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/9.jpg&mask=circle&w=60&h=60"alt="X网络"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/9.png"alt="X黑手网络"/>
         <br>
-        <a href="https://xheishou.com"><sub>X网络</sub></a>
+        <a href="https://xheishou.com"><sub>X黑手网络</sub></a>
     </td>
   </tr>
 </table></div>
