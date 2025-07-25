@@ -1,7 +1,7 @@
 ![z0scan](https://socialify.git.ci/JiuZero/z0scan/image?description=1&font=Raleway&language=1&logo=https%3A%2F%2Fraw.githubusercontent.com%2FJiuZero%2Fz0scan%2Frefs%2Fheads%2Fmain%2Fdoc%2Flogo.png&owner=1&pattern=Solid&theme=Auto)
 
 <h4 align="center" dir="auto">
-  中文 | <a href="https://github.com/JiuZero/z0scan/blob/master/README.MD">英文</a> | <a href="https://jiuzero.github.io/tags/z0scan/">文档</a>
+  中文 • <a href="https://github.com/JiuZero/z0scan/blob/master/README.MD">英文</a> • <a href="https://jiuzero.github.io/tags/z0scan/">文档</a>
 </p>
 
 <p align="center">
@@ -19,22 +19,69 @@
   </a>
 </p>
 
-## ⚠️ 免责声明
+## 鸣谢
 
-> 如您在使用本项目及包含工具的过程中存在任何非法行为，您需自行承担相应后果，我们将不承担任何法律及连带责任。
+<div><table frame=void>
+	<tr>
+    <td align="center">
+        <img src="https://images.weserv.nl/?url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/1.jpg&mask=circle&w=60&h=60"alt="威零安全"/>
+        <br>
+        <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzg4Mzg4OTIyMA====&scene=124#wechat_redirect"><sub>威零安全</sub></a>
+    </td>
+    <td align="center">
+        <img src="https://images.weserv.nl/?url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/2.jpg&mask=circle&w=60&h=60"alt="蓝剑安全"/>
+        <br>
+        <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzkxMzI5NzI5Mg==&scene=124#wechat_redirect"><sub>蓝剑实验室</sub></a>
+    </td>
+    <td align="center">
+        <img src="https://images.weserv.nl/?url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/3.jpg&mask=circle&w=60&h=60"alt="HackTwo"/>
+        <br>
+        <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzg3ODE2MjkxMQ==&scene=124#wechat_redirect"><sub>HackTwo</sub></a>
+    </td>
+    <td align="center">
+        <img src="https://images.weserv.nl/?url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/4.jpg&mask=circle&w=60&h=60"alt="ZAC安全"/>
+        <br>
+        <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzkzMjIxMDU5OA==&scene=124#wechat_redirect"><sub>ZAC安全</sub></a>
+    </td>
+    <td align="center">
+        <img src="https://images.weserv.nl/?url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/5.jpg&mask=circle&w=60&h=60"alt="奉天安全"/>
+        <br>
+        <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzk0NjQ2NzQ0Ng==&scene=124#wechat_redirect"><sub>奉天安全</sub></a>
+    </td>
+    <td align="center">
+        <img src="https://images.weserv.nl/?url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/6.jpg&mask=circle&w=60&h=60"alt="神农Sec"/>
+        <br>
+        <a href="https://xz.aliyun.com/users/141291/"><sub>神农Sec</sub></a>
+    </td>
+    <td align="center">
+        <img src="https://images.weserv.nl/?url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/7.jpg&mask=circle&w=60&h=60"alt="棉花糖"/>
+        <br>
+        <a href="javascript:void(0)"><sub>棉花糖</sub></a>
+    </td>
+    <td align="center">
+        <img src="https://images.weserv.nl/?url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/8.jpg&mask=circle&w=60&h=60"alt="风铃Sec"/>
+        <br>
+        <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzk0MjY1ODE5Mg==&scene=124#wechat_redirect"><sub>风铃Sec</sub></a>
+    </td>
+    <td align="center">
+        <img src="https://images.weserv.nl/?url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/9.jpg&mask=circle&w=60&h=60"alt="X网络"/>
+        <br>
+        <a href="https://xheishou.com"><sub>X网络</sub></a>
+    </td>
+  </tr>
+</table></div>
 
-> 您的使用行为或者您以其他任何明示或者默示方式表示接受本协议的，即视为您已阅读并同意本协议的约束。
-
-## 🌟 优势
+## 优势
 
 1. WAF判断、指纹信息与插件扫描的联动
-2. 能够解析Json、XML等复杂格式中的参数及伪静态参数（Beta）
+2. 支持解析Json、XML等复杂格式中的参数及伪静态参数
 3. 以SQLite3提供扫描记录等数据储存支持
 4. 基于Python3开源并提供全平台支持
-5. 支持IPV6解析域名（Beta）
-6. 交互式动态调整被动扫描参数
+5. 交互式动态调整被动扫描参数
+6. JS敏感信息-AI智能后校验
+7. 支持IPV6解析域名
 
-## 🔧 安装
+## 安装
 
 ### 推荐
 
@@ -57,7 +104,7 @@ python3 z0.py help
 
 - 部分**特殊环境安装**（如Termux），请见：[文档](https://jiuzero.github.io/tags/z0scan/)
 
-## 🚀 使用示例
+## 使用示例
 
 ### 被动扫描
 
@@ -94,7 +141,7 @@ z0 scan -f urls.txt
 
 - 获取更加详细的信息，请见：[文档](https://jiuzero.github.io/tags/z0scan/)
 
-## ✨ ️插件列表
+## 插件列表
 
 - PerFile
 
@@ -161,18 +208,16 @@ z0 scan -f urls.txt
 |other-smuggling|请求走私漏洞|3|
 |trave-list_3|目录浏览|2|
 
-## 🔆 更新日记 & 许可
+## 更新日记 & 许可
 
 - 更新日记：[CHANGELOG](https://github.com/JiuZero/z0scan/blob/master/doc/CHANGELOG.MD)
 
-- 未来：[TODO](https://github.com/JiuZero/z0scan/blob/master/doc/TODO.MD)
-
 - GPL-2.0授权许可：[LICENSE](https://github.com/JiuZero/z0scan/blob/master/LICENSE)
 
-## 📝 联系
+## 联系开发者
 
 |平台|联系|
 |:---:|:----:|
-|WeiXin|JiuZer1|
+|WeChat|JiuZer1|
 |QQ|1703417187|
 |Email|jiuzer0@qq.com|
