@@ -44,7 +44,7 @@
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzk0NjQ2NzQ0Ng==&scene=124#wechat_redirect"><sub>奉天安全</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/10.png"alt="隼目安全"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/10.jpg"alt="隼目安全"/>
         <br>
         <a href="https://www.cn-fnst.top"><sub>隼目安全</sub></a>
     </td>
