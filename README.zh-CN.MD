@@ -64,7 +64,7 @@
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzk0MjY1ODE5Mg==&scene=124#wechat_redirect"><sub>风铃Sec</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/9.jpg"alt="X网络"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/9.png"alt="X网络"/>
         <br>
         <a href="https://xheishou.com"><sub>X网络</sub></a>
     </td>
