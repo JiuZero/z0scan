@@ -4,8 +4,6 @@
   <a href="https://github.com/JiuZero/z0scan/blob/master/README.zh-CN.MD">Chinese</a> • English • <a href="https://jiuzero.github.io/tags/z0scan/">Documentation</a>
 </p>
 
-## Acknowledgments
-
 <p align="center">
   <a href="https://www.python.org/">
     <img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white">
@@ -21,7 +19,7 @@
   </a>
 </p>
 
-## 鸣谢
+## Acknowledgments
 
 <div><table frame=void>
 	<tr>
