@@ -16,8 +16,8 @@ class Parser:
     form_content = ''
     username_keyword = ''
     password_keyword = ''
-    data = ''
     cms = ''
+    data = {}
 
     def __init__(self, requests, response):
         self.requests = requests

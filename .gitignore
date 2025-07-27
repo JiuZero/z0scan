@@ -25,3 +25,5 @@ venv/
 ENV/
 
 data/z0scan.db
+certs/baseproxy_*
+output/*_*

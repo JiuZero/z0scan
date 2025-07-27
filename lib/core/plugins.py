@@ -325,6 +325,17 @@ class PluginBase(object):
             payload = parse.quote(payload)
             url = re.sub(r'/{}[-_/]([^-_/?#&=]+)'.format(re.escape(key), re.escape(value)),r'/{}[-_/]([^-_/?#&=]+)'.format(key, parse.quote(value + payload)), self.requests.url)
             return url
+        
+    def urlencode(self, s, chars_to_encode="!@#$^&*()=[]{}|;:'\",<>?. "):
+        if '%' in s:
+            return s
+        result = []
+        for char in s:
+            if char in chars_to_encode:
+                result.append(quote(char))
+            else:
+                result.append(char)
+        return "".join(result)
 
     def req(self, position, payload, allow_redirects=True):
         '''
@@ -344,7 +355,7 @@ class PluginBase(object):
             }
         
         params = copy.deepcopy(self.requests.params)
-        params = "?" + "&".join(f"{k}={v}" for k, v in params.items())
+        params = "?" + "&".join(f"{k}={self.urlencode(v)}" for k, v in params.items())
         
         data = copy.deepcopy(self.requests.post_data)
         if data is not None:

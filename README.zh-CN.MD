@@ -44,7 +44,7 @@
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzk0NjQ2NzQ0Ng==&scene=124#wechat_redirect"><sub>奉天安全</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/10.png"alt="隼目安全"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/10.jpg"alt="隼目安全"/>
         <br>
         <a href="https://www.cn-fnst.top"><sub>隼目安全</sub></a>
     </td>
@@ -69,9 +69,29 @@
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzk0MjY1ODE5Mg==&scene=124#wechat_redirect"><sub>风铃Sec</sub></a>
     </td>
     <td align="center">
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/11.jpg"alt="银遁安全"/>
+        <br>
+        <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzU3MjU4MjM3MQ==&scene=124#wechat_redirect"><sub>银遁安全</sub></a>
+    </td>
+    <td align="center">
         <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/9.png"alt="X黑手网络"/>
         <br>
         <a href="https://xheishou.com"><sub>X黑手网络</sub></a>
+    </td>
+    <td align="center">
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/12.jpg"alt="Sec探索者"/>
+        <br>
+        <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzkyNDYwNTcyNA==&scene=124#wechat_redirect"><sub>Sec探索者</sub></a>
+    </td>
+    <td align="center">
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/13.jpg"alt="雪山盟"/>
+        <br>
+        <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzE5MTQ3MjE0OQ==&scene=124#wechat_redirect"><sub>雪山盟</sub></a>
+    </td>
+    <td align="center">
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/14.jpg"alt="夜组安全"/>
+        <br>
+        <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzk0ODM0NDIxNQ==&scene=124#wechat_redirect"><sub>夜组安全</sub></a>
     </td>
   </tr>
 </table></div>

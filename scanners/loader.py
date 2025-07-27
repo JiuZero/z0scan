@@ -17,6 +17,7 @@ from lib.parse.parse_request import FakeReq
 from lib.parse.parse_response import FakeResp
 from lib.core.db import selectdb, insertdb
 from lib.core.settings import notAcceptedExt, logoutParams
+from lib.helper.paramanalyzer import VulnDetector
 
 # 欺骗 in 操作
 class CheatIn:
@@ -115,39 +116,47 @@ class Z0SCAN(PluginBase):
         }
         insertdb("info", cv)
 
+        iterdatas = self.generateItemdatas()
+        for _ in iterdatas:
+            k, v, position = _
+            VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_sql_injection(k, v)
+            VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_file_access(k, v)
+            VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_redirect(k, v)
+            VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_ssrf(k, v)
+
+
         # PerFile
-        if not self.requests.suffix in notAcceptedExt:
-            if KB["spiderset"].add(url, 'PerFile'):
-                task_push('PerFile', self.requests, self.response)
-                if conf.auto_spider:
-                    # 二级主动扫描 (深度一级)
-                    links = get_links(self.requests.content, url, True)
-                    for link in set(links):
-                        try:
-                            for item in logoutParams:
-                                if item in link.lower():
-                                    if not KB["spiderset"].inside(link, 'PerFile'):
-                                        """
-                                        # 超过5M拒绝请求
-                                        r = requests.head(link, headers=headers)
-                                        if "Content-Length" in r.headers:
-                                            if int(r.headers["Content-Length"]) > 1024 * 1024 * 5:
-                                                raise Exception("length")
-                                        """
-                                        p = urlparse(link)
-                                        if p.netloc == self.requests.hostname:
-                                            exi = os.path.splitext(p.path)[1].lower()
-                                            if exi in notAcceptedExt:
-                                                raise Exception("exi")
-                                            if self.skip(url):
-                                                return
-                                            r = requests.get(link, headers=headers)
-                                            fake_resp = FakeResp(r.status_code, r.content, r.headers)
-                                            task_push('PerFile', r, fake_resp)
-                                        else:
-                                            raise Exception("hostname")
-                        except Exception as e:
-                            continue
+        if KB["spiderset"].add(url, 'PerFile'):
+            task_push('PerFile', self.requests, self.response)
+            if conf.auto_spider:
+                # 二级主动扫描 (深度一级)
+                links = get_links(self.requests.content, url, True)
+                for link in set(links):
+                    try:
+                        for item in logoutParams:
+                            if item in link.lower():
+                                if not KB["spiderset"].inside(link, 'PerFile'):
+                                    """
+                                    # 超过5M拒绝请求
+                                    r = requests.head(link, headers=headers)
+                                    if "Content-Length" in r.headers:
+                                        if int(r.headers["Content-Length"]) > 1024 * 1024 * 5:
+                                            raise Exception("length")
+                                    """
+                                    p = urlparse(link)
+                                    if p.netloc == self.requests.hostname:
+                                        exi = os.path.splitext(p.path)[1].lower()
+                                        if exi in notAcceptedExt:
+                                            raise Exception("exi")
+                                        if self.skip(url):
+                                            return
+                                        r = requests.get(link, headers=headers)
+                                        fake_resp = FakeResp(r.status_code, r.content, r.headers)
+                                        task_push('PerFile', r, fake_resp)
+                                    else:
+                                        raise Exception("hostname")
+                    except Exception as e:
+                        continue
 
         # PerServer
         domain = deepcopy(self.requests.netloc)

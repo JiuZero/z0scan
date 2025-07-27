@@ -7,10 +7,9 @@ from lib.core.data import conf
 from lib.core.log import logger
 
 class VulnDetector():
-    def __init__(self, url):
+    def __init__(self, url, remind=False):
         super().__init__()
-        if conf.hidden_vul_reminder:
-            self.remind = True
+        self.remind = remind
         self.url = url
             
     def is_sql_injection(self, key, value):
@@ -48,11 +47,11 @@ class VulnDetector():
             r'^(url|jump|to|link|domain)[a-z0-9]*$',
             r'^callbackurl$'
         ]
-        if conf.level == 3:
-            return True
         if (any(re.fullmatch(p, key, re.IGNORECASE) for p in redirect_keys)) or re.match(r'^(http|https|ftp|javascript):', value, re.IGNORECASE):
             if self.remind:
                 logger.info(f"Suspected Redirect param: {self.url} => {key}")
+            return True
+        if conf.level == 3:
             return True
         return False
         
@@ -63,11 +62,11 @@ class VulnDetector():
             r'^(metainf|webinf)$',
             r'^(topic|attach|download)[a-z0-9]*$'
         ]
-        if conf.level == 3:
-            return True
         if any(re.fullmatch(p, key, re.IGNORECASE) for p in patterns):
             if self.remind:
                 logger.info(f"Suspected File operations: {self.url} => {key}")
+            return True
+        if conf.level == 3:
             return True
         return False
     
@@ -78,10 +77,10 @@ class VulnDetector():
             r'^(api|service|endpoint)[a-z0-9]*$',
             r'^image(url|uri|src)$'
         ]
-        if conf.level == 3:
-            return True
         if (any(re.fullmatch(p, key, re.IGNORECASE) for p in ssrf_keys)) or re.search(r'(127\.|192\.168|10\.|172\.(1[6-9]|2\d|3[01]))', value):
             if self.remind:
                 logger.info(f"Suspected SSRF param: {self.url} => {key}")
+            return True
+        if conf.level == 3:
             return True
         return False
