@@ -5,9 +5,9 @@
 
 from urllib.parse import urlparse
 from copy import deepcopy
-import requests, re, os, json
+import requests, re, os
 from lib.controller.controller import task_push
-from lib.core.common import isListLike, get_parent_paths, get_links
+from lib.core.common import get_parent_paths, get_links
 from lib.core.data import conf, KB
 from lib.core.log import logger
 from lib.core.wafDetector import detector
@@ -69,6 +69,8 @@ class Z0SCAN(PluginBase):
                 pass
             detector(self)
             KB.limit = False
+        if self.fingerprints.waf == "None":
+            self.fingerprints.waf = False
         
         if self.skip(url):
             return
@@ -116,47 +118,16 @@ class Z0SCAN(PluginBase):
         }
         insertdb("info", cv)
 
-        iterdatas = self.generateItemdatas()
-        for _ in iterdatas:
-            k, v, position = _
-            VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_sql_injection(k, v)
-            VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_file_access(k, v)
-            VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_redirect(k, v)
-            VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_ssrf(k, v)
-
-
         # PerFile
         if KB["spiderset"].add(url, 'PerFile'):
             task_push('PerFile', self.requests, self.response)
-            if conf.auto_spider:
-                # 二级主动扫描 (深度一级)
-                links = get_links(self.requests.content, url, True)
-                for link in set(links):
-                    try:
-                        for item in logoutParams:
-                            if item in link.lower():
-                                if not KB["spiderset"].inside(link, 'PerFile'):
-                                    """
-                                    # 超过5M拒绝请求
-                                    r = requests.head(link, headers=headers)
-                                    if "Content-Length" in r.headers:
-                                        if int(r.headers["Content-Length"]) > 1024 * 1024 * 5:
-                                            raise Exception("length")
-                                    """
-                                    p = urlparse(link)
-                                    if p.netloc == self.requests.hostname:
-                                        exi = os.path.splitext(p.path)[1].lower()
-                                        if exi in notAcceptedExt:
-                                            raise Exception("exi")
-                                        if self.skip(url):
-                                            return
-                                        r = requests.get(link, headers=headers)
-                                        fake_resp = FakeResp(r.status_code, r.content, r.headers)
-                                        task_push('PerFile', r, fake_resp)
-                                    else:
-                                        raise Exception("hostname")
-                    except Exception as e:
-                        continue
+            iterdatas = self.generateItemdatas()
+            for _ in iterdatas:
+                k, v, position = _
+                VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_sql_injection(k, v)
+                VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_file_access(k, v)
+                VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_redirect(k, v)
+                VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_ssrf(k, v)
 
         # PerServer
         domain = deepcopy(self.requests.netloc)

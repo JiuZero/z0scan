@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @Time    : 2019/6/28 10:59 PM
-# @Author  : w8ay
-# @File    : __init__.py
+# w8ay 2019/6/28
+# JiuZero 2025/7/28
 
 import copy
 import logging
@@ -16,7 +15,7 @@ from requests.sessions import Session
 from requests.sessions import merge_setting, merge_cookies
 from requests.utils import get_encodings_from_content
 from urllib3 import disable_warnings
-
+from urllib.parse import quote
 from lib.core.data import conf
 
 
@@ -39,8 +38,18 @@ def session_request(self, method, url,
         "Connection": "close"
     }
     params=params or ""
+    def urlencode(s, chars_to_encode="!@#$^&*()=[]{}|;:'\",<>?. \\"):
+        if '%' in s:
+            return s
+        result = []
+        for char in s:
+            if char in chars_to_encode:
+                result.append(quote(char))
+            else:
+                result.append(char)
+        return "".join(result)
     if isinstance(params, dict):
-        params = "?" + "&".join(f"{k}={v}" for k, v in params.items())
+        params = "?" + "&".join(f"{k}={urlencode(v)}" for k, v in params.items())
     req = Request(
         method=method.upper(),
         url=url,
@@ -62,11 +71,11 @@ def session_request(self, method, url,
     if "Host" not in _headers:
         _headers["Host"] = p.netloc
     if prep.body:
-
+        body = prep.body.decode('utf-8') if isinstance(prep.body, bytes) else prep.body
         raw = "{}\n{}\n\n{}\n\n".format(
             prep.method + ' ' + prep.url + ' HTTP/1.1',
             '\n'.join('{}: {}'.format(k, v) for k, v in _headers.items()),
-            prep.body)
+            body)
     else:
         raw = "{}\n{}\n\n".format(
             prep.method + ' ' + prep.url + ' HTTP/1.1',

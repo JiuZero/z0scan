@@ -24,7 +24,7 @@ def detector(self):
     
     # 不存在WAF且本次启动后有检测过
     elif not history1 and history2:
-        self.fingerprints.waf = None
+        self.fingerprints.waf = False
         return
     
     # 存在WAF但本次启动后没有检测过
@@ -66,6 +66,8 @@ def detector(self):
         # 3. 关键字符
         keys = ['攻击行为', '创宇盾', '拦截提示', '非法', '安全威胁', '防火墙', '黑客', '不合法', "Illegal operation"]
         '''
+        self.fingerprints.waf = False
+        return
     # 超时与连接问题很可能产生于WAF
     except (TimeoutError, ConnectionError, Exception) as e:
         logger.warning("<{}{}{}> An error occurred during the request, possible WAF detected".format(colors.m, self.requests.hostname, colors.e))

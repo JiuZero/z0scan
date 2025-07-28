@@ -21,7 +21,6 @@ SMARTSCAN_SELECTOR = {
     "model": "gpt-3.5-turbo", 
     "apikey": "", 
 } # AI智能插件优化（支持所有openai库所能调用的模型）
-AUTO_SPIDER = False # 一级深度的二级主动扫描
 MAX_DIR = 2 # PerFolder插件的扫描深度(目录深度)
 ZMQ_PORT = 9331 # console交互通信端口
 HIDDEN_VUL_REMINDER = True # 漏洞隐患提醒

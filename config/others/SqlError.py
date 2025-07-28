@@ -22,6 +22,7 @@ rules = {
         r"Unclosed quotation mark ", 
         r'\[Macromedia\]\[SQLServer JDBC Driver\]', 
         r'the used select statements have different number of columns',
+        r'Unclosed quotation mark after the character string'
     ],
     "DB2": [
         r'DB2 SQL error:', 
@@ -31,6 +32,8 @@ rules = {
     ],
     "SyBase": [
         r"Sybase message:", 
+        r'Sybase Driver', 
+        r'[SYBASE]'
     ],
     "Microsoft Access": [
         r'Syntax error in query expression', 
@@ -59,11 +62,13 @@ rules = {
         r"Column count doesn't match", 
         r"the used select statements have different number of columns", 
         r"Table '[^']+' doesn't exist", 
+        r'DBD::mysql::st execute failed', 
     ],
     "Informix": [
         r'com\.informix\.jdbc', 
         r'Dynamic Page Generation Error:', 
         r'An illegal character has been found in the statement', 
+        r'[Informix]'
     ],
     "InterBase": [
         r'<b>Warning</b>:  ibase_', 
@@ -90,4 +95,9 @@ rules = {
         r'SQLITE_ERROR',
         r'SQLite\.Exception',
     ],
+    "UNKNOWN": [
+        r'列 [\"\']?[\w]+[\"\']? 不存在', 
+        r'附近的语法不正确|附近有语法错误|后的引号不完整|未闭合'
+        r'&lt;b&gt;Warning&lt;/b&gt;\:  ibase_'
+    ]
 }
