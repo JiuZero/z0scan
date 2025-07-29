@@ -19,7 +19,7 @@
   </a>
 </p>
 
-## contributors
+## Contributors
 
 <div><table frame=void>
 	<tr>
