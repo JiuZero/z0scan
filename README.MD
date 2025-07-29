@@ -8,11 +8,8 @@
   <a href="https://www.python.org/">
     <img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white">
   </a>
-  <a href="https://github.com/JiuZero/z0scan/releases">
-    <img src="https://img.shields.io/github/downloads/JiuZero/z0scan/total">
-  </a>
-  <a href="https://github.com/JiuZero/z0scan/releases">
-    <img src="https://img.shields.io/github/v/release/JiuZero/z0scan.svg">
+  <a href="https://github.com/JiuZero/z0scan">
+    <img src="https://img.shields.io/github/last-commit/JiuZero/z0scan?style=flat&logo=github">
   </a>
   <a href="https://github.com/JiuZero/z0scan">
     <img src="https://img.shields.io/github/stars/JiuZero/z0scan?style=flat&logo=github&color=yellow">
