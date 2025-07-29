@@ -57,8 +57,6 @@ class Z0SCAN(PluginBase):
 
 
     def audit(self):
-        if KB.pause:
-            return
         headers = deepcopy(self.requests.headers)
         url = deepcopy(self.requests.url)
         hostname = deepcopy(self.requests.hostname)

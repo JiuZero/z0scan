@@ -9,7 +9,7 @@ from api import generateResponse, VulType, PLACE, PluginBase, Type, conf, KB
 
 class Z0SCAN(PluginBase):
     name = "unauth"
-    desc = 'Unauthorized'
+    desc = 'Unauthorized Access Vulnerability'
     version = "2025.3.4"
     risk = 2
     

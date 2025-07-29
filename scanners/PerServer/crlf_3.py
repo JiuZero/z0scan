@@ -9,7 +9,7 @@ from api import generateResponse, VulType, KB, Type, PluginBase, conf, Threads
 
 class Z0SCAN(PluginBase):
     name = "crlf_3"
-    desc = 'CRLF Injection'
+    desc = 'CRLF Line Injection Vulnerability (Domain-based)'
     version = "2025.6.28"
     risk = 2
 

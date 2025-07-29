@@ -6,8 +6,10 @@
 import time
 import struct
 import binascii
+import sys
+import os
 
-from config.config import REVERSE_DNS
+from config.config import REVERSE_DNS, DNS_PORT
 from lib.reverse.lib import rlog, reverse_lock, reverse_records
 
 try:
@@ -143,14 +145,30 @@ class DnsRequestHandler(SocketServer.BaseRequestHandler):
 
 
 class SimpleDnsServer:
-    def __init__(self, port=53):
+    def __init__(self, port=DNS_PORT):
         self.port = port
 
     def start(self):
         host, port = "0.0.0.0", self.port
-        rlog.info("Dns Server listion {}:{}".format(host, port))
-        dns_udp_server = SocketServer.UDPServer((host, port), DnsRequestHandler)
-        dns_udp_server.serve_forever()
+        log_msg = f"Dns Server listion {host}:{port}\n"
+        rlog.info(log_msg)
+        sys.stdout.flush()
+        try:
+            dns_udp_server = SocketServer.UDPServer((host, port), DnsRequestHandler)
+            dns_udp_server.serve_forever()
+        except OSError as e:
+          if e.errno == 98:
+            rlog.error(f"DNS server startup failed: Port {port} is occupied, check if there are other programs occupying the port or try again after changing the port.")
+            rlog.error("Exit. (Please go to config/config to modify)")
+            sys.stdout.flush()
+            os._exit(1)
+          else:
+            error_msg = rlog.error(f"Unable to start DNS server: {e}")
+            rlog.error(error_msg)
+            sys.stdout.flush()
+            raise
+        except Exception as e:
+            rlog.error(f"DNS server operation error: {e}")
 
 
 def dns_start():

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # w8ay 2019/6/30
-# JiuZero 2025/5/11
+# JiuZero 2025/7/29
 
 import difflib
 import requests
@@ -13,8 +13,8 @@ from lib.helper.paramanalyzer import VulnDetector
 
 class Z0SCAN(PluginBase):
     name = "sqli-bool"
-    desc = 'Bool SQL Finder'
-    version = "2025.5.11"
+    desc = 'SQL Boolean-based Blind Injection'
+    version = "2025.7.29"
     risk = 2
     
     def __init__(self):
@@ -32,6 +32,49 @@ class Z0SCAN(PluginBase):
         self.retry = 3
         # 存储动态内容的标记
         self.dynamic = []
+        # 布尔盲注概率计算相关参数
+        self.MIN_DIFF_RATIO = 0.1  # 最小差异比率
+    
+    def calculate_boolean_probability(self, original_page, true_page, false_page):
+        """
+        计算布尔盲注存在的概率（完全按照DetSQL原有逻辑）
+        :param original_page: 原始页面内容
+        :param true_page: 真条件返回的页面内容
+        :param false_page: 假条件返回的页面内容
+        :return: 布尔盲注存在的概率(0.0-1.0)
+        """
+        # 计算原始页面与真/假页面的相似度
+        self.seqMatcher.set_seq1(original_page)
+        self.seqMatcher.set_seq2(true_page)
+        true_ratio = round(self.seqMatcher.quick_ratio(), 3)
+        
+        self.seqMatcher.set_seq1(original_page)
+        self.seqMatcher.set_seq2(false_page)
+        false_ratio = round(self.seqMatcher.quick_ratio(), 3)
+        
+        # 计算真/假页面之间的差异度
+        self.seqMatcher.set_seq1(true_page)
+        self.seqMatcher.set_seq2(false_page)
+        diff_ratio = 1.0 - round(self.seqMatcher.quick_ratio(), 3)
+
+        probability = 0.0
+        if true_ratio > self.UPPER_RATIO_BOUND and false_ratio < self.UPPER_RATIO_BOUND:
+            probability = 0.8 + min(diff_ratio, 0.2)
+        elif diff_ratio > self.MIN_DIFF_RATIO:
+            probability = 0.6 + min(diff_ratio * 0.5, 0.4)
+        else:
+            original_lines = set(getFilteredPageContent(original_page).split("\n"))
+            true_lines = set(getFilteredPageContent(true_page).split("\n"))
+            false_lines = set(getFilteredPageContent(false_page).split("\n"))
+            
+            true_diff = len(true_lines - original_lines)
+            false_diff = len(false_lines - original_lines)
+            
+            if true_diff <= 2 and false_diff > 2:
+                probability = 0.7
+            elif true_diff != false_diff:
+                probability = 0.5 + (abs(true_diff - false_diff) * 0.1)
+        return max(0.0, min(1.0, probability))
     
     def findDynamicContent(self, firstPage, secondPage):
         ret = findDynamicContent(firstPage, secondPage)
@@ -57,6 +100,11 @@ class Z0SCAN(PluginBase):
         
         truePage = removeDynamicContent(r.text, self.dynamic)
         falsePage = removeDynamicContent(r2.text, self.dynamic)
+        originalPage = removeDynamicContent(self.resp_str, self.dynamic)
+        
+        # 计算布尔盲注概率
+        self.probability = self.calculate_boolean_probability(originalPage, truePage, falsePage)
+        
         try:
             self.seqMatcher.set_seq1(self.resp_str)
             self.seqMatcher.set_seq2(falsePage)
@@ -74,10 +122,12 @@ class Z0SCAN(PluginBase):
             ratio_true = round(self.seqMatcher.quick_ratio(), 3)
         except (MemoryError, OverflowError):
             return False
+            
+        # 使用概率值作为判断依据
         if ratio_true > self.UPPER_RATIO_BOUND and abs(ratio_true - ratio_false) > self.DIFF_TOLERANCE:
             if ratio_false <= self.UPPER_RATIO_BOUND:
                 is_inject = True
-        if not is_inject and ratio_true > 0.68 and ratio_true > ratio_false:
+        elif not is_inject and ratio_true > 0.68 and ratio_true > ratio_false:
             originalSet = set(getFilteredPageContent(self.resp_str).split("\n"))
             trueSet = set(getFilteredPageContent(truePage).split("\n"))
             falseSet = set(getFilteredPageContent(falsePage).split("\n"))
@@ -86,6 +136,7 @@ class Z0SCAN(PluginBase):
                 candidates = trueSet - falseSet
                 if len(candidates) > 0:
                     is_inject = True
+        
         if is_inject:
             ret = []
             ret.append({
@@ -94,7 +145,7 @@ class Z0SCAN(PluginBase):
                 "key": k,
                 "payload": payload_true,
                 "position": position,
-                "desc": "The similarity between the true request packet and the original web page:{}".format(ratio_true)
+                "desc": f"The similarity between the true request packet and the original web page:{ratio_true}, Probability: {self.probability:.2f}"
             })
             ret.append({
                 "request": r2.reqinfo,
@@ -102,7 +153,7 @@ class Z0SCAN(PluginBase):
                 "key": k,
                 "payload": payload_false,
                 "position": position,
-                "desc": "The similarity between the False request packet and the original web page:{}".format(ratio_false)
+                "desc": f"The similarity between the False request packet and the original web page:{ratio_false}, Probability: {self.probability:.2f}"
             })
             return ret
         else:
@@ -191,6 +242,7 @@ class Z0SCAN(PluginBase):
                         "vultype": VulType.SQLI, 
                         "show": {
                             "Position": f"{position} >> {k}",
+                            "Probability": f"{self.probability:.2f}", 
                             "Payload": payload,
                         }
                     })

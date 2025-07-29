@@ -527,37 +527,38 @@ class ProxyHandle(BaseHTTPRequestHandler):
                     self.send_error(404, 'response is None {}'.format(errMsg))
                 
                 # 使用线程池异步处理任务，避免阻塞
-                if not self._is_replay() and response:
-                    def process_task(request, response):
-                        time.sleep(2)
-                        netloc = "http"
-                        if request.https:
-                            netloc = "https"
-                        if (netloc == "https" and int(request.port) == 443) or (
-                                netloc == "http" and int(request.port) == 80):
-                            url = "{0}://{1}{2}".format(netloc, request.hostname, request.path)
-                        else:
-                            url = "{0}://{1}:{2}{3}".format(netloc, request.hostname, request.port,
-                                                            request.path)
-                        method = request.command.lower()
-                        if method == "get":
-                            method = HTTPMETHOD.GET
-                        elif method == "post":
-                            method = HTTPMETHOD.POST
-                        elif method == "put":
-                            method = HTTPMETHOD.PUT
-                        try:
-                            body_data = request.get_body_data().decode('utf-8')
-                        except:
-                            body_data = ""
-                        req = FakeReq(url, request._headers, method, body_data)
-                        resp = FakeResp(int(response.status), response.get_body_data(), response._headers)
-                        KB['task_queue'].put(('loader', req, resp))
-                    
-                    # 使用线程池异步执行
-                    task_thread = threading.Thread(target=process_task, args=(request, response))
-                    task_thread.daemon = True
-                    task_thread.start()
+                if not KB.pause:
+                    if not self._is_replay() and response:
+                        def process_task(request, response):
+                            time.sleep(2)
+                            netloc = "http"
+                            if request.https:
+                                netloc = "https"
+                            if (netloc == "https" and int(request.port) == 443) or (
+                                    netloc == "http" and int(request.port) == 80):
+                                url = "{0}://{1}{2}".format(netloc, request.hostname, request.path)
+                            else:
+                                url = "{0}://{1}:{2}{3}".format(netloc, request.hostname, request.port,
+                                                                request.path)
+                            method = request.command.lower()
+                            if method == "get":
+                                method = HTTPMETHOD.GET
+                            elif method == "post":
+                                method = HTTPMETHOD.POST
+                            elif method == "put":
+                                method = HTTPMETHOD.PUT
+                            try:
+                                body_data = request.get_body_data().decode('utf-8')
+                            except:
+                                body_data = ""
+                            req = FakeReq(url, request._headers, method, body_data)
+                            resp = FakeResp(int(response.status), response.get_body_data(), response._headers)
+                            KB['task_queue'].put(('loader', req, resp))
+                        
+                        # 使用线程池异步执行
+                        task_thread = threading.Thread(target=process_task, args=(request, response))
+                        task_thread.daemon = True
+                        task_thread.start()
 
             else:
                 self.send_error(404, 'request is None')

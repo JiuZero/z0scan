@@ -17,7 +17,7 @@ from lib.helper.jscontext import SearchInputInScript
 
 class Z0SCAN(PluginBase):
     name = 'xss'
-    desc = "XSS SCAN"
+    desc = "JS Semantic-based XSS Scanning"
     version = "2025.6.16"
     risk = 1
 

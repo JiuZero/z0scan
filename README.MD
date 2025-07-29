@@ -1,15 +1,18 @@
 ![z0scan](https://socialify.git.ci/JiuZero/z0scan/image?description=1&font=Raleway&language=1&logo=https%3A%2F%2Fraw.githubusercontent.com%2FJiuZero%2Fz0scan%2Frefs%2Fheads%2Fmain%2Fdoc%2Flogo.png&owner=1&pattern=Solid&theme=Auto)
 
 <h4 align="center" dir="auto">
-  <a href="https://github.com/JiuZero/z0scan/blob/master/README.zh-CN.MD">Chinese</a> • English • <a href="https://jiuzero.github.io/tags/z0scan/">Documentation</a>
+  <a href="https://jiuzero.github.io/tags/z0scan/">Documentation</a> • <a href="https://github.com/JiuZero/z0scan/releases">Download</a> • <a href="https://github.com/JiuZero/z0scan/blob/master/doc/CHANGELOG.MD">ChangeLog</a> • <a href="https://github.com/JiuZero/z0scan-report">ReportSource</a>
 </p>
 
 <p align="center">
   <a href="https://www.python.org/">
     <img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white">
   </a>
-  <a href="https://github.com/JiuZero/z0scan">
-    <img src="https://img.shields.io/github/last-commit/JiuZero/z0scan?style=flat&logo=github">
+  <a href="https://github.com/JiuZero/z0scan/releases">
+    <img src="https://img.shields.io/github/downloads/JiuZero/z0scan/total">
+  </a>
+  <a href="https://github.com/JiuZero/z0scan/releases">
+    <img src="https://img.shields.io/github/v/release/JiuZero/z0scan.svg">
   </a>
   <a href="https://github.com/JiuZero/z0scan">
     <img src="https://img.shields.io/github/stars/JiuZero/z0scan?style=flat&logo=github&color=yellow">
@@ -18,6 +21,18 @@
     <img src="https://img.shields.io/badge/License-GPL2-red?style=flat&logo=gnu">
   </a>
 </p>
+
+## contributors
+
+<div><table frame=void>
+	<tr>
+    <td align="center">
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/1.png"alt="steveopen1"/>
+        <br>
+        <a href="https://github.com/steveopen1/"><sub>steveopen1</sub></a>
+    </td>
+  </tr>
+</table></div>
 
 ## Acknowledgments
 
@@ -92,6 +107,16 @@
         <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/14.jpg"alt="夜组安全"/>
         <br>
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzk0ODM0NDIxNQ==&scene=124#wechat_redirect"><sub>夜组安全</sub></a>
+    </td>
+    <td align="center">
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/15.jpg"alt="星落安全"/>
+        <br>
+        <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzkwNjczOTQwOA==&scene=124#wechat_redirect"><sub>星落安全</sub></a>
+    </td>
+    <td align="center">
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/16.jpg"alt="Cyber-Tools"/>
+        <br>
+        <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzkzNTc0OTgwMA==&scene=124#wechat_redirect"><sub>Cyber-Tools</sub></a>
     </td>
   </tr>
 </table></div>
@@ -168,7 +193,7 @@ z0 scan -f urls.txt
 
 ## Plugin List  
 
-- PerFile  
+- **PerFile**  
 
 | Plugin Name          | Description                          | Risk |  
 |:--------------------:|:------------------------------------:|:----:|  
@@ -198,9 +223,10 @@ z0 scan -f urls.txt
 | sensi-sourcecode     | Source Code Leak                     | 1    |  
 | captcha-bypass       | CAPTCHA Bypass                       | 0    |  
 | sensi-retirejs       | Outdated JS Component Detection      | -1   |  
-| ssti                 | SSTI Vulnerability Detection         | 3    |  
+| ssti                 | SSTI Vulnerability Detection         | 3    |
+| ssti-angularjs|AngularJS Client-Side Template Injection Detector|2 |
 
-- PerFolder  
+- **PerFolder**  
 
 | Plugin Name          | Description                          | Risk |  
 |:--------------------:|:------------------------------------:|:----:|  
@@ -210,7 +236,7 @@ z0 scan -f urls.txt
 | upload-oss           | OSS Bucket Arbitrary File Upload     | 2    |  
 | sensi-frontpage      | FrontPage Configuration Leak         | 1    |  
 
-- PerServer  
+- **PerServer**  
 
 | Plugin Name          | Description                          | Risk |  
 |:--------------------:|:------------------------------------:|:----:|  
@@ -233,16 +259,10 @@ z0 scan -f urls.txt
 | other-smuggling      | Request Smuggling Vulnerability      | 3    |  
 | trave-list_3         | Directory Listing                    | 2    |  
 
-## Changelog & License  
-
-- Changelog: [CHANGELOG](https://github.com/JiuZero/z0scan/blob/master/doc/CHANGELOG.MD)  
-
-- GPL-2.0 License: [LICENSE](https://github.com/JiuZero/z0scan/blob/master/LICENSE)  
-
 ## Contact the Developer  
 
 | Platform | Contact        |  
 |:--------:|:--------------:|  
-| WeChat   | JiuZer1        |  
-| QQ       | 1703417187     |  
-| Email    | jiuzer0@qq.com |
+| **WeChat**   | JiuZer1        |  
+| **QQ**       | 1703417187     |  
+| **Email**    | jiuzer0@qq.com |

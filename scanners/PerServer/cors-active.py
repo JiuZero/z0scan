@@ -10,7 +10,7 @@ from api import generateResponse, VulType, PLACE, Type, PluginBase, KB, conf
 
 class Z0SCAN(PluginBase):
     name = "cors-active"
-    desc = 'CORS Active Scan'
+    desc = 'CORS Vulnerability (Active Detection)'
     version = "2025.5.25"
     risk = 2
 

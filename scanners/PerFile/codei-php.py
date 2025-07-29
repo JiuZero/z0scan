@@ -11,7 +11,7 @@ from lib.helper.helper_sensitive import sensitive_page_error_message_check
 
 class Z0SCAN(PluginBase):
     name = "codei-php"
-    desc = 'PHP Code Injection'
+    desc = 'PHP Code Execution'
     version = "2025.6.16"
     risk = 3
             

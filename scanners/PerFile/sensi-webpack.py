@@ -9,7 +9,7 @@ from api import generateResponse, random_num, PLACE, VulType, Type, PluginBase, 
 
 class Z0SCAN(PluginBase):
     name = 'webpack'
-    desc = "The leak of webpack sources"
+    desc = "Webpack Source Code Leak"
     version = "2025.5.8"
     risk = 1
 

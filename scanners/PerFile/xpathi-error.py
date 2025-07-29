@@ -8,7 +8,7 @@ from api import generateResponse, VulType, Type, PluginBase, KB, conf, Threads
 
 class Z0SCAN(PluginBase):
     name = "xpathi-error"
-    desc = 'XPath Injection'
+    desc = 'Error-based XPATH Injection'
     version = "2025.3.18"
     risk = 2
 

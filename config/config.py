@@ -4,14 +4,14 @@
 """
 总配置
 """
-THREADS = 15  # 默认线程数量
-EXCLUDES = ["google", '.gov.', 'baidu', 'firefox', 'microsoft.com', '.bing.', 'msn.cn']  # 排除包含关键字的网址
+THREADS = 10  # 默认线程数量
+EXCLUDES = ["google", '.gov.', 'baidu', 'firefox', 'microsoft', '.bing.', 'msn.cn']  # 排除包含关键字的网址
 DEFAULT_PROXY_PORT = 5920 # 被动模式默认监听端口
-RETRY = 2  # 超时重试次数
+RETRY = 3  # 超时重试次数
 TIMEOUT = 6  # 超时时间
 LEVEL = 2 # 0:纯被动分析模式，不做额外请求，即不加载Payload | 1:最低请求量的扫描，最低的业务影响 | 2:中等请求量的扫描，Payload多为通用 | 3:大量请求扫描，Payload覆盖面更广
 RISK = [0, 1, 2] # -1:几乎无危害的常见漏洞，0:可能导致危害产生，1:低危害，2. 中等危害，3:高危害
-SKIP_WAF_RECHECK = True # 是否跳过曾经检测到WAF但在本次启动后的扫描中未检测的站点的WAF检测
+SKIP_WAF_RECHECK = False # 是否跳过曾经检测到WAF但在本次启动后的扫描中未检测的站点的WAF检测
 IPV6 = False # 需网络支持ipv6（使用此参数优先ipv6地址，ipv6无记录再使用ipv4地址）
 SKIP_SIMILAR_REQUEST = True # 是否跳过相似请求的扫描
 PSEUDO_STATIC_KEYWORDS = ['id', 'pid', 'cid', 'user', 'page', 'category', 'column_id', 'tty'] # 伪静态关键点参数（忽略大小写）
@@ -39,7 +39,7 @@ PROXY_CONFIG = {
 """
 LOAD = []  # 需要加载的插件
 DISLOAD = []  # 不加载的插件
-PLUGIN_THREADS = 2 # 插件内线程（针对多参数情况）
+PLUGIN_THREADS = 3 # 插件内线程（针对多参数情况）
 # sqli-time
 SQLi_TIME = 4 # SQLi插件延时时间
 # xss
@@ -64,3 +64,4 @@ REVERSE_DNS = ""
 REVERSE_RMI_IP = "127.0.0.1"  # Java RMI 回连IP,需要改为服务器ip，不能改为0.0.0.0，因为程序无法识别
 REVERSE_RMI_PORT = 10002  # Java RMI 回连端口
 REVERSE_SLEEP = 5  # 反连后延时检测时间，单位是(秒)
+DNS_PORT = 53 # DNS服务默认端口

@@ -9,7 +9,7 @@ from api import conf, VulType, Type, PluginBase, Threads, KB
 
 class Z0SCAN(PluginBase):
     name = "sensi-php-realpath"
-    desc = 'Php Real Path Finder'
+    desc = 'PHP Real Path Discovery'
     version = "2025.6.24"
     risk = 0
         

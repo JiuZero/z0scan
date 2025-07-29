@@ -9,7 +9,7 @@ from api import VulType, Type, PLACE, PluginBase, generateResponse, conf, KB
 
 class Z0SCAN(PluginBase):
     name = 'other-smuggling'
-    desc = 'HTTP smuggling vulnerability'
+    desc = 'Request Smuggling Vulnerability'
     version = "2025.6.22"
     risk = 3
 

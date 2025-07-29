@@ -7,7 +7,7 @@ import requests
 
 class Z0SCAN(PluginBase):
     name = "upload-put"
-    desc = "Detect the vulnerability of uploading arbitrary files by PUT method"
+    desc = "PUT-based Arbitrary File Upload"
     version = "2025.5.7"
     risk = 3
     

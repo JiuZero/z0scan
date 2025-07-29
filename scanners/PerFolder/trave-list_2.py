@@ -8,7 +8,7 @@ from api import VulType, KB, PluginBase, Type, conf, generateResponse
 
 class Z0SCAN(PluginBase):
     name = "trave-list"
-    desc = "Directory browsing vulnerability"
+    desc = "Directory browsing vulnerability (Directory-based)"
     version = "2025.5.11"
     risk = 2
 

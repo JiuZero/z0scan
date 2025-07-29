@@ -7,7 +7,7 @@ import re, socket
 
 class Z0SCAN(PluginBase):
     name = "other-hosti"
-    desc = "Host Header Injection"
+    desc = "Host Header Injection Detection"
     version = "2025.6.7"
     risk = 1
     

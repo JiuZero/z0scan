@@ -10,7 +10,7 @@ from api import conf, generateResponse, VulType, KB, PluginBase, Type, Threads
 
 class Z0SCAN(PluginBase):
     name = "sensi-files"
-    desc = 'File Leak Finder'
+    desc = 'Sensitive File Leak (e.g., phpinfo, .git)'
     version = "2025.6.26"
     risk = 1
     

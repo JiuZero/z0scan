@@ -8,7 +8,7 @@ import re
 
 class Z0SCAN(PluginBase):
     name = "sensi-viewstate"
-    desc = "Check for unencrypted ASP.NET ViewState parameters"
+    desc = "Unencrypted VIEWSTATE Discovery"
     version = "2025.5.26"
     risk = 0
     

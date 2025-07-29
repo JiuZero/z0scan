@@ -11,7 +11,7 @@ from api import generateResponse, VulType, PluginBase, conf, KB, Type
 
 class Z0SCAN(PluginBase):
     name = 'sensi-backup_1'
-    desc = 'Backup File Finder for PerFile'
+    desc = 'Backup File Detection (File-based)'
     version = "2025.5.15"
     risk = 1
         

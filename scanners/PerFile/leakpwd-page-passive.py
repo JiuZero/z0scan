@@ -15,7 +15,7 @@ def get_res_length(res):
 
 class Z0SCAN(PluginBase):
     name = "leakpwd-page"
-    desc = 'Login page user and password brute'
+    desc = 'Weak Password on Login Page'
     version = "2025.5.15"
     risk = 2
     

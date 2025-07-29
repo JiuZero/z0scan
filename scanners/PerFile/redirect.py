@@ -9,7 +9,7 @@ from api import generateResponse, VulType, PLACE, Type, PluginBase, conf, logger
 
 class Z0SCAN(PluginBase):
     name = "redirect"
-    desc = 'Open Redirect'
+    desc = 'Redirect Vulnerability'
     version = "2025.7.3"
     risk = 1
     

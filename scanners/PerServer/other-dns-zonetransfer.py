@@ -11,7 +11,7 @@ from api import generateResponse, VulType, PluginBase, conf, KB, Type
 
 class Z0SCAN(PluginBase):
     name = "other-dns-zonetransfer"
-    desc = 'DNS zone transfer'
+    desc = 'DNS Zone Transfer Vulnerability'
     version = "2025.5.11"
     risk = 1
     

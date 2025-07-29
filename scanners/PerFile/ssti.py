@@ -7,7 +7,7 @@ from api import generateResponse, VulType, Type, PluginBase, conf, KB, Threads
 
 class Z0SCAN(PluginBase):
     name = "ssti"
-    desc = 'SSTI'
+    desc = 'SSTI Vulnerability Detection'
     version = "2025.6.24"
     risk = 3
 

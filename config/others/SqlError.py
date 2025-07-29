@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/5/15
+# JiuZero 2025/7/29
 
 rules = {
     "Microsoft SQL": [
@@ -33,7 +33,7 @@ rules = {
     "SyBase": [
         r"Sybase message:", 
         r'Sybase Driver', 
-        r'[SYBASE]'
+        r'\[SYBASE\]'
     ],
     "Microsoft Access": [
         r'Syntax error in query expression', 
@@ -68,7 +68,7 @@ rules = {
         r'com\.informix\.jdbc', 
         r'Dynamic Page Generation Error:', 
         r'An illegal character has been found in the statement', 
-        r'[Informix]'
+        r'\[Informix\]'
     ],
     "InterBase": [
         r'<b>Warning</b>:  ibase_', 

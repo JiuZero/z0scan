@@ -12,7 +12,7 @@ from api import conf, generateResponse, VulType, KB, PluginBase, Type
 
 class Z0SCAN(PluginBase):
     name = "sensi-backup_3"
-    desc = "Backup Files Of Each Domain"
+    desc = "Backup File Detection (Domain-based)"
     version = "2025.3.1"
     risk = 1
     

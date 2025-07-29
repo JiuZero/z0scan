@@ -12,7 +12,7 @@ from api import generateResponse, random_str, conf, PLACE, VulType, POST_HINT, T
 
 class Z0SCAN(PluginBase):
     name = "cmdi"
-    desc = 'Cmd Injection'
+    desc = 'Command Execution'
     version = "2025.6.14"
     risk = 3
         

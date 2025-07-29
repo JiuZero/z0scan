@@ -9,7 +9,7 @@ from api import PluginBase, VulType, isJavaObjectDeserialization, isPHPObjectDes
 
 class Z0SCAN(PluginBase):
     name = "objectdese"
-    desc = 'ObjectDeserialization Finder'
+    desc = 'Deserialization Parameter Analysis'
     version = "2025.3.4"
     risk = 3
     

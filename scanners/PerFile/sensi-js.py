@@ -11,7 +11,7 @@ from api import VulType, Type, PluginBase, conf, KB, logger, chat
 
 class Z0SCAN(PluginBase):
     name = "sensi-js"
-    desc = 'JS Sensitive Information Scanner (with AI Context Validation)'
+    desc = 'JS Sensitive Information Leak (with AI Context Validation)'
     version = "2025.3.4"
     risk = 0
         

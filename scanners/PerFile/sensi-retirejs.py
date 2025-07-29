@@ -8,7 +8,7 @@ from api import VulType, Type, PLACE, PluginBase, generateResponse, conf, KB
 
 class Z0SCAN(PluginBase):
     name = 'sensi-retirejs'
-    desc = 'Detects outdated JavaScript libraries with known vulnerabilities'
+    desc = 'Outdated JS Component Detection'
     version = "2025.6.21"
     risk = -1
 

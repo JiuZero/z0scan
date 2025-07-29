@@ -10,7 +10,7 @@ from api import PluginBase, conf, VulType, generateResponse, Type, logger, Threa
 
 class Z0SCAN(PluginBase):
     name = "codei-asp"
-    desc = 'ASP Code Injection'
+    desc = 'ASP Code Execution'
     version = "2025.5.15"
     risk = 3
         

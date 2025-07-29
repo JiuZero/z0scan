@@ -6,7 +6,7 @@ from api import generateResponse, conf, VulType, PLACE, PluginBase, Type, KB
 
 class Z0SCAN(PluginBase):
     name = "cors-passive"
-    desc = 'CORS Passive Scan'
+    desc = 'CORS Vulnerability (Passive Analysis)'
     version = "2025.5.26"
     risk = 1
     

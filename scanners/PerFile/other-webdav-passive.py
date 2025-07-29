@@ -7,7 +7,7 @@ from api import generateResponse, VulType, PLACE, HTTPMETHOD, PluginBase, conf, 
 
 class Z0SCAN(PluginBase):
     name = "other-webdav-passive"
-    desc = 'Webdav Finder'
+    desc = 'WebDAV Service Passive Detection'
     version = "2025.5.15"
     risk = 0
     
