@@ -8,8 +8,11 @@
   <a href="https://www.python.org/">
     <img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white">
   </a>
-  <a href="https://github.com/JiuZero/z0scan">
-    <img src="https://img.shields.io/github/last-commit/JiuZero/z0scan?style=flat&logo=github">
+  <a href="https://github.com/JiuZero/z0scan/releases">
+    <img src="https://img.shields.io/github/v/release/JiuZero/z0scan.svg">
+  </a>
+  <a href="https://github.com/JiuZero/z0scan/releases">
+    <img src="https://img.shields.io/github/downloads/JiuZero/z0scan/total">
   </a>
   <a href="https://github.com/JiuZero/z0scan">
     <img src="https://img.shields.io/github/stars/JiuZero/z0scan?style=flat&logo=github&color=yellow">
@@ -36,82 +39,84 @@
 <div><table frame=void>
 	<tr>
     <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/1.jpg"alt="威零安全"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/1.jpg"alt="Typora-Logo"/>
         <br>
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzg4Mzg4OTIyMA====&scene=124#wechat_redirect"><sub>威零安全</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/2.jpg"alt="蓝剑安全"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/2.jpg"alt="Typora-Logo"/>
         <br>
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzkxMzI5NzI5Mg==&scene=124#wechat_redirect"><sub>蓝剑实验室</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/4.jpg"alt="ZAC安全"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/4.jpg"alt="Typora-Logo"/>
         <br>
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzkzMjIxMDU5OA==&scene=124#wechat_redirect"><sub>ZAC安全</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/5.jpg"alt="奉天安全"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/5.jpg"alt="Typora-Logo"/>
         <br>
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzk0NjQ2NzQ0Ng==&scene=124#wechat_redirect"><sub>奉天安全</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/10.jpg"alt="隼目安全"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/10.jpg"alt="Typora-Logo"/>
         <br>
         <a href="https://www.cn-fnst.top"><sub>隼目安全</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/3.jpg"alt="HackTwo"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/3.jpg"alt="Typora-Logo"/>
         <br>
         <a href="https://mp.weixin.qq.com/s/XvCq_kBAY-aDUH0uE3-oOQ"><sub>HackTwo</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/6.jpg"alt="神农Sec"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/6.jpg"alt="Typora-Logo"/>
         <br>
         <a href="https://xz.aliyun.com/users/141291/"><sub>神农Sec</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/7.jpg"alt="棉花糖"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/7.jpg"alt="Typora-Logo"/>
         <br>
         <a href="javascript:void(0)"><sub>棉花糖</sub></a>
     </td>
+  </tr>
+  <tr>
     <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/8.jpg"alt="风铃Sec"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/8.jpg"alt="Typora-Logo"/>
         <br>
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzk0MjY1ODE5Mg==&scene=124#wechat_redirect"><sub>风铃Sec</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/11.jpg"alt="银遁安全"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/11.jpg"alt="Typora-Logo"/>
         <br>
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzU3MjU4MjM3MQ==&scene=124#wechat_redirect"><sub>银遁安全</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/9.png"alt="X黑手网络"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/9.png"alt="Typora-Logo"/>
         <br>
         <a href="https://xheishou.com"><sub>X黑手网络</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/12.jpg"alt="Sec探索者"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/12.jpg"alt="Typora-Logo"/>
         <br>
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzkyNDYwNTcyNA==&scene=124#wechat_redirect"><sub>Sec探索者</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/13.jpg"alt="雪山盟"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/13.jpg"alt="Typora-Logo"/>
         <br>
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzE5MTQ3MjE0OQ==&scene=124#wechat_redirect"><sub>雪山盟</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/14.jpg"alt="夜组安全"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/14.jpg"alt="Typora-Logo"/>
         <br>
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzk0ODM0NDIxNQ==&scene=124#wechat_redirect"><sub>夜组安全</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/15.jpg"alt="星落安全"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/15.jpg"alt="Typora-Logo"/>
         <br>
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzkwNjczOTQwOA==&scene=124#wechat_redirect"><sub>星落安全</sub></a>
     </td>
     <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/16.jpg"alt="Cyber-Tools"/>
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/16.jpg"alt="Typora-Logo"/>
         <br>
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=MzkzNTc0OTgwMA==&scene=124#wechat_redirect"><sub>Cyber-Tools</sub></a>
     </td>
