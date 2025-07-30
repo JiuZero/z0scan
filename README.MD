@@ -22,7 +22,7 @@
   </a>
 </p>
 
-## contributors
+## Contributors
 
 <div><table frame=void>
 	<tr>
@@ -78,13 +78,13 @@
         <br>
         <a href="javascript:void(0)"><sub>棉花糖</sub></a>
     </td>
-  </tr>
-  <tr>
     <td align="center">
         <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/8.jpg"alt="Typora-Logo"/>
         <br>
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzk0MjY1ODE5Mg==&scene=124#wechat_redirect"><sub>风铃Sec</sub></a>
     </td>
+  </tr>
+  <tr>
     <td align="center">
         <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/11.jpg"alt="Typora-Logo"/>
         <br>
@@ -145,10 +145,9 @@ Get the release version (**compiled with Nuitka for significantly improved speed
 
 > PyPI updates have been discontinued since 2025.7.19  
 
-Install via **GitHub/Gitee** clone:  
+Install via **GitHub** clone:  
 ```bash  
-git clone https://github.com/JiuZero/z0scan  
-# https://gitee.com/JiuZero/z0scan  
+git clone https://github.com/JiuZero/z0scan
 cd z0scan  
 pip install -r requirements.txt  
 python3 z0.py help  
