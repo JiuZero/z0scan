@@ -3,7 +3,7 @@
 
 import _socket
 import http
-import os
+import os, re
 import platform
 import select
 import sys
@@ -27,6 +27,7 @@ from lib.core.enums import HTTPMETHOD
 from lib.core.settings import notAcceptedExt
 from lib.parse.parse_request import FakeReq
 from lib.parse.parse_response import FakeResp
+from lib.core.db import selectdb, insertdb
 from socket import socket
 import socks as socks5
 
@@ -530,16 +531,15 @@ class ProxyHandle(BaseHTTPRequestHandler):
                 if not KB.pause:
                     if not self._is_replay() and response:
                         def process_task(request, response):
+                            # 防止流量竞争
                             time.sleep(2)
                             netloc = "http"
                             if request.https:
                                 netloc = "https"
-                            if (netloc == "https" and int(request.port) == 443) or (
-                                    netloc == "http" and int(request.port) == 80):
+                            if (netloc == "https" and int(request.port) == 443) or (netloc == "http" and int(request.port) == 80):
                                 url = "{0}://{1}{2}".format(netloc, request.hostname, request.path)
                             else:
-                                url = "{0}://{1}:{2}{3}".format(netloc, request.hostname, request.port,
-                                                                request.path)
+                                url = "{0}://{1}:{2}{3}".format(netloc, request.hostname, request.port, request.path)
                             method = request.command.lower()
                             if method == "get":
                                 method = HTTPMETHOD.GET
@@ -553,8 +553,30 @@ class ProxyHandle(BaseHTTPRequestHandler):
                                 body_data = ""
                             req = FakeReq(url, request._headers, method, body_data)
                             resp = FakeResp(int(response.status), response.get_body_data(), response._headers)
+                            # 跳过用户设置的不扫描目标
+                            for rule in conf.excludes:
+                                if rule in req.hostname:
+                                    logger.info("Skip Domain: {}".format(url))
+                                    return
+                            # 去重
+                            _raw = req.raw
+                            if isinstance(_raw, bytes):
+                                raw_str = _raw.decode('utf-8', errors='ignore')
+                            else:
+                                raw_str = _raw
+                            replaced_str = re.sub(r'\d+', '0', raw_str)
+                            history = selectdb("cache", "requestsRaw", where="hostname='{}'".format(req.hostname))
+                            replaced_str = re.sub(r'[\s\n\r]+', '', replaced_str)
+                            if history == replaced_str and conf.skip_similar_request:
+                                logger.info("Skip URL: {}".format(url))
+                                return
+                            if history != replaced_str:
+                                cv = {
+                                    'hostname': req.hostname,
+                                    'requestsRaw': replaced_str
+                                }
+                                insertdb("cache", cv)
                             KB['task_queue'].put(('loader', req, resp))
-                        
                         # 使用线程池异步执行
                         task_thread = threading.Thread(target=process_task, args=(request, response))
                         task_thread.daemon = True

@@ -13,6 +13,7 @@ from lib.core.data import path, conf
 from lib.core.log import logger, colors
 from lib.core.settings import VERSION
 from urllib.parse import urlparse
+from lib.core.notice import notice_all
 
 class OutPut(object):
 
@@ -26,13 +27,13 @@ class OutPut(object):
         folder_path = os.path.join(path.output, folder_name)
         if not os.path.isdir(folder_path):
             os.mkdir(folder_path)
-        if conf.json:
+        if conf.get("json"):
             self.filename = conf.json
         else:
             filename = str(int(time.time())) + ".json"
             self.filename = os.path.join(folder_path, filename)
-        self.ishtml = conf.html
-
+        txt_filename = str(int(time.time())) + ".txt"
+        self.txt_filename = os.path.join(folder_path, txt_filename)
         html_filename = str(int(time.time())) + ".html"
         self.html_filename = os.path.join(folder_path, html_filename)
 
@@ -42,6 +43,9 @@ class OutPut(object):
     def get_html_filename(self):
         return self.html_filename
 
+    def get_txt_filename(self):
+        return self.txt_filename
+        
     def _set(self, value):
         '''
         存储相同的结果，防止重复,不存在返回真，存在返回假
@@ -69,7 +73,7 @@ class OutPut(object):
         with open(self.filename, "a+") as f:
             f.write(json.dumps(output) + '\n')
 
-        if self.ishtml:
+        if conf.html:
             # 写入html
             if not os.path.exists(self.html_filename):
                 with open(os.path.join(path.root, "data", "report.template"), encoding='utf-8') as f:
@@ -95,16 +99,14 @@ class OutPut(object):
         Payload : ' and 1=2--+
         ....
         """
-        if conf.concise_output:
-            logger.info("[{}{}{}][{}{}{}] {}".format(colors.cy, output["vultype"], colors.e, colors.m, output["name"], colors.e, output["url"]))
-        else:
-            msg = "<{}{}{}> | [{}{}{}] [{}{}{}]\n".format(colors.m, str(output["hostname"]), colors.e, colors.m, output["type"], colors.e, colors.m, output["name"], colors.e)
-            msg += "{}URL{} : {}\n".format(colors.cy, colors.e, output["url"])
-            msg += "{}Vultype{} : {}\n".format(colors.cy, colors.e, output["vultype"])
-            if output["show"]:
-                for key, value in output["show"].items():
-                    msg += "{}{}{} : {}\n".format(colors.cy, key, colors.e, value)
-            logger.info(msg)
+        msg = "<{}{}{}> | [{}{}{}] [{}{}{}]\n".format(colors.m, str(output["hostname"]), colors.e, colors.m, output["type"], colors.e, colors.m, output["name"], colors.e)
+        msg += "{}URL{} : {}\n".format(colors.cy, colors.e, output["url"])
+        msg += "{}Vultype{} : {}\n".format(colors.cy, colors.e, output["vultype"])
+        if output["show"]:
+            for key, value in output["show"].items():
+                msg += "{}{}{} : {}\n".format(colors.cy, key, colors.e, value)
+        logger.info(msg)
+        notice_all(msg)
 
 
 class ResultObject(object):

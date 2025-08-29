@@ -15,7 +15,7 @@ class Z0SCAN(PluginBase):
     risk = 1
 
     def audit(self):
-        if not self.risk in conf.risk or conf.level == 0 or self.name in KB.disable:
+        if not self.risk in conf.risk or conf.level == 0:
             return
         accepted_ext = ["php", "php3", "php4", "php5", "asp", "aspx", "jsp", "cfm", "pl", "shtml"]
         if not self.requests.suffix.lower().lstrip('.') in accepted_ext:

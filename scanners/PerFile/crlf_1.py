@@ -23,7 +23,7 @@ class Z0SCAN(PluginBase):
         return False, None
 
     def audit(self):
-        if conf.level == 0 or not self.risk in conf.risk or self.fingerprints.waf or self.name in KB.disable:
+        if conf.level == 0 or not self.risk in conf.risk or self.fingerprints.waf:
             return
         _payloads = [
             # 基础换行组合

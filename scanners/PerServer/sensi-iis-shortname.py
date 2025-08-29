@@ -12,7 +12,7 @@ class Z0SCAN(PluginBase):
     risk = 0
     
     def audit(self):
-        if not "IIS" in self.fingerprints.webserver and self.risk in conf.risk and conf.level != 0 and not self.name in KB.disable:
+        if not "IIS" in self.fingerprints.webserver and self.risk in conf.risk and conf.level != 0:
             existed_path = '/*~1*/a.aspx'
             not_existed_path = '/JiuZer0~1*/a.aspx'
             r1 = requests.get(self.requests.netloc + existed_path)

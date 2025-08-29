@@ -49,7 +49,7 @@ class Z0SCAN(PluginBase):
         return probability
     
     def audit(self):
-        if not self.fingerprints.waf and self.risk in conf.risk and conf.level != 0 and not self.name in KB.disable:
+        if not self.fingerprints.waf and self.risk in conf.risk and conf.level != 0:
             _payloads = [
                 r"'\")",
                 ## 宽字节

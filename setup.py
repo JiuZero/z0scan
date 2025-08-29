@@ -3,22 +3,13 @@
 # JiuZero 2025/6/20
 
 import setuptools
-import os, io
 from lib.core.settings import VERSION, SITE
-import shutil
-import tempfile
 
-
-current_dir = os.path.abspath(os.path.dirname(__file__))
-with io.open(os.path.join(current_dir, "README.md"), encoding="utf-8") as fd:
-    desc = fd.read()
-with io.open(os.path.join(current_dir, "requirements.txt"), encoding="utf-8") as fd:
-    install_requires = fd.readlines()
+with open('README.md', 'r') as f:
+    long_description = f.read()
+with open('requirements.txt', 'r') as f:
+    install_requires = f.readlines()
     install_requires = [i.strip() for i in install_requires]
-
-env_dir = tempfile.mkdtemp(prefix="z0scan-install-")
-shutil.copytree(os.path.abspath(os.getcwd()), os.path.join(env_dir, "z0scan"))
-os.chdir(env_dir)
 
 setuptools.setup(
     name='z0scan',
@@ -48,6 +39,3 @@ setuptools.setup(
         "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
     )
 )
-
-dist_dir = os.path.join(env_dir, "dist")
-shutil.move(dist_dir, os.path.join(current_dir, "dist"))

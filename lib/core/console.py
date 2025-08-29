@@ -1,51 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/7/5
+# JiuZero 2025/8/10
 
-from lib.core.data import conf, KB
+from lib.core.data import conf, KB, path
 from lib.core.log import logger
-import threading, time, sys
+import threading, time, sys, os
 from typing import Optional
+import socket
+from lib.core.common import ltrim
+from lib.core.exection import PluginCheckError
+from lib.core.loader import load_file_to_module
 
-try:
-    import zmq
-    ZMQ_AVAILABLE = True
-except ImportError:
-    ZMQ_AVAILABLE = False
-    import socket
-
-class BackgroundZeroMQServer:
+class BackgroundServer:
     def __init__(self, port: int = 9331):
         self.port = port
-        self.ctx: Optional[zmq.Context] = None
         self.socket = None
         self.running = False
         self.server_thread: Optional[threading.Thread] = None
-        self.use_zmq = ZMQ_AVAILABLE
 
     def _server_loop(self):
         """服务端内部循环"""
-        if self.use_zmq:
-            self._zmq_server_loop()
-        else:
-            self._socket_server_loop()
-
-    def _zmq_server_loop(self):
-        """ZeroMQ服务端循环"""
-        self.ctx = zmq.Context()
-        self.socket = self.ctx.socket(zmq.REP)
-        self.socket.bind(f"tcp://*:{self.port}")
-        logger.info(f"ZeroMQ server started on port {self.port}")
-        
-        while self.running:
-            try:
-                msg = self.socket.recv_string()
-                logger.debug(f"Received message: {msg}", level=1)
-                r = Command().exec_command(msg)
-                self.socket.send_string(r)
-            except zmq.ZMQError as e:
-                logger.error(f"Server error: {e}")
-                break
+        self._socket_server_loop()
 
     def _socket_server_loop(self):
         """Socket服务端循环"""
@@ -53,8 +28,7 @@ class BackgroundZeroMQServer:
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind(('localhost', self.port))
         self.socket.listen(1)
-        logger.warning(f"ZeroMQ server init fail, Socket server started on port {self.port}")
-        logger.info(f"You can replace Socket with ZeroMQ by installing ZeroMQ")
+        logger.info(f"Socket server started on port {self.port}")
         
         while self.running:
             try:
@@ -89,19 +63,12 @@ class BackgroundZeroMQServer:
             return
 
         self.running = False
-        if self.use_zmq:
-            if self.socket:
-                self.socket.close()
-            if self.ctx:
-                self.ctx.term()
-        else:
-            if self.socket:
-                try:
-                    self.socket.shutdown(socket.SHUT_RDWR)
-                except Exception:
-                    pass
-                self.socket.close()
-        logger.info(f"Server stopped ({'ZeroMQ' if self.use_zmq else 'Socket'})")
+        try:
+            self.socket.shutdown(socket.SHUT_RDWR)
+        except Exception:
+            pass
+        self.socket.close()
+        logger.info(f"Server stopped Socket")
 
     def __enter__(self):
         return self.start()
@@ -110,27 +77,14 @@ class BackgroundZeroMQServer:
         """支持上下文管理器"""
         self.stop()
 
-class ZeroMQClient:
+class Client:
     def __init__(self, host: str = "localhost", port: int = 9331, timeout: int = 3000):
         self.host = host
         self.port = port
         self.timeout = timeout
-        self.use_zmq = ZMQ_AVAILABLE
         self.socket = None
         
-        if self.use_zmq:
-            self._init_zmq_client()
-        else:
-            self._init_socket_client()
-
-    def _init_zmq_client(self):
-        """初始化ZeroMQ客户端"""
-        self.ctx = zmq.Context()
-        self.socket = self.ctx.socket(zmq.DEALER)
-        self.socket.setsockopt(zmq.LINGER, 0)
-        self.socket.setsockopt(zmq.RCVTIMEO, self.timeout)  # 设置接收超时
-        self.socket.connect(f"tcp://{self.host}:{self.port}")
-        logger.info(f"ZeroMQ client connected to server at {self.host}:{self.port}")
+        self._init_socket_client()
 
     def _init_socket_client(self):
         """初始化Socket客户端"""
@@ -145,22 +99,7 @@ class ZeroMQClient:
             self.socket = None
 
     def send_message(self, message: str) -> Optional[str]:
-        if self.use_zmq:
-            return self._zmq_send_message(message)
-        else:
-            return self._socket_send_message(message)
-
-    def _zmq_send_message(self, message: str) -> Optional[str]:
-        """ZeroMQ发送消息实现"""
-        try:
-            self.socket.send_string(message)
-            return self.socket.recv_string()
-        except zmq.Again:
-            logger.warning(f"Timeout after {self.timeout}ms while waiting for reply")
-            return None
-        except zmq.ZMQError as e:
-            logger.error(f"ZMQ error occurred: {str(e)}")
-            return None
+        return self._socket_send_message(message)
 
     def _socket_send_message(self, message: str) -> Optional[str]:
         """Socket发送消息实现"""
@@ -181,20 +120,12 @@ class ZeroMQClient:
             return None
 
     def close(self):
-        if self.use_zmq:
-            try:
-                self.socket.close()
-                self.ctx.term()
-            except zmq.ZMQError as e:
-                logger.error(f"Error closing ZeroMQ connection: {str(e)}")
-        else:
-            if self.socket:
-                try:
-                    self.socket.shutdown(socket.SHUT_RDWR)
-                except Exception:
-                    pass
-                self.socket.close()
-                logger.info("Socket connection closed")
+        try:
+            self.socket.shutdown(socket.SHUT_RDWR)
+        except Exception:
+            pass
+        self.socket.close()
+        logger.info("Socket connection closed")
 
 class Command:
     def parse_command(self, input_str):
@@ -212,64 +143,116 @@ class Command:
     help      - Show this help message
     pause     - Pause current operation
     set       - Set parameter (format: set key=value)
-        Allowed parameters: level, timeout, retry, risk, disable
+        Allowed parameters: level, timeout, retry, risk
     env       - Show current configuration
     status    - Scan status
+    load      - Load new plugins
+    disload   - Disable plugins that be loaded
     
     Examples:
     set level=3
-    set disable=sqli-error,sqli-bool
+    load sqli-error,sqli-bool
     pause"""
             return help_text
-            
         elif cmd == "pause":
             KB.pause = True
             return "Operation paused"
-            
         elif cmd == "set":
             if len(args) < 1:
                 return "Error: Parameter required (format: set key=value)"
-                
             try:
                 key, value = args[0].split('=', 1)
                 key = key.strip()
                 value = value.strip()
-                
-                if key not in ["level", "timeout", "retry", "risk", "disable"]:
+                if key not in ["level", "timeout", "retry", "disable"]:
                     return f"Error: Not allowed to set parameter '{key}'"
-                    
-                if key == "risk":
-                    try:
-                        # Convert string list to actual list of floats
-                        value = [int(x.strip()) for x in value.split(',')]
-                    except ValueError as e:
-                        return f"Error: Invalid risk list values ({str(e)})"
-                if key == "disable":
-                    try:
-                        value = [str(x.strip()) for x in value.split(',')]
-                    except ValueError as e:
-                        return f"Error: Invalid disable list values ({str(e)})"
                 if key in ["level", "retry"]:
                     value = int(value)
                 elif key in ["timeout"]:
                     value = float(value)
-                    
-                setattr(conf, key, value)
+                if key in ["disable"]:
+                    conf.disable += value
+                else:
+                    setattr(conf, key, value)
                 return f"Parameter set: {key} => {value}"
-                
             except ValueError as e:
                 return f"Error: Invalid parameter value ({str(e)})"
-                
+        elif cmd == "load":
+            load_new_plugins(args)
+        elif cmd == "disload":
+            disload_plugins(args)
         elif cmd == "env":
             env_info = "\n".join(
                 f"{k}: {getattr(conf, k, 'N/A')}"
                 for k in ["level", "timeout", "retry", "risk", "disable"]
             )
             return f"Current Configuration:\n{env_info}"
-        
         elif cmd == "status":
             status_info = f'{KB.output.count():d} SUCCESS | {KB.running:d} RUNNING | {KB.task_queue.qsize():d} REMAIN | {KB.finished:d} SCANNED IN {time.time()-KB.start_time:.2f}s'
             return f"Scan Status:\n{status_info}"
-            
         else:
             return f"Error: Unknown command '{cmd}'. Type 'help' for available commands"
+
+
+def disload_plugins(disload_list: list):
+    for _dir in conf.scanner_folder:
+        if _dir not in ["PerFile", "PerFolder", "PerServer"]:
+            continue
+        for root, dirs, files in os.walk(os.path.join(path.scanners, _dir)):
+            files = filter(lambda x: not x.startswith("__") and x.endswith(".py"), files)
+            dis_list = ""
+            for _ in files:
+                filename = os.path.join(root, _)
+                mod = load_file_to_module(filename)
+                try:
+                    mod = mod.Z0SCAN()
+                    mod.checkImplemennted()
+                    if not mod.name in disload_list:
+                        continue
+                    if not mod.name in KB["registered"].keys:
+                        logger.warning(f"Plugin {mod.name} hadn't been loaded. Skip.")
+                        continue
+                    plugin = os.path.splitext(_)[0]
+                    dis_list += f" {mod.name}"
+                    del KB["registered"][plugin]
+                except PluginCheckError as e:
+                    logger.error('Not "{}" attribute in the plugin: {}'.format(e, filename))
+                except AttributeError as e:
+                    logger.error('Filename: {} not class "{}", Reason: {}'.format(filename, 'Z0SCAN', e))
+                    raise
+        logger.info(f'Disable plugins:{dis_list}.')
+
+def load_new_plugins(load_list: list):
+    for _dir in conf.scanner_folder:
+        if _dir not in ["PerFile", "PerFolder", "PerServer"]:
+            continue
+        for root, dirs, files in os.walk(os.path.join(path.scanners, _dir)):
+            files = filter(lambda x: not x.startswith("__") and x.endswith(".py"), files)
+            new_add = ""
+            for _ in files:
+                q = os.path.splitext(_)[0]
+                filename = os.path.join(root, _)
+                mod = load_file_to_module(filename)
+                try:
+                    mod = mod.Z0SCAN()
+                    mod.checkImplemennted()
+                    if not mod.name in KB["registered"].keys:
+                        logger.warning(f"Plugin {mod.name} had been loaded. Skip.")
+                        continue
+                    if not mod.name in load_list:
+                        continue
+                    new_add += f" {mod.name}"
+                    plugin = os.path.splitext(_)[0]
+                    plugin_type = os.path.split(root)[1]
+                    relative_path = ltrim(filename, path.root)
+                    if getattr(mod, 'type', None) is None:
+                        setattr(mod, 'type', plugin_type)
+                    if getattr(mod, 'path', None) is None:
+                        setattr(mod, 'path', relative_path)
+                    KB["registered"][plugin] = mod
+                except PluginCheckError as e:
+                    logger.error('Not "{}" attribute in the plugin: {}'.format(e, filename))
+                except AttributeError as e:
+                    logger.error('Filename: {} not class "{}", Reason: {}'.format(filename, 'Z0SCAN', e))
+                    raise
+        logger.info(f'New load plugins:{new_add}.')

@@ -3,13 +3,75 @@
 # w8ay 2019/6/28
 # JiuZero 2025/3/24
 
-import base64, copy, hashlib, json, os, random, re, string, struct, requests, sys, socket, ipaddress
-from urllib.parse import urlparse, urljoin, quote, urlunparse
-from colorama.ansi import code_to_chars
+import platform, copy, hashlib, json, os, random, re, string, struct, requests, sys, socket, ipaddress
+from urllib.parse import urlparse, urljoin, quote, urlunparse, unquote
+from lib.core.log import logger
 from lib.core.enums import PLACE, POST_HINT
 from lib.core.settings import DEFAULT_GET_POST_DELIMITER, DEFAULT_COOKIE_DELIMITER
 from fake_useragent import UserAgent
-from lib.core.data import conf
+from lib.core.data import conf, KB
+from lib.api.reverse_api import reverseApi
+
+def check_reverse():
+    ver = platform.system()
+    rA = reverseApi()
+    http_token = random_str(6)
+    dns_token = random_str(6)
+    domain = "{}.{}".format(http_token, conf.reverse.get("http_domain"))
+    url = "http://{}:{}/?d={}".format(conf.reverse.get("http_ip"), conf.reverse.get("http_port"), dns_token)
+    logger.info("Will exec ping to test reverse server...")
+    if ver.lower() == "windows":
+        cmd = "ping -n 2 {}>nul".format(domain)
+    else:
+        cmd = "ping -c 2 {} 2>&1 >/dev/null".format(domain)
+    logger.info("Start exec cmd:{}".format(cmd))
+    run_cmd(cmd)
+    res_http = rA.check(http_token)
+    res_dns = rA.check(dns_token)
+    # 此处需添加RMI&LDAP服务的检测代码
+    if res_http[0]:
+        logger.critical("Client connect HTTP reverse: Success")
+        KB.reverse_running_server.append("http")
+    else:
+        logger.warning("Client connect HTTP reverse: Fail")
+    if res_dns[0]:
+        logger.critical("Client connect DNS reverse: Success")
+        KB.reverse_running_server.append("dns")
+    else:
+        logger.warning("Client disconnect DNS reverse: Fail")
+
+def isjson(arg, quote=True):
+    '''
+    arg: string
+    '''
+    try:
+        if arg.isdigit():
+            return False
+        if not arg:
+            return False
+        if quote:
+            arg = unquote(arg)
+        return json.loads(arg)
+    except:
+        return False
+        
+def gethostportfromurl(url):
+    '''
+    return list [host,port]
+    '''
+    port = 80
+    r = urlparse(url)
+    netloc = re.search(r"(^[0-9a-z\-\.]+$)|(^[0-9a-z\-\.]+:\d+)", r.netloc, re.I)
+    if netloc:
+        netloc = netloc.group()
+        if ":" not in netloc:
+            if r.scheme == "https":
+                port = 443
+        else:
+            h, p = netloc.split(":", 1)
+            return h, int(p)
+        return r.netloc, port
+    return url, 0
 
 def getmd5(s):
     m = hashlib.md5()

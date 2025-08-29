@@ -16,3 +16,6 @@ urllib3
 viewstate
 prettytable
 openai
+redis
+ldaptor
+wechatpy

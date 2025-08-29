@@ -13,7 +13,7 @@ class Z0SCAN(PluginBase):
     
     def audit(self):
         # 通过检测拓展协议判断为Webdav
-        if self.risk in conf.risk and not self.name in KB.disable:
+        if self.risk in conf.risk:
             keys = ["translate","if","lock-token"]
             for k, v in self.requests.headers.items():
                 if k.lower() in keys:

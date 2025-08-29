@@ -6,9 +6,9 @@ import json
 import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse
-
-from config.config import REVERSE_HTTP_PORT, REVERSE_HTTP_IP
-from lib.reverse.lib import reverse_records, reverse_lock, rlog
+from lib.core.data import conf
+from lib.core.log import logger
+from lib.reverse.lib import reverse_records, reverse_lock
 
 
 class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
@@ -17,14 +17,26 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
         querypath = urlparse(self.path)
         path, query = querypath.path.lstrip('/'), querypath.query
         client_ip = self.client_address[0]
-        content = b"ok"
 
         if not path:
             return self.output(b'faild')
-
+        
         if self.path.startswith("/_/search"):
             querys = query.split("=")
             if len(querys) != 2:
+                if self.path.startswith("/z0_"):
+                    res = {
+                        "type": "http", 
+                        "client": client_ip, 
+                        "query": self.path, 
+                        "info": path,
+                        "time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+                    }
+                    reverse_lock.acquire()
+                    reverse_records.append(res)
+                    logger.info("Record: {}".format(json.dumps(res)), origin="HTTP")
+                    reverse_lock.release()
+                    return self.output(b'ok')
                 return self.output(b"faild")
             # 寻找接口
             query = querys[1]
@@ -35,18 +47,22 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
                 if query in item_query or query == 'all':
                     result.append(item)
             if result:
-                rlog.info("interface result:{}".format(json.dumps(result)))
+                logger.info("Interface result: {}".format(json.dumps(result)))
             reverse_lock.release()
             return self.output(json.dumps(result).encode())
-
-        # insert
-        res = {"type": "http", "client": client_ip, "query": self.path, "info": path,
-               "time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))}
+            
+        res = {
+            "type": "http", 
+            "client": client_ip, 
+            "query": self.path, 
+            "info": path,
+            "time": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+        }
         reverse_lock.acquire()
         reverse_records.append(res)
-        rlog.info("http insert {}".format(json.dumps(res)))
+        logger.info("Record: {}".format(json.dumps(res)), origin="HTTP")
         reverse_lock.release()
-        return self.output(content)
+        return self.output(b'ok')
 
     def log_message(self, format, *args):
         pass
@@ -60,8 +76,7 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 
 
 def http_start():
-    port = REVERSE_HTTP_PORT
-    server_address = (REVERSE_HTTP_IP, port)
+    server_address = (conf.reverse.get("http_ip"), conf.reverse.get("http_port"))
     httpd = HTTPServer(server_address, testHTTPServer_RequestHandler)
-    rlog.info('Running Server... visited http://{}:{}'.format(REVERSE_HTTP_IP, REVERSE_HTTP_PORT))
+    logger.info('Running Server... visited http://{}:{}'.format(conf.reverse.get("http_ip"), conf.reverse.get("http_port")))
     httpd.serve_forever()

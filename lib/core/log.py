@@ -4,7 +4,7 @@
  
 from colorama import Fore, Style
 import time, sys
-from lib.core.data import conf
+from lib.core.data import conf, KB
 import concurrent.futures
 from functools import wraps
 
@@ -25,6 +25,8 @@ def non_blocking_delay(delay=0.01):
 @non_blocking_delay(0.01)
 def dataToStdout(data):
     print(data, flush=False)
+    with open(KB.output.txt_filename, 'a', encoding='utf-8') as f:
+        f.write(str(data) + '\n')
 
 
 class colors:

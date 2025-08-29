@@ -45,7 +45,7 @@ class Z0SCAN(PluginBase):
     def audit(self):
         if self.requests.url.count("/") > int(conf.max_dir) + 2:
             return
-        if self.risk in conf.risk and conf.level != 0 and not self.name in KB.disable:
+        if conf.level != 0:
             file_dic = conf.lists["backup"]
             url = self.requests.url.rstrip("/")
             directory = os.path.basename(url)

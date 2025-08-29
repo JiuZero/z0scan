@@ -16,7 +16,7 @@ class Z0SCAN(PluginBase):
     risk = 0
         
     def audit(self):
-        if not self.requests.suffix == ".js" or not self.risk in conf.risk or self.name in KB.disable:
+        if not self.requests.suffix == ".js" or not self.risk in conf.risk:
             return
             
         js_content = self.response.text

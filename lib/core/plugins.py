@@ -44,7 +44,6 @@ def _flatten_json_items(data, prefix=''):
         yield (prefix, data)
 
 class PluginBase(object):
-    fingerprints = SimpleNamespace(waf=False, os=[], programing=[], webserver=[])
     def __init__(self):
         self.type = None
         self.path = None
@@ -53,6 +52,7 @@ class PluginBase(object):
 
         self.requests: FakeReq = None
         self.response: FakeResp = None
+        self.fingerprints = SimpleNamespace(waf=False, os=[], programing=[], webserver=[])
 
     def generate_result(self) -> ResultObject:
         return ResultObject(self)
@@ -370,9 +370,10 @@ class PluginBase(object):
         # sess.close()
         return r
     
-    def execute(self, request: FakeReq, response: FakeResp):
+    def execute(self, request: FakeReq, response: FakeResp, fingerprints):
         self.requests = request
         self.response = response
+        self.fingerprints = fingerprints
         output = None
         try:
             output = self.audit()

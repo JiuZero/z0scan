@@ -41,7 +41,7 @@ class Z0SCAN(PluginBase):
         return False
 
     def audit(self):
-        if conf.level == 0 or not self.risk in conf.risk or self.name in KB.disable:
+        if conf.level == 0 or not self.risk in conf.risk:
             return
         headers = self.requests.headers
         url = self.requests.url

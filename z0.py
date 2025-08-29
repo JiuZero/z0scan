@@ -18,13 +18,12 @@ from lib.parse.parse_request import FakeReq
 from lib.parse.parse_response import FakeResp
 from lib.proxy.baseproxy import AsyncMitmProxy
 
-from lib.core.reverse import reverse_main
-
 from lib.parse.cmdparse import cmd_line_parser
 from lib.core.data import conf, KB
 from lib.core.log import logger, dataToStdout
 from lib.core.option import init
 from lib.core.settings import banner
+from lib.core.console import BackgroundServer
 
 def version_check():
     # Check Python version
@@ -52,10 +51,6 @@ def main():
     # init
     root = modulePath()
     cmdline = cmd_line_parser()
-    if cmdline["reverse"]:
-        dataToStdout(banner)
-        reverse_main()
-        sys.exit(0)
     init(root, cmdline)
 
     if conf.url or conf.url_file:
@@ -82,6 +77,7 @@ def main():
             task_push_from_name('loader', fake_req, fake_resp)
         start()
     elif conf.server_addr:
+        server = BackgroundServer(port=conf.socket_port).start()
         KB["continue"] = True
         # 启动漏洞扫描器
         scanner = threading.Thread(target=start)
@@ -89,16 +85,25 @@ def main():
         scanner.start()
         # 启动代理服务器
         baseproxy = AsyncMitmProxy(server_addr=conf.server_addr, https=True)
-
         try:
             baseproxy.serve_forever()
         except KeyboardInterrupt:
             scanner.join(0.1)
+            KB["continue"] = False
             threading.Thread(target=baseproxy.shutdown, daemon=True).start()
             deinit()
             logger.warning("User QUIT.")
         baseproxy.server_close()
-
+    elif conf.get("redis_server"):
+        KB["continue"] = True
+        try:
+            # 启动漏洞扫描器
+            start()
+        except KeyboardInterrupt:
+            scanner.join(0.1)
+            KB["continue"] = False
+            deinit()
+            logger.warning("User QUIT.")
 
 if __name__ == '__main__':
     main()

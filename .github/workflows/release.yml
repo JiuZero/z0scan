@@ -6,7 +6,7 @@ on:
       version:
         description: 'Release version (e.g. v1.0.0)'
         required: true
-        default: 'v1.0.0'
+        default: 'v0.1.0.0'
       is_prerelease:
         description: 'Is this a pre-release?'
         type: boolean

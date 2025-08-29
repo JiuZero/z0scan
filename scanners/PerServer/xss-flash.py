@@ -16,7 +16,7 @@ class Z0SCAN(PluginBase):
     risk = 1
         
     def audit(self):
-        if self.risk in conf.risk and conf.level != 0 and not self.fingerprints.waf or self.name in KB.disable:
+        if self.risk in conf.risk and conf.level != 0 and not self.fingerprints.waf:
             p = urlparse(self.requests.url)
             arg = "{}://{}/".format(p.scheme, p.netloc)
             FileList = []

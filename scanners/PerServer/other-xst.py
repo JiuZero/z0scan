@@ -14,7 +14,7 @@ class Z0SCAN(PluginBase):
     risk = -1
     
     def audit(self):
-        if not conf.level == 0 and self.risk in conf.risk and not self.name in KB.disable:
+        if not conf.level == 0 and self.risk in conf.risk:
             rand_str = ''.join(random.choices(string.hexdigits, k=4)).lower()
             r = requests.request("TRACE", self.requests.netloc + "/*", allow_redirects=True, verify=False, headers={f"{rand_str}": "{rand_str}"})
             if re.search(f"{rand_str}: *?{rand_str}", r.text, re.I):

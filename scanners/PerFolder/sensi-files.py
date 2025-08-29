@@ -17,7 +17,7 @@ class Z0SCAN(PluginBase):
     def audit(self):
         if self.requests.url.count("/") > int(conf.max_dir) + 2:
             return
-        if 1 in conf.risk and conf.level != 0 and not self.name in KB.disable:
+        if conf.level != 0:
             z0thread = Threads(name="sensi-files")
             z0thread.submit(self.process, rules)
 

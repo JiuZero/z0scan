@@ -8,7 +8,7 @@ from json import JSONDecodeError
 
 import requests
 
-from config.config import REVERSE_SLEEP
+from lib.core.data import conf
 from lib.core.common import random_str
 
 
@@ -18,7 +18,7 @@ class DnsLogApi(object):
         self.req = requests.Session()
         self._new_api = "http://www.dnslog.cn/getdomain.php?t=0." + random_str(10, string.digits)
         self._check_api = "http://www.dnslog.cn/getrecords.php?t=0." + random_str(10, string.digits)
-        self.sleep = REVERSE_SLEEP
+        self.sleep = conf.reverse.get("sleep")
 
     def new_domain(self) -> str:
         '''

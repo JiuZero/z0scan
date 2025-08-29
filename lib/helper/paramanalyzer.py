@@ -72,12 +72,13 @@ class VulnDetector():
     
     def is_ssrf(self, key, value):
         """SSRF检测"""
+        args = ['open', 'location', 'goto', 'address', 'target', 'wap', 'domain', '3g', 'g', 'go', 'share', 'redir', 'addr', 'u', 'to', 'display']
         ssrf_keys = [
             r'^(url|link|src|source)[a-z0-9]*$',
             r'^(api|service|endpoint)[a-z0-9]*$',
             r'^image(url|uri|src)$'
         ]
-        if (any(re.fullmatch(p, key, re.IGNORECASE) for p in ssrf_keys)) or re.search(r'(127\.|192\.168|10\.|172\.(1[6-9]|2\d|3[01]))', value):
+        if (any(re.fullmatch(p, key, re.IGNORECASE) for p in ssrf_keys)) or re.search(r'(127\.|192\.168|10\.|172\.(1[6-9]|2\d|3[01]))', value) or key.lower() in args:
             if self.remind:
                 logger.info(f"Suspected SSRF param: {self.url} => {key}")
             return True

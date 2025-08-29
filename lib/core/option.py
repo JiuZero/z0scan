@@ -9,7 +9,7 @@ import time
 from queue import Queue
 from config import config
 from colorama import init as cinit
-from lib.core.common import random_UA, ltrim
+from lib.core.common import random_UA, ltrim, check_reverse
 from lib.core.data import path, KB, conf
 from lib.core.log import dataToStdout, logger, colors
 from lib.core.exection import PluginCheckError
@@ -22,7 +22,7 @@ from thirdpart.console import getTerminalSize
 from lib.patch.requests_patch import patch_all
 from lib.patch.ipv6_patch import ipv6_patch
 from prettytable import PrettyTable
-from lib.core.zmq import ZeroMQClient, BackgroundZeroMQServer
+from lib.core.console import Client, BackgroundServer
 from lib.core.aichat import chat
 from pathlib import Path
 
@@ -37,8 +37,7 @@ def setPaths(root):
     path.fingprints = os.path.join(root, "fingerprints")
     path.output = os.path.join(root, "output")
     Path(path.output).mkdir(exist_ok=True)
-
-
+    
 def initKb():
     KB['continue'] = False  # 线程一直继续
     KB['registered'] = dict()  # 注册的漏洞插件列表
@@ -47,16 +46,15 @@ def initKb():
     KB["spiderset"] = SpiderSet()  # 去重复爬虫
     KB['start_time'] = time.time()  # 开始时间
     KB["lock"] = threading.Lock()  # 线程锁
-    if not conf.list:
-        KB["output"] = OutPut()
-    KB["running_plugins"] = dict()
+    KB["running_plugins"] = dict() # 运行中的插件统计
     KB['finished'] = 0  # 完成数量
     KB["result"] = 0  # 结果数量
     KB["running"] = 0  # 正在运行数量
-
-    KB.limit = False
-    KB.pause = False
-    KB.disable = list()
+    KB["request"] = 0 # 请求数量
+    KB["request_fail"] = 0 # 请求失败数量
+    KB["output"] = OutPut() # 报告信息
+    KB.reverse_running_server = list() # 运行的反连服务
+    KB.waf_detecting = list() # 限制单线程检测WAF
 
 def _list():
     """列出所有已注册的插件信息"""
@@ -80,9 +78,9 @@ def _list():
             version,
             risk,
         ])
-    print(f"\n{colors.y}Loaded Plugins:{colors.e}")
-    print(table)
-    print(f"Total plugins: {colors.y}{len(KB['registered']) - 1}{colors.e}\n")
+    dataToStdout(f"\n{colors.y}Loaded Plugins:{colors.e}")
+    dataToStdout(table)
+    dataToStdout(f"Total plugins: {colors.y}{len(KB['registered']) - 1}{colors.e}\n")
     """列出所有模糊测试字典"""
     if not hasattr(conf, "lists") or not conf.lists:
         logger.warning("No fuzz dictionaries loaded.")
@@ -92,41 +90,75 @@ def _list():
     table.align["Dictionary Name"] = "l"
     for name, entries in conf.lists.items():
         table.add_row([name, len(entries)])
-    print(f"\n{colors.y}Loaded Fuzz Dictionaries:{colors.e}")
-    print(table)
-    print(f"Total dictionaries: {colors.y}{len(conf.lists)}{colors.e}\n")
+    dataToStdout(f"\n{colors.y}Loaded Fuzz Dictionaries:{colors.e}")
+    dataToStdout(table)
+    dataToStdout(f"Total dictionaries: {colors.y}{len(conf.lists)}{colors.e}\n")
 
 def initPlugins():
-    # 加载检测插件
-    for root, dirs, files in os.walk(path.scanners):
-        files = filter(lambda x: not x.startswith("__") and x.endswith(".py"), files)
-        for _ in files:
-            q = os.path.splitext(_)[0]
-            if conf.load and q not in conf.load and q != 'loader':
-                continue
-            if conf.disload and q in conf.disload:
-                continue
-            filename = os.path.join(root, _)
-            mod = load_file_to_module(filename)
-            try:
-                mod = mod.Z0SCAN()
-                mod.checkImplemennted()
-                plugin = os.path.splitext(_)[0]
-                plugin_type = os.path.split(root)[1]
-                relative_path = ltrim(filename, path.root)
-                if getattr(mod, 'type', None) is None:
-                    setattr(mod, 'type', plugin_type)
-                if getattr(mod, 'path', None) is None:
-                    setattr(mod, 'path', relative_path)
-                KB["registered"][plugin] = mod
-            except PluginCheckError as e:
-                logger.error('Not "{}" attribute in the plugin: {}'.format(e, filename))
-            except AttributeError as e:
-                logger.error('Filename: {} not class "{}", Reason: {}'.format(filename, 'Z0SCAN', e))
-                raise
-    if not conf.list:
+    if conf.command == "list" or conf.get("redis_server"):
+        conf.scanner_folder = ["PerFile", "PerFolder", "PerServer"]
+    require_reverse_list = []
+    # 加载loader
+    loader_path = os.path.join(path.scanners, "loader.py")
+    if os.path.exists(loader_path):
+        try:
+            loader_mod = load_file_to_module(loader_path)
+            loader_instance = loader_mod.Z0SCAN()
+            loader_instance.checkImplemennted()
+            setattr(loader_instance, 'type', 'loader')
+            setattr(loader_instance, 'path', 'loader.py')
+            setattr(loader_instance, 'name', 'loader')
+            KB["registered"]["loader"] = loader_instance
+            logger.info("Loader plugin loaded successfully")
+        except Exception as e:
+            logger.error(f"Failed to load loader: {e}")
+            raise
+    else:
+        logger.error("Loader file not found at: {}".format(loader_path))
+        raise FileNotFoundError("Loader plugin is required but not found")
+    # 加载漏洞扫描插件
+    for _dir in conf.scanner_folder:
+        if _dir not in ["PerFile", "PerFolder", "PerServer"]:
+            logger.error(f"Can't load plugins from {_dir}.")
+            continue
+        for root, dirs, files in os.walk(os.path.join(path.scanners, _dir)):
+            files = filter(lambda x: not x.startswith("__") and x.endswith(".py"), files)
+            for _ in files:
+                filename = os.path.join(root, _)
+                mod = load_file_to_module(filename)
+                try:
+                    mod = mod.Z0SCAN()
+                    mod.checkImplemennted()
+                    if conf.get("load") and conf.get("load") != [] != []:
+                        if mod.name not in conf.get("load") and conf.get("load") != []:
+                            continue
+                    if mod.risk not in conf.risk:
+                        if conf.get("load") and conf.get("load") != [] != []:
+                            logger.warning(f"Plugin {mod.name} can't be loaded because of risk.")
+                        continue
+                    plugin_type = os.path.split(root)[1]
+                    relative_path = ltrim(filename, path.root)
+                    if getattr(mod, 'type', None) is None:
+                        setattr(mod, 'type', plugin_type)
+                    if getattr(mod, 'path', None) is None:
+                        setattr(mod, 'path', relative_path)
+                    if conf.command == "reverse_client":
+                        try:
+                            if mod.require_reverse is True:
+                                require_reverse_list.append(mod.name)
+                                continue
+                        except:
+                            pass
+                    KB["registered"][mod.name] = mod
+                except PluginCheckError as e:
+                    logger.error('Not "{}" attribute in the plugin: {}'.format(e, filename))
+                except AttributeError as e:
+                    logger.error('Filename: {} not class "{}", Reason: {}'.format(filename, 'Z0SCAN', e))
+                    raise
+    if not require_reverse_list == []:
+        logger.info(f'Skip scanner plugins that require of reverse: {colors.y}{require_reverse_list}{colors.e}')
+    if not conf.command == "list":
         logger.info(f'Load scanner plugins: {colors.y}{len(KB["registered"])-1}{colors.e}')
-    
     # 加载指纹识别插件
     num = 0
     for root, dirs, files in os.walk(path.fingprints):
@@ -138,15 +170,14 @@ def initPlugins():
             name = os.path.split(os.path.dirname(filename))[-1]
             mod = load_file_to_module(filename)
             if not getattr(mod, 'fingerprint'):
-                logger.error("filename: {} load faild,not function 'fingerprint'".format(filename))
+                logger.error("Filename: {} load faild, not function 'fingerprint'".format(filename))
                 continue
             if name not in KB["fingerprint"]:
                 KB["fingerprint"][name] = []
             KB["fingerprint"][name].append(mod)
             num += 1
-    if not conf.list:
+    if not conf.command == "list":
         logger.info(f'Load fingerprint plugins: {colors.y}{num}{colors.e}')
-    
     # 加载模糊字典并储存为列表
     conf.lists = dict()
     for root, dirs, files in os.walk(path.lists):
@@ -162,7 +193,6 @@ def initPlugins():
             except Exception as e:
                 logger.warning(f'Error loading list {file}: {str(e)}')
 
-
 def _merge_options(cmdline):
     # 命令行配置 将覆盖 config配置
     if hasattr(cmdline, "items"):
@@ -176,18 +206,7 @@ def _merge_options(cmdline):
         conf[key] = value
         continue
 
-
 def _set_conf():
-    # show version
-    if conf.version:
-        sys.exit(0)
-
-    if conf.list:
-        initKb()
-        initPlugins()
-        _list()
-        sys.exit(0)
-
     # server_addr
     if isinstance(conf["server_addr"], str):
         if ":" in conf["server_addr"]:
@@ -195,87 +214,117 @@ def _set_conf():
             conf["server_addr"] = tuple([splits[0], int(splits[1])])
         else:
             conf["server_addr"] = tuple([conf["server_addr"], conf.default_proxy_port])
-
-    # threads
-    conf["threads"] = int(conf["threads"])
-
     # proxy
-    if isinstance(conf["proxy"], str) and "@" in conf["proxy"]:
-        conf["proxy_config_bool"] = True
-        method, ip = conf["proxy"].split("@")
-        conf["proxy"] = {
-            method.lower(): ip
-        }
-
+    if isinstance(conf["proxy"], str):
+        if "://" in conf["proxy"]:
+            method, ip = conf["proxy"].split("://")
+            conf["proxies"] = {
+                method.lower(): [ip]
+            }
+        else:
+            from lib.proxy.autoproxy import AutoProxy
+            conf["proxies"] = AutoProxy().import_proxies(conf["proxy"])
     # user-agent
     if conf.random_agent:
         conf.agent = random_UA()
     else:
         conf.agent = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101'
-
+    if conf.get("server_addr"):
+        conf.pause_upload = False # 暂停提交扫描任务
 
 def _init_stdout():
-    logger.info(f"Number of threads: {conf.threads} / {conf.plugin_threads}")
+    logger.info(f"Current WorkDir: {path.root}")
+    logger.info(f"Number of Threads: {conf.threads} / {conf.plugin_threads}")
     logger.info(f"Scan Level: [#{conf.level}]")
     logger.info(f"Scan Risk: {conf.risk}")
-    if conf.ignore_waf:
-        logger.info(f'Ignore the WAF status: True')
-    if conf.ignore_fingerprint:
-        logger.info(f'Ignore the WAF status: True')
-    # 不扫描网址
-    if len(conf["excludes"]):
-        logger.info("Skip scan: {}".format(repr(conf["excludes"])))
-    # 指定扫描插件
-    if conf.disload:
-        logger.info("Disload plugins: {}".format(repr(conf.disload)))
-    if conf.load:
-        logger.info("Load Plugins: {}".format(repr(conf.load)))
-    if conf.html:
-        logger.info("HTML report path: {}".format(KB.output.get_html_filename()))
-    logger.info("JSON report path: {}".format(KB.output.get_filename()))
-
-def init(root, cmdline):
-    cinit(autoreset=True)
-    setPaths(root)
-    dataToStdout(banner)
-    _merge_options(cmdline)
-    port = conf.zmq_port
-    if conf.console:
-        try:
-            client = ZeroMQClient(port=port)
-            while True:
-                msg = input(f"[{colors.m}CMD{colors.e}] Send to server >> ")
-                if msg.lower() == 'exit':
-                    sys.exit(0)
-                response = client.send_message(msg)
-                if response:
-                    logger.info(f"{colors.br}{response}{colors.e}\n", showtime=False)
-        except:
-            client.close()
-            sys.exit(0)
-    initdb(root)
-    if conf.dbcmd:
-        try:
-            while True:
-                cmd = input(f"[{colors.m}CMD{colors.e}] SQL Command ('exit' to quit) >> ")
-                if cmd.lower() == 'exit':
-                    sys.exit(0)
-                logger.info(f"{colors.br}{execute_sqlite_command(cmd)}{colors.e}\n", showtime=False)
-        except Exception as e:
-            logger.error(e, showtime=False)
-            sys.exit(0)
-    _set_conf()
-    initKb()
-    logger.info(f"Current WorkDir: {path.root}")
-    initPlugins()
-    _init_stdout()
-    patch_all()
-    ipv6_patch()
-    if conf.smartscan_selector["enable"]:
+    if conf.smartscan["enable"]:
         message = chat("API validity verification: If you can receive this message, please reply 'OK'")
         if message is None:
+            # message为None时chat函数会警告
             sys.exit(0)
-        else:
+        elif "ok" in message.lower():
             logger.info("Connect to AI model: {}[OK]".format(conf.smartscan_selector["model"]))
-    if conf.server_addr:
-        server = BackgroundZeroMQServer(port=port).start()
+        else:
+            logger.info("AI return message is not True!")
+            sys.exit(0)
+    if conf.ignore_waf:
+        logger.info(f'Ignore WAF Status: True')
+    if conf.ignore_fingerprint:
+        logger.info(f'Ignore Fingerprints Status: True')
+    # 不扫描网址
+    if len(conf["excludes"]):
+        logger.info("Skip Scan: {}".format(repr(conf["excludes"])))
+    if conf.get("load") and conf.get("load") != []:
+        logger.info("Load Plugins: {}".format(repr(conf.get("load") and conf.get("load") != [])))
+    if conf.html:
+        logger.info("HTML Report Path: {}".format(KB.output.get_html_filename()))
+    logger.info("JSON Report Path: {}".format(KB.output.get_filename()))
+
+def _commands(v):
+    if conf.command == "scan":
+        return
+    if v == "console":
+        if conf.command == "console":
+            try:
+                client = Client(port=conf.console_port)
+                while True:
+                    msg = input(f"[{colors.m}CMD{colors.e}] Send to server >> ")
+                    if msg.lower() == 'exit':
+                        break
+                    response = client.send_message(msg)
+                    if response:
+                        logger.info(f"{colors.br}{response}{colors.e}\n", showtime=False)
+            except:
+                client.close()
+        else: return
+    if v == "dbcmd":
+        if conf.command == "dbcmd":
+            try:
+                while True:
+                    cmd = input(f"[{colors.m}CMD{colors.e}] SQL Command ('exit' to quit) >> ")
+                    if cmd.lower() == 'exit':
+                        break
+                    logger.info(f"{colors.br}{execute_sqlite_command(cmd)}{colors.e}\n", showtime=False)
+            except Exception as e:
+                logger.error(e, showtime=False)
+        else: return
+    if v == "reverse":
+        if conf.command == "reverse":
+            from lib.core.reverse import reverse_main
+            reverse_main()
+        else: return
+    if v == "list":
+        if conf.command == "list":
+            _list()
+        else: return
+    if v == "version":
+        if conf.command == "version":
+            sys.exit(0)
+        return
+    sys.exit(0)
+        
+def init(root, cmdline):
+    cinit(autoreset=True)
+    setPaths(root) # 设置工作路径
+    initKb() # 初始化KB
+    dataToStdout(banner) # version & logo
+    _merge_options(cmdline) # 合并命令行与config中的参数
+    _commands("version")
+    _commands("console")
+    initdb(root) # 初始化数据库
+    _commands("dbcmd")
+    _commands("reverse")
+    initPlugins() # 初始化插件
+    _commands("list")
+    _set_conf() # 按照设置配置
+    _init_stdout() # 打印初始化后的一些配置信息
+    patch_all() # requests全局补丁
+    ipv6_patch() # ipv6补丁
+    if conf.get("redis_client") or conf.get("redis_server"):
+        from lib.core.red import set_conn, cleanred
+        set_conn() # 连接到redis
+    if conf.get("clean_redis"):
+        from lib.core.red import set_conn, cleanred
+        cleanred() # 清理redis队列
+    if conf.get("reverse_client"):
+        check_reverse()

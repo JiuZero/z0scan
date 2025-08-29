@@ -42,7 +42,7 @@ class Z0SCAN(PluginBase):
             self.success(result)
 
     def audit(self):
-        if not self.risk in conf.risk or conf.level == 0 or self.name in KB.disable:
+        if not self.risk in conf.risk or conf.level == 0:
             return
         params = deepcopy(self.requests.params)
         data = deepcopy(self.requests.post_data)

@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# @Time    : 2020/4/5 12:33 AM
-# @File    : reverse_dns.py
 
 import time
 import struct
 import binascii
 import sys
 import os
-
-from config.config import REVERSE_DNS, DNS_PORT
-from lib.reverse.lib import rlog, reverse_lock, reverse_records
-
+from lib.core.log import logger
+from lib.core.data import conf
+from lib.reverse.lib import reverse_lock, reverse_records
 try:
     import SocketServer
 except:
@@ -28,13 +25,13 @@ def decode_dns(dnslog):
     res = ""
     try:
         dnslog = dnslog[4:]
-        dnslog = dnslog.replace("." + REVERSE_DNS, "")
+        dnslog = dnslog.replace("." + conf.reverse.get("dns_domain"), "")
         dnslog = "".join(dnslog.split("."))
         res = binascii.a2b_hex(dnslog.encode()).decode()
     except binascii.Error as ex:
         pass
     except Exception as ex:
-        rlog.warning('decode dns get error:{}'.format(ex))
+        logger.warning('Decode dns get error:{}'.format(ex))
     return res
 
 
@@ -80,8 +77,7 @@ class SinDNSAnswer:
 
 class SinDNSFrame:
     def __init__(self, data):
-        (self.id, self.flags, self.quests, self.answers, self.author, self.addition) = struct.unpack('>HHHHHH',
-                                                                                                     data[0:12])
+        (self.id, self.flags, self.quests, self.answers, self.author, self.addition) = struct.unpack('>HHHHHH', data[0:12])
         self.query = SinDNSQuery(data[12:])
 
     def getname(self):
@@ -108,7 +104,7 @@ class DnsRequestHandler(SocketServer.BaseRequestHandler):
         query_name = dns.getname()
         # A record
         if dns.query.type == 1:
-            response = ip_address if query_name.endswith(REVERSE_DNS) else None
+            response = ip_address if query_name.endswith(conf.reverse.get("dns_domain")) else None
             if response:
                 dns.setip(response)
                 log_format = {'client_ip': self.client_address[0], 'client_port': self.client_address[1],
@@ -120,7 +116,7 @@ class DnsRequestHandler(SocketServer.BaseRequestHandler):
                 res["query"] = query_name
                 res["info"] = decode_dns(query_name)
                 res["time"] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-                # insert_db(res)
+                logger.info(f"Record: {str(res)}", origin="DNS")
                 reverse_lock.acquire()
                 reverse_records.append(res)
                 reverse_lock.release()
@@ -145,30 +141,30 @@ class DnsRequestHandler(SocketServer.BaseRequestHandler):
 
 
 class SimpleDnsServer:
-    def __init__(self, port=DNS_PORT):
+    def __init__(self, port=conf.reverse.get("dns_port")):
         self.port = port
 
     def start(self):
         host, port = "0.0.0.0", self.port
         log_msg = f"Dns Server listion {host}:{port}\n"
-        rlog.info(log_msg)
+        logger.info(log_msg)
         sys.stdout.flush()
         try:
             dns_udp_server = SocketServer.UDPServer((host, port), DnsRequestHandler)
             dns_udp_server.serve_forever()
         except OSError as e:
           if e.errno == 98:
-            rlog.error(f"DNS server startup failed: Port {port} is occupied, check if there are other programs occupying the port or try again after changing the port.")
-            rlog.error("Exit. (Please go to config/config to modify)")
+            logger.error(f"DNS server startup failed: Port {port} is occupied, check if there are other programs occupying the port or try again after changing the port.")
+            logger.error("Exit. (Please go to config/config to modify)")
             sys.stdout.flush()
             os._exit(1)
           else:
-            error_msg = rlog.error(f"Unable to start DNS server: {e}")
-            rlog.error(error_msg)
+            error_msg = logger.error(f"Unable to start DNS server: {e}")
+            logger.error(error_msg)
             sys.stdout.flush()
             raise
         except Exception as e:
-            rlog.error(f"DNS server operation error: {e}")
+            logger.error(f"DNS server operation error: {e}")
 
 
 def dns_start():

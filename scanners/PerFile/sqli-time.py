@@ -64,7 +64,7 @@ class Z0SCAN(PluginBase):
         return payload1, payload0
     
     def audit(self):
-        if self.fingerprints.waf or not self.risk in conf.risk or conf.level == 0 or self.name in KB.disable:
+        if self.fingerprints.waf or not self.risk in conf.risk or conf.level == 0:
             return
         num = random_num(4)
         sql_times = {

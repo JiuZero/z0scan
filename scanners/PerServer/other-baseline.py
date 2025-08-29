@@ -12,7 +12,7 @@ class Z0SCAN(PluginBase):
     risk = -1
 
     def audit(self):
-        if self.risk in conf.risk and not self.name in KB.disable:
+        if self.risk in conf.risk:
             self.server_version_leak()
             self.x_powered_by_version_leak()
         

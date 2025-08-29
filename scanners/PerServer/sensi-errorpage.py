@@ -17,7 +17,7 @@ class Z0SCAN(PluginBase):
     risk = 0
     
     def audit(self):
-        if not conf.level == 0 and 0 in conf.risk and not self.name in KB.disable:
+        if not conf.level == 0 and 0 in conf.risk:
             headers = self.requests.headers.copy()
             p = urlparse(self.requests.url)
             domain = "{}://{}/".format(p.scheme, p.netloc) + random_str(6)

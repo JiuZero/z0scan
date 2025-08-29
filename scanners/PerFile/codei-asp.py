@@ -15,7 +15,7 @@ class Z0SCAN(PluginBase):
     risk = 3
         
     def audit(self):
-        if conf.level == 0 or not self.risk in conf.risk or self.fingerprints.waf or self.name in KB.disable:
+        if conf.level == 0 or not self.risk in conf.risk or self.fingerprints.waf:
             return
         if not "ASP" in self.fingerprints.programing:
             randint1 = random.randint(10000, 90000)

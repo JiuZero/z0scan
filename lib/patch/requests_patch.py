@@ -6,7 +6,7 @@
 import copy
 import logging
 
-import ssl
+import ssl, random
 from urllib.parse import urlparse
 
 from requests.cookies import RequestsCookieJar
@@ -16,7 +16,10 @@ from requests.sessions import merge_setting, merge_cookies
 from requests.utils import get_encodings_from_content
 from urllib3 import disable_warnings
 from urllib.parse import quote
-from lib.core.data import conf
+from lib.core.data import conf, KB
+from lib.core.red import gredis
+from lib.core.common import gethostportfromurl
+from lib.core.block_info import block_count
 
 
 def patch_all():
@@ -30,6 +33,10 @@ def session_request(self, method, url,
                     params=None, data=None, headers=None, cookies=None, files=None, auth=None,
                     timeout=None,
                     allow_redirects=True, proxies=None, hooks=None, stream=None, verify=False, cert=None, json=None):
+    h, p = gethostportfromurl(url)
+    block = block_count(h, p)
+    if block.is_block():
+        return None
     # Create the Request.
     merged_cookies = merge_cookies(merge_cookies(RequestsCookieJar(), self.cookies),
                                    cookies)
@@ -82,23 +89,15 @@ def session_request(self, method, url,
             '\n'.join('{}: {}'.format(k, v) for k, v in _headers.items()))
 
     proxies = proxies or {}
-    if conf["proxy_config_bool"] and not proxies:
-        proxies = conf["proxy"]
-        if "socks4" in proxies.keys():
-            _tmp_str = "socks4://" + proxies["socks4"]
-            _tmp_proxy = {
-                "http": _tmp_str,
-                "https": _tmp_str
-            }
-            proxies = _tmp_proxy
-        elif "socks5" in proxies.keys():
-            _tmp_str = "socks5://" + proxies["socks5"]
-            _tmp_proxy = {
-                "http": _tmp_str,
-                "https": _tmp_str
-            }
-            proxies = _tmp_proxy
-
+    if conf.get("proxies") and not proxies:
+        proxies = conf["proxies"]
+        p = random.choice(proxies.keys())
+        _tmp_str = f"{p}://" + random.choice(proxies[p])
+        _tmp_proxy = {
+            "http": _tmp_str,
+            "https": _tmp_str
+        }
+        proxies = _tmp_proxy
     # prep.url = prep.url.encode('utf-8', errors='ignore').decode('utf-8', errors='ignore')
     settings = self.merge_environment_settings(
         prep.url, proxies, stream, verify, cert
@@ -112,7 +111,21 @@ def session_request(self, method, url,
     send_kwargs.update(settings)
 
     resp = self.send(prep, **send_kwargs)
-
+    KB["request"] += 1
+    if resp != None:
+        block.push_result_status(0)
+        """
+        if scan_set.get("search_open", False):
+            s = searchmsg(r)
+            s.verify()
+        """
+    else:
+        block.push_result_status(1)
+        if conf.redis:
+            red = gredis()
+            red.hincrby("count", "request_fail", amount=1)
+        KB["request_fail"] += 1
+        
     if resp.encoding == 'ISO-8859-1':
         encodings = get_encodings_from_content(resp.text)
         if encodings:

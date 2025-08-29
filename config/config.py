@@ -4,7 +4,7 @@
 """
 总配置
 """
-THREADS = 10  # 默认线程数量
+THREADS = 15  # 默认线程数量
 EXCLUDES = ["google", '.gov.', 'baidu', 'firefox', 'microsoft', '.bing.', 'msn.cn']  # 排除包含关键字的网址
 DEFAULT_PROXY_PORT = 5920 # 被动模式默认监听端口
 RETRY = 3  # 超时重试次数
@@ -15,31 +15,54 @@ SKIP_WAF_RECHECK = False # 是否跳过曾经检测到WAF但在本次启动后�
 IPV6 = False # 需网络支持ipv6（使用此参数优先ipv6地址，ipv6无记录再使用ipv4地址）
 SKIP_SIMILAR_REQUEST = True # 是否跳过相似请求的扫描
 PSEUDO_STATIC_KEYWORDS = ['id', 'pid', 'cid', 'user', 'page', 'category', 'column_id', 'tty'] # 伪静态关键点参数（忽略大小写）
-SMARTSCAN_SELECTOR = {
+SMARTSCAN = {
     "enable": False, 
-    "apiurl": "https://free.v36.cm/v1/",
+    "api_url": "https://free.v36.cm/v1/",
     "model": "gpt-3.5-turbo", 
-    "apikey": "", 
+    "api_key": "", 
 } # AI智能插件优化（支持所有openai库所能调用的模型）
 MAX_DIR = 2 # PerFolder插件的扫描深度(目录深度)
-ZMQ_PORT = 9331 # console交互通信端口
+CONSOLE_PORT = 9331 # console交互通信端口
 HIDDEN_VUL_REMINDER = True # 漏洞隐患提醒
-
-"""
-下游代理配置
-"""
-PROXY_CONFIG_BOOL = False
-PROXY_CONFIG = {
-    # "http": "127.0.0.1:8080",
-    # "https": "127.0.0.1:8080"
+BLOCK_COUNT = 20 # 请求多次失败后诊断为网站对本机IP封禁，加入请求黑名单
+STATUS_FLASH_TIME = 60 # 扫描状态输出间隔(>=60)
+NOTICE = {
+    # 微信推送
+    "wechat": {
+        "enable": False, 
+        "corp_id": "", 
+        "secret": "", 
+        "agent_id": "", 
+        "user_list": [''], 
+    },
+    # 钉钉推送
+    "dingtalk": {
+        "enable": False, 
+        "token": "", 
+    }
 }
+AUTOPROXY = {
+    "threads": 20, # 线程数
+    "export": True, # 导出代理
+    "fofa": {
+        "enabled": False,
+        "key": "",
+        "query": "protocol==\"socks5\" && country==\"CN\" && banner=\"Method:No\"",
+        "size": 500
+    },
+    "hunter": {
+        "enabled": False,
+        "key": "",
+        "query": "protocol==\"socks5\"&&protocol.banner=\"No authentication\"&&ip.country=\"CN\"",
+        "size": 50
+    }
+} # 自动代理获取
 
 """
 插件配置
 """
-LOAD = []  # 需要加载的插件
-DISLOAD = []  # 不加载的插件
 PLUGIN_THREADS = 3 # 插件内线程（针对多参数情况）
+DISLOAD = ["unauth"]  # 不加载的插件
 # sqli-time
 SQLi_TIME = 4 # SQLi插件延时时间
 # xss
@@ -55,13 +78,22 @@ BRUTE_DELAY = 0.03  # 每次请求之后sleep的间隔
 SSTI_LEVEL = 0  # 0-5 扫描速度，越往后数据包越多，个别fuzz情况可配置大一些
 
 """
-反连配置
+服务端&客户端反连配置
 """
-USE_REVERSE = False  # 使用反连平台将False改为True
-REVERSE_HTTP_IP = "127.0.0.1"  # 回连http IP地址，需要改为服务器ip，不能改为0.0.0.0，因为程序无法识别
-REVERSE_HTTP_PORT = 9999  # 回连http端口
-REVERSE_DNS = ""
-REVERSE_RMI_IP = "127.0.0.1"  # Java RMI 回连IP,需要改为服务器ip，不能改为0.0.0.0，因为程序无法识别
-REVERSE_RMI_PORT = 10002  # Java RMI 回连端口
-REVERSE_SLEEP = 5  # 反连后延时检测时间，单位是(秒)
-DNS_PORT = 53 # DNS服务默认端口
+REVERSE = {
+    # 客户端
+    "sleep": 5,  # 反连后延时检测时间，单位是(秒)
+    # 服务端&客户端
+    "http_ip": "127.0.0.1",   # 反连HTTP IP地址
+    "http_port": 9999,   # 反连HTTP端口
+    "dns_enable": True, 
+    "dns_domain": "log.evilhex.top",  # 配置NS的域名
+    "dns_port": 53,  # DNS服务默认端口
+    # 下面两种暂时没有应用场景
+    "rmi_enable": False, 
+    "rmi_ip": "127.0.0.1",   # Java RMI 反连IP
+    "rmi_port": 10002,   # Java RMI 反连端口
+    "ldap_enable": False,
+    "ldap_ip": "127.0.0.1",  # LDAP 反连IP
+    "ldap_port": 10003,  # LDAP 反连端口
+}

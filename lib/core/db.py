@@ -80,12 +80,18 @@ def initdb(root):
     with db_lock:  # 使用锁确保线程安全
         with db_connection() as conn:
             cursor = conn.cursor()
+            try:
+                cursor.execute('DELETE FROM block_count')
+                cursor.execute('DELETE FROM block_id')
+            except:
+                pass
             # 域名信息记录
             # port: |80|443|
             # fingerprint: |os=["LINUX"]|webserver=["NGINX"]|programing=["PHP"]|
             cursor.execute('CREATE TABLE IF NOT EXISTS info(hostname TEXT, waf TEXT, port TEXT, fingerprint TEXT)')
+            cursor.execute('CREATE TABLE IF NOT EXISTS block_count(id TEXT, count TEXT)')
+            cursor.execute('CREATE TABLE IF NOT EXISTS block_host(id TEXT)')
             # 缓存记录（记录每次项目启动后扫描过的URL及关联信息）
-            # 服务于去重
             try:
                 cursor.execute('DELETE FROM cache')
             except:

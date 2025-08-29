@@ -10,15 +10,15 @@ import sys
 def chat(text):
     try:
         # 验证配置
-        if not all(key in conf.smartscan_selector for key in ["apikey", "apiurl", "model"]):
+        if not all(key in conf.smartscan for key in ["API_KEY", "API_URL", "MODEL"]):
             raise ValueError("Missing required configuration in conf.smartscan_selector.")
 
         client = OpenAI(
-            api_key=conf.smartscan_selector["apikey"],
-            base_url=conf.smartscan_selector["apiurl"],
+            api_key = conf.smartscan_selector["API_KEY"],
+            base_url = conf.smartscan_selector["API_URL"],
         )
         completion = client.chat.completions.create(
-            model=conf.smartscan_selector["model"],
+            model = conf.smartscan_selector["MODEL"], 
             messages=[
                 {"role": "user", "content": text}
             ],

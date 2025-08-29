@@ -19,7 +19,6 @@ class Z0SCAN(PluginBase):
     
     def __init__(self):
         super().__init__()
-        # 初始化序列匹配器，用于比较页面内容的相似度
         self.seqMatcher = difflib.SequenceMatcher(None)
         # 设置页面相似度的上下界
         self.UPPER_RATIO_BOUND = 0.98
@@ -32,17 +31,10 @@ class Z0SCAN(PluginBase):
         self.retry = 3
         # 存储动态内容的标记
         self.dynamic = []
-        # 布尔盲注概率计算相关参数
+        # 布尔盲注概率计算
         self.MIN_DIFF_RATIO = 0.1  # 最小差异比率
     
     def calculate_boolean_probability(self, original_page, true_page, false_page):
-        """
-        计算布尔盲注存在的概率（完全按照DetSQL原有逻辑）
-        :param original_page: 原始页面内容
-        :param true_page: 真条件返回的页面内容
-        :param false_page: 假条件返回的页面内容
-        :return: 布尔盲注存在的概率(0.0-1.0)
-        """
         # 计算原始页面与真/假页面的相似度
         self.seqMatcher.set_seq1(original_page)
         self.seqMatcher.set_seq2(true_page)
@@ -160,7 +152,7 @@ class Z0SCAN(PluginBase):
             return False
 
     def audit(self):
-        if not (self.risk in conf.risk or conf.level != 0) or self.name in KB.disable:
+        if not (self.risk in conf.risk or conf.level != 0):
             return
         count = 0
         ratio = 0

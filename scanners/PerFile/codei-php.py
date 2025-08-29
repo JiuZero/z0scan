@@ -16,7 +16,7 @@ class Z0SCAN(PluginBase):
     risk = 3
             
     def audit(self):
-        if conf.level == 0 or not self.risk in conf.risk or self.fingerprints.waf or self.name in KB.disable:
+        if conf.level == 0 or not self.risk in conf.risk or self.fingerprints.waf:
             return
         if not "PHP" in self.fingerprints.programing:
             randint = random.randint(10120, 10240)

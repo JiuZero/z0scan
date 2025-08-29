@@ -78,13 +78,13 @@
         <br>
         <a href="javascript:void(0)"><sub>棉花糖</sub></a>
     </td>
+  </tr>
+  <tr>
     <td align="center">
         <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/8.jpg"alt="Typora-Logo"/>
         <br>
         <a href="https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=Mzk0MjY1ODE5Mg==&scene=124#wechat_redirect"><sub>风铃Sec</sub></a>
     </td>
-  </tr>
-  <tr>
     <td align="center">
         <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/acknowledgments/11.jpg"alt="Typora-Logo"/>
         <br>
@@ -122,6 +122,12 @@
     </td>
   </tr>
 </table></div>
+
+## Contact
+
+| **WeChat**  | **QQ**        |   **Email**    | **QQGroup**  |
+|:--------:|:--------------:|  :--------------:|  :--------------:|
+| JiuZer1     | 1703417187       |  jiuzer0@qq.com | 1058256508 |
 
 ## Advantages  
 
@@ -226,6 +232,9 @@ z0 scan -f urls.txt
 | sensi-retirejs       | Outdated JS Component Detection      | -1   |  
 | ssti                 | SSTI Vulnerability Detection         | 3    |
 | ssti-angularjs|AngularJS Client-Side Template Injection Detector|2 |
+|ssrf|SSRF plugin detects server-side request forgery vulnerabilities via crafted payloads.|2|
+|xxe|XXE plugin detects XML external entity injection vulnerabilities via malicious payloads.|3|
+|xxe-blind|Blind XXE plugin detects out-of-band data exfiltration.|3|
 
 - **PerFolder**  
 
@@ -259,11 +268,3 @@ z0 scan -f urls.txt
 | other-baseline       | Service Version Leak                 | -1   |  
 | other-smuggling      | Request Smuggling Vulnerability      | 3    |  
 | trave-list_3         | Directory Listing                    | 2    |  
-
-## Contact the Developer  
-
-| Platform | Contact        |  
-|:--------:|:--------------:|  
-| **WeChat**   | JiuZer1        |  
-| **QQ**       | 1703417187     |  
-| **Email**    | jiuzer0@qq.com |

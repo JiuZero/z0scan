@@ -16,7 +16,7 @@ class Z0SCAN(PluginBase):
         self.ssti_payloads = importssti()
         
     def audit(self):
-        if not self.risk in conf.risk or conf.level == 0 or self.name in KB.disable:
+        if not self.risk in conf.risk or conf.level == 0:
             return
         if self.requests.suffix.lower() not in ["", "php", "do", "action"]:
             return

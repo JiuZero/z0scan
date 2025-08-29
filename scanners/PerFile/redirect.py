@@ -57,7 +57,7 @@ class Z0SCAN(PluginBase):
         return any(re.search(p, value, re.I) for p in patterns)
 
     def audit(self):
-        if conf.level != 0 and self.risk in conf.risk and self.response.status_code == 302 and not self.name in KB.disable:
+        if conf.level != 0 and self.risk in conf.risk and self.response.status_code == 302:
             randomint = randint(10000,99999)
             test_domains = [f"http://z.{randomint}.com", "http://z0.{randomint}.#{self.requests.hostname}"]
             if conf.level == 3:

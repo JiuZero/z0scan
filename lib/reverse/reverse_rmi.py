@@ -8,8 +8,9 @@ import struct
 import time
 import binascii
 
-from config.config import REVERSE_RMI_IP, REVERSE_RMI_PORT
-from lib.reverse.lib import rlog, reverse_records, reverse_lock
+from lib.core.log import logger
+from lib.core.data import conf
+from lib.reverse.lib import reverse_records, reverse_lock
 
 
 def decode_rmi(query):
@@ -17,7 +18,7 @@ def decode_rmi(query):
     try:
         info = binascii.a2b_hex(query[4:].encode()).decode()
     except Exception as ex:
-        rlog.warning("decode rmi error:{} sourquery:{}".format(ex, query))
+        logger.warning("Decode rmi error:{} sourquery:{}".format(ex, query))
     return info
 
 
@@ -41,20 +42,19 @@ def rmi_response(client, address):
                     break
             if buf1:
                 path = bytearray(buf1).split(b"\xdf\x74")[-1][2:].decode(errors="ignore")
-                rlog.info("client:{} send path:{}".format(address, path))
+                logger.info("Client {} send {}".format(address, path), origin="RMI")
                 res = {}
-                res["type"] = "dns"
+                res["type"] = "rmi"
                 res["client"] = address[0]
                 res["query"] = path
                 res["info"] = decode_rmi(path)
                 res["time"] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-                rlog.info("Insert to db:" + str(res))
-                # insert_db(res)
+                logger.info(f"Record: {str(res)}", origin="RMI")
                 reverse_lock.acquire()
                 reverse_records.append(res)
                 reverse_lock.release()
     except Exception as ex:
-        rlog.warning('Run rmi error:{} address:{}'.format(ex, address))
+        logger.warning('Run rmi error:{} address:{}'.format(ex, address))
     finally:
         client.close()
 
@@ -62,10 +62,10 @@ def rmi_response(client, address):
 def rmi_start():
     max_conn = 200
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    ip_port = (REVERSE_RMI_IP, int(REVERSE_RMI_PORT))
+    ip_port = (conf.reverse.get("rmi_ip"), int(conf.reverse.get("rmi_port")))
     sock.bind(ip_port)
     sock.listen(max_conn)
-    rlog.info("RMI listen rmi://{}:{}".format(REVERSE_RMI_IP, REVERSE_RMI_PORT))
+    logger.info("RMI listen rmi://{}:{}".format(conf.reverse.get("rmi_ip"), conf.reverse.get("rmi_port")))
     while True:
         client, address = sock.accept()
         thread = threading.Thread(target=rmi_response, args=(client, address))

@@ -74,7 +74,7 @@ class Z0SCAN(PluginBase):
         return result
 
     def audit(self):
-        if not self.risk in conf.risk or not self.requests.post_hint == POST_HINT.JSON or self.name in KB.disable:
+        if not self.risk in conf.risk or not self.requests.post_hint == POST_HINT.JSON:
             return
         callbaks = ["callback", "cb", "json"]
         params = deepcopy(self.requests.params)

@@ -13,17 +13,5 @@ assignees: ''
 - Python version [e.g. 3.5, 3.6]
 - Z0scan version
 
-## Expected Behavior
+## Description
 
-what should happen
-
-## Current Behavior
-
-what happens instead of the expected behavior
-
-## To Reproduce
-
-Steps to reproduce the behavior:
-
-- Step1
-- Step2

@@ -14,7 +14,7 @@ class Z0SCAN(PluginBase):
     risk = 0
         
     def audit(self):
-        if conf.level == 0 or not self.risk in conf.risk or self.name in KB.disable:
+        if conf.level == 0 or not self.risk in conf.risk:
             return
         if not "PHP" in self.fingerprints.programing:
             iterdatas = self.generateItemdatas()

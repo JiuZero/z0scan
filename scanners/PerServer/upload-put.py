@@ -29,7 +29,7 @@ class Z0SCAN(PluginBase):
         return None
     
     def audit(self):
-        if conf.level == 0 or not self.risk in conf.risk or self.name in KB.disable:
+        if conf.level == 0 or not self.risk in conf.risk:
             return
         if r := self._put_upload():
             r1, r2 = r

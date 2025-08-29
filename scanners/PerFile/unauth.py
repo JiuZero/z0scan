@@ -17,7 +17,7 @@ class Z0SCAN(PluginBase):
     SIMILAR_MIN = 0.90
 
     def condition(self):
-        if conf.level == 0 or not 2 in conf.risk or self.name in KB.disable:
+        if conf.level == 0 or not 2 in conf.risk:
             return False
         for k, v in self.requests.headers.items():
             if k.lower() in ["cookie", "token", "auth"]:

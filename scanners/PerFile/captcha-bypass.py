@@ -12,7 +12,7 @@ class Z0SCAN(PluginBase):
     risk = 0
         
     def audit(self):
-        if not self.risk in conf.risk or self.name in KB.disable:
+        if not self.risk in conf.risk:
             return
 
         # 基于前端的验证码绕过(生成代码在前端)

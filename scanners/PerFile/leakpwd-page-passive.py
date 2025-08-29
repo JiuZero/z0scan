@@ -20,7 +20,7 @@ class Z0SCAN(PluginBase):
     risk = 2
     
     def condition(self):
-        if conf.level == 0 or not 2 in conf.risk or self.name in KB.disable:
+        if conf.level == 0 or not 2 in conf.risk:
             return False
         result = re.findall(".*<form (.*)</form>.*", self.response.text, re.S)
         if result:
