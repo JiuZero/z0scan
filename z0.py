@@ -77,7 +77,7 @@ def main():
             task_push_from_name('loader', fake_req, fake_resp)
         start()
     elif conf.server_addr:
-        server = BackgroundServer(port=conf.socket_port).start()
+        server = BackgroundServer(port=conf.console_port).start()
         KB["continue"] = True
         # 启动漏洞扫描器
         scanner = threading.Thread(target=start)
