@@ -13,7 +13,8 @@ import zlib, threading
 from http.client import HTTPResponse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
-from ssl import wrap_socket, SSLError
+import ssl
+from ssl import SSLError
 from urllib.parse import urlparse, ParseResult, urlunparse
 
 import chardet
@@ -620,7 +621,10 @@ class ProxyHandle(BaseHTTPRequestHandler):
         self.hostname, self.port = self.path.split(':')
         self.proxy_connect()
         # 进行SSL包裹
-        self._proxy_sock = wrap_socket(self._proxy_sock)
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+        self._proxy_sock = context.wrap_socket(self._proxy_sock)
 
     def _proxy_to_dst(self):
         # 代理连接http目标服务器
@@ -650,8 +654,9 @@ class ProxyHandle(BaseHTTPRequestHandler):
 
             # 这个时候需要将客户端的socket包装成sslsocket,这个时候的self.path类似www.baidu.com:443，根据域名使用相应的证书
             try:
-                self.request = wrap_socket(self.request, server_side=True,
-                                           certfile=self.server.ca[self.path.split(':')[0]])
+                context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+                context.load_cert_chain(self.server.ca[self.path.split(':')[0]])
+                self.request = context.wrap_socket(self.request, server_side=True)
             except SSLError:
                 return
 
