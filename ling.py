@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @File    : z0scan_gui.py
-# 为 z0scan 项目添加GUI 界面
 
 import sys
 import os
@@ -28,58 +27,53 @@ PLUGIN_INFO_PATTERNS = {
 # 用于匹配JSON报告路径的正则表达式
 JSON_REPORT_PATH_PATTERN = re.compile(r'JSON Report Path: (.*\.json)')
 
+INFO = """
+<h2 style="text-align: center;">z0scan-ling 漏洞扫描工具</h2>
+<p style="text-align: center;">版本: 0.0.1</p>
+<hr>
+<p>z0scan 是一款功能强大的网络漏洞扫描工具，旨在帮助安全测试人员发现和评估网络应用中的安全漏洞。</p>
+<p>ling 则作为z0的GUI实现，具有直观、便捷等特点。</p>
+<hr>
+<p style="text-align: center;">© 2025 JiuZero</p>
+"""
+
 class AboutDialog(QDialog):
     """关于页面对话框"""
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("关于 ling")
+        self.setWindowTitle("关于 Ling")
         self.setMinimumSize(400, 300)
-        
         layout = QVBoxLayout(self)
-        
         # 程序信息
         info_text = QTextEdit()
         info_text.setReadOnly(True)
         info_text.setStyleSheet("background-color: transparent; border: none;")
-        info_text.setHtml("""
-        <h2 style="text-align: center;">z0scan-ling 漏洞扫描工具</h2>
-        <p style="text-align: center;">版本: 0.0.1</p>
-        <hr>
-        <p>z0scan 是一款功能强大的网络漏洞扫描工具，旨在帮助安全测试人员发现和评估网络应用中的安全漏洞。</p>
-        <p>ling 则作为z0scan的GUI实现，具有直观、便捷等特点。</p>
-        <hr>
-        <p style="text-align: center;">© 2025 JiuZero</p>
-        """)
-        
+        info_text.setHtml(INFO)
         layout.addWidget(info_text)
-        
         # 按钮
         buttons = QDialogButtonBox(QDialogButtonBox.Ok)
         buttons.accepted.connect(self.accept)
         layout.addWidget(buttons)
 
+
 class RiskSelectionDialog(QDialog):
-    """风险等级选择对话框，允许用户选择多个风险级别"""
+    """风险等级选择对话框"""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("选择风险等级")
         self.setMinimumWidth(300)
-        
         layout = QVBoxLayout(self)
-        
         # 风险等级选项
         self.risk_options = {
-            0: QCheckBox("0 (信息)"),
+            0: QCheckBox("0 (极低&信息)"),
             1: QCheckBox("1 (低)"),
             2: QCheckBox("2 (中)"),
             3: QCheckBox("3 (高)")
         }
-        
         # 默认全选
         for cb in self.risk_options.values():
             cb.setChecked(True)
             layout.addWidget(cb)
-        
         # 按钮
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttons.accepted.connect(self.accept)
@@ -89,6 +83,7 @@ class RiskSelectionDialog(QDialog):
     def get_selected_risks(self):
         """获取选中的风险等级"""
         return [level for level, cb in self.risk_options.items() if cb.isChecked()]
+
 
 class ScanThread(QThread):
     """扫描线程，用于在后台执行扫描任务"""
@@ -113,7 +108,6 @@ class ScanThread(QThread):
                 universal_newlines=True,
                 bufsize=1
             )
-
             # 实时读取输出并查找JSON报告路径
             while self.running and process.poll() is None:
                 line = process.stdout.readline()
@@ -123,18 +117,12 @@ class ScanThread(QThread):
                     path_match = JSON_REPORT_PATH_PATTERN.search(line)
                     if path_match:
                         self.json_report_path = path_match.group(1)
-            
             # 处理剩余输出
             remaining = process.stdout.read()
             if remaining:
                 self.output_signal.emit(remaining)
-                # 检查剩余输出中是否包含JSON报告路径
-                path_match = JSON_REPORT_PATH_PATTERN.search(remaining)
-                if path_match:
-                    self.json_report_path = path_match.group(1)
-                
         except Exception as e:
-            self.output_signal.emit(f"扫描出错: {str(e)}")
+            self.output_signal.emit(f"[Ling][ERR]: {str(e)}")
         finally:
             # 将JSON报告路径传递给主线程
             self.finish_signal.emit(self.json_report_path)
@@ -142,140 +130,72 @@ class ScanThread(QThread):
     def stop(self):
         self.running = False
 
+
 class VulnerabilityDetailWidget(QWidget):
     """漏洞详情展示组件"""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.init_ui()
-        
+    
     def init_ui(self):
         layout = QVBoxLayout(self)
-        
         # 创建标签页
         self.tabs = QTabWidget()
-        
         # 基本信息标签页
         self.basic_info = QTextEdit()
         self.basic_info.setReadOnly(True)
         self.tabs.addTab(self.basic_info, "基本信息")
-        
-        # 请求信息标签页
-        self.request_info = QTextEdit()
-        self.request_info.setReadOnly(True)
-        self.request_info.setFont(QFont("Monospace", 9))
-        self.tabs.addTab(self.request_info, "请求")
-        
-        # 响应信息标签页
-        self.response_info = QTextEdit()
-        self.response_info.setReadOnly(True)
-        self.response_info.setFont(QFont("Monospace", 9))
-        self.tabs.addTab(self.response_info, "响应")
-        
         # 验证步骤标签页
         self.verification_steps = QTreeWidget()
-        self.verification_steps.setHeaderLabel("验证步骤与利用建议")
-        self.tabs.addTab(self.verification_steps, "验证与利用")
-        
+        self.verification_steps.setHeaderLabel("验证步骤")
+        self.tabs.addTab(self.verification_steps, "验证")
         layout.addWidget(self.tabs)
         
     def update_detail(self, vuln_data):
         """更新漏洞详情"""
         # 更新各个标签页数据
         self._update_basic_info(vuln_data)
-        self._update_request_response(vuln_data)
         self._update_verification_steps(vuln_data)
     
     def _update_basic_info(self, vuln_data):
         """更新基本信息标签页"""
+        basic_text = ""
+        basic_text += f"主机名: {vuln_data.get('hostname', '未知')}\n"
+        basic_text += f"URL: {vuln_data.get('url', '未知')}\n"
         basic_text = f"漏洞名称: {vuln_data.get('name', '未知')}\n"
         basic_text += f"漏洞类型: {vuln_data.get('vultype', '未知')}\n"
-        basic_text += f"URL: {vuln_data.get('url', '未知')}\n"
         basic_text += f"风险等级: {vuln_data.get('risk', '未知')}\n"
         basic_text += f"描述: {vuln_data.get('desc', '无')}\n"
         basic_text += f"发现时间: {vuln_data.get('createtime', '未知')}\n"
-        basic_text += f"主机名: {vuln_data.get('hostname', '未知')}\n"
-        
         self.basic_info.setText(basic_text)
     
-    def _update_request_response(self, vuln_data):
-        """更新请求和响应信息标签页"""
-        detail = vuln_data.get('detail', {})
-        request_text = ""
-        response_text = ""
-        
-        # 处理请求信息
-        if 'Request' in detail and isinstance(detail['Request'], list):
-            for idx, req in enumerate(detail['Request'], 1):
-                if 'request' in req:
-                    request_text += f"=== 请求 #{idx} ===\n{req['request']}\n\n"
-                if 'response' in req:
-                    response_text += f"=== 响应 #{idx} ===\n{req['response']}\n\n"
-        # 处理XSS类型漏洞的请求信息
-        elif 'Request1' in detail and isinstance(detail['Request1'], list):
-            for idx, req in enumerate(detail['Request1'], 1):
-                if 'request' in req:
-                    request_text += f"=== 请求 #{idx} ===\n{req['request']}\n\n"
-                if 'response' in req:
-                    response_text += f"=== 响应 #{idx} ===\n{req['response']}\n\n"
-        
-        self.request_info.setText(request_text)
-        self.response_info.setText(response_text)
-    
     def _update_verification_steps(self, vuln_data):
-        """更新验证步骤标签页"""
+        """验证步骤标签页"""
         self.verification_steps.clear()
-        
         # 添加验证信息
         show_info = vuln_data.get('show', {})
         if show_info:
             verify_item = QTreeWidgetItem(["验证信息"])
-            if 'Position' in show_info:
-                verify_item.addChild(QTreeWidgetItem([f"参数位置: {show_info['Position']}"]))
-            if 'Payload' in show_info:
-                payload_item = QTreeWidgetItem([f"Payload: {show_info['Payload']}"])
-                payload_item.setForeground(0, QColor(255, 0, 0))  # 红色显示Payload
-                verify_item.addChild(payload_item)
-            if 'Desc' in show_info:
-                verify_item.addChild(QTreeWidgetItem([f"描述: {show_info['Desc']}"]))
-            if 'Tips' in show_info:
-                verify_item.addChild(QTreeWidgetItem([f"提示: {show_info['Tips']}"]))
-                
+            for key, value in show_info.items():
+                verify_item.addChild(QTreeWidgetItem([f"{key}: {value}"]))
             self.verification_steps.addTopLevelItem(verify_item)
         
         # 添加漏洞详情
         detail_info = vuln_data.get('detail', {})
         if detail_info:
-            detail_item = QTreeWidgetItem(["漏洞详情"])
-            
             # 处理请求详情
-            if 'Request' in detail_info and isinstance(detail_info['Request'], list):
-                for req in detail_info['Request']:
-                    if 'desc' in req:
-                        detail_item.addChild(QTreeWidgetItem([f"请求描述: {req['desc']}"]))
-            elif 'Request1' in detail_info and isinstance(detail_info['Request1'], list):
-                for req in detail_info['Request1']:
-                    if 'desc' in req:
-                        detail_item.addChild(QTreeWidgetItem([f"请求描述: {req['desc']}"]))
-                
+            detail_item = QTreeWidgetItem(["漏洞详情"])
+            for key, value in detail_info.items():
+                if isinstance(value, dict):
+                    # 如果值是字典，递归处理
+                    sub_item = QTreeWidgetItem([key])
+                    for sub_key, sub_value in value.items():
+                        sub_item.addChild(QTreeWidgetItem([f"{sub_key}: {sub_value}"]))
+                    detail_item.addChild(sub_item)
+                else:
+                    # 如果值是简单类型，直接添加
+                    detail_item.addChild(QTreeWidgetItem([f"{key}: {value}"]))
             self.verification_steps.addTopLevelItem(detail_item)
-        
-        # 添加通用利用建议
-        exploit_item = QTreeWidgetItem(["利用建议"])
-        vuln_type = vuln_data.get('vultype', '').lower()
-        
-        if 'xss' in vuln_type:
-            exploit_item.addChild(QTreeWidgetItem(["1. 尝试多种XSS向量以绕过过滤机制"]))
-            exploit_item.addChild(QTreeWidgetItem(["2. 测试事件处理器注入（onerror, onload等）"]))
-            exploit_item.addChild(QTreeWidgetItem(["3. 考虑使用HTML5特性进行绕过"]))
-        elif 'crlf' in vuln_type:
-            exploit_item.addChild(QTreeWidgetItem(["1. 尝试注入Set-Cookie头进行会话固定攻击"]))
-            exploit_item.addChild(QTreeWidgetItem(["2. 测试注入安全相关响应头"]))
-            exploit_item.addChild(QTreeWidgetItem(["3. 尝试响应拆分攻击"]))
-            
-        exploit_item.addChild(QTreeWidgetItem(["4. 结合其他漏洞可能造成更严重的影响"]))
-        exploit_item.addChild(QTreeWidgetItem(["5. 建议对输入进行严格过滤和编码"]))
-        
-        self.verification_steps.addTopLevelItem(exploit_item)
     
 
 class Z0ScanGUI(QMainWindow):
@@ -294,35 +214,27 @@ class Z0ScanGUI(QMainWindow):
         
     def init_ui(self):
         # 设置窗口基本属性
-        self.setWindowTitle("ling : Z0-GUI漏洞扫描工具")
+        self.setWindowTitle("Ling - Z0GUI漏洞扫描工具")
         self.setGeometry(100, 100, 1200, 800)
         self.setMinimumSize(1000, 600)
-        
         # 设置字体
         font = QFont("SimHei", 9)
         self.setFont(font)
-        
         # 创建主部件和布局
         main_widget = QWidget()
         main_layout = QVBoxLayout(main_widget)
         self.setCentralWidget(main_widget)
-        
         # 创建标签页
         self.tabs = QTabWidget()
         main_layout.addWidget(self.tabs)
-        
         # 创建扫描配置标签页
         self.create_scan_tab()
-        
         # 创建扫描结果标签页
         self.create_results_tab()
-        
         # 创建插件管理标签页
         self.create_plugins_tab()
-        
         # 创建关于标签页（移除了设置标签页）
         self.create_about_tab()
-        
         # 创建状态栏
         self.statusBar().showMessage("就绪")
 
@@ -479,7 +391,7 @@ class Z0ScanGUI(QMainWindow):
         
         filter_layout.addWidget(QLabel("漏洞类型过滤:"))
         self.type_filter = QComboBox()
-        self.type_filter.addItems(["全部", "XSS", "命令注入", "路径遍历", "敏感信息泄露", "其他"])
+        self.type_filter.addItems(["全部", "SQLi", "SSTi", "CSRF", "SSRF", "XSS", "命令注入", "路径遍历", "敏感信息泄露", "其他"])
         self.type_filter.currentIndexChanged.connect(self.filter_vulnerabilities)
         filter_layout.addWidget(self.type_filter)
         
@@ -600,35 +512,13 @@ class Z0ScanGUI(QMainWindow):
         """创建关于标签页"""
         about_tab = QWidget()
         layout = QVBoxLayout(about_tab)
-        
         # 使用AboutDialog的内容创建标签页
         about_text = QTextEdit()
         about_text.setReadOnly(True)
         about_text.setStyleSheet("background-color: transparent; border: none;")
-        about_text.setHtml("""
-        <h2 style="text-align: center;">z0scan-ling 漏洞扫描工具</h2>
-        <p style="text-align: center;">版本: 0.0.1</p>
-        <hr>
-        <p>z0scan 是一款功能强大的网络漏洞扫描工具，旨在帮助安全测试人员发现和评估网络应用中的安全漏洞。</p>
-        <p>ling 则作为z0scan的GUI实现，具有直观、便捷等特点。</p>
-        <hr>
-        <p style="text-align: center;">© 2025 JiuZero</p>
-        """)
-        
-        # 添加一个"查看详情"按钮，打开对话框
-        detail_btn = QPushButton("查看详情")
-        detail_btn.clicked.connect(self.show_about_dialog)
-        
-        # 布局设置
+        about_text.setHtml(INFO)
         layout.addWidget(about_text)
-        layout.addWidget(detail_btn, alignment=Qt.AlignCenter)
-        
         self.tabs.addTab(about_tab, "关于")
-
-    def show_about_dialog(self):
-        """显示关于对话框"""
-        dialog = AboutDialog(self)
-        dialog.exec_()
 
     # 辅助方法
     def toggle_scan_mode(self):
@@ -650,34 +540,28 @@ class Z0ScanGUI(QMainWindow):
         self.perfolder_plugins.clear()
         self.perserver_plugins.clear()
         self.plugin_info_cache.clear()
-        
         # 插件类型与目录的映射
         plugin_types = {
             "PerFile": self.perfile_plugins,
             "PerFolder": self.perfolder_plugins,
             "PerServer": self.perserver_plugins
         }
-        
         # 遍历每种插件类型对应的目录
         for plugin_type, list_widget in plugin_types.items():
             plugin_dir = os.path.join(self.scanner_dir, plugin_type)
-            
             # 检查目录是否存在
             if not os.path.exists(plugin_dir) or not os.path.isdir(plugin_dir):
                 continue
-                
-            # 遍历目录中的所有Python文件
+            # 遍历目录中的所有插件
             for filename in os.listdir(plugin_dir):
                 if filename.endswith(".py") and not filename.startswith("__"):
                     plugin_path = os.path.join(plugin_dir, filename)
                     plugin_info = self.get_plugin_info(plugin_path, filename)
-                    
                     if plugin_info:
                         # 缓存插件信息
                         self.plugin_info_cache[plugin_info['name']] = plugin_info
-                        
                         # 创建列表项
-                        risk_text = f"风险: {plugin_info['risk']}"
+                        risk_text = f"RISK: {plugin_info['risk']}"
                         item_text = f"{plugin_info['name']} - {plugin_info['desc']} ({risk_text})"
                         item = QListWidgetItem(item_text)
                         item.setCheckState(Qt.Checked)
@@ -700,19 +584,16 @@ class Z0ScanGUI(QMainWindow):
             # 读取文件内容
             with open(plugin_path, 'r', encoding='utf-8', errors='ignore') as f:
                 content = f.read()
-                
             # 使用正则提取信息
             name = PLUGIN_INFO_PATTERNS['name'].search(content)
             desc = PLUGIN_INFO_PATTERNS['desc'].search(content)
             version = PLUGIN_INFO_PATTERNS['version'].search(content)
             risk = PLUGIN_INFO_PATTERNS['risk'].search(content)
-            
             # 处理提取结果
             plugin_name = name.group(1) if name else os.path.splitext(filename)[0]
             plugin_desc = desc.group(1) if desc else "无描述"
             plugin_version = version.group(1) if version else "未知版本"
             plugin_risk = int(risk.group(1)) if risk else 0
-            
             return {
                 'name': plugin_name,
                 'desc': plugin_desc,
@@ -792,13 +673,23 @@ class Z0ScanGUI(QMainWindow):
 
     def start_scan(self):
         """开始扫描"""
+        current_dir = os.getcwd()
+        # 根据平台确定可能的可执行文件
         if sys.platform.startswith('win'):
-            python_cmd = "python"
+            exe_candidates = [os.path.join(current_dir, "z0.exe")]
         else:
-            python_cmd = "python3"
-        
-        # 构建扫描命令
-        command = f"{python_cmd} z0.py scan"
+            exe_candidates = [
+                os.path.join(current_dir, "z0"),
+                os.path.join(current_dir, "z0.bin")
+            ]
+        if (getattr(sys, 'frozen', False) and 
+            any(os.path.isfile(candidate) for candidate in exe_candidates)):
+            # 找到第一个存在的可执行文件
+            executable_path = next(c for c in exe_candidates if os.path.isfile(c))
+            command = f"{executable_path} scan"
+        else:
+            python_cmd = "python" if sys.platform.startswith('win') else "python3"
+            command = f"{python_cmd} z0.py scan"
         
         # 主动/被动模式
         if self.active_scan_radio.isChecked():
@@ -806,7 +697,10 @@ class Z0ScanGUI(QMainWindow):
             if not target:
                 self.scan_output.append("请输入目标URL或文件")
                 return
-            command += f" -u {target}"
+            if target.split(".")[-1] == "txt":
+                command += f" -f {target}"
+            else:
+                command += f" -u {target}"
         else:
             proxy = self.proxy_input.text().strip()
             if not proxy:
@@ -876,13 +770,11 @@ class Z0ScanGUI(QMainWindow):
         self.start_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
         self.progress_bar.setVisible(False)
-        
         if json_report_path:
-            self.statusBar().showMessage(f"扫描完成，正在处理报告: {json_report_path}")
+            self.statusBar().showMessage(f"扫描结束，正在处理报告: {json_report_path}")
             self.process_json_report(json_report_path)
         else:
-            self.statusBar().showMessage("扫描完成，未找到JSON报告")
-            
+            self.statusBar().showMessage("扫描结束，未找到JSON报告")
         self.scan_output.append(f"\n[{QDateTime.currentDateTime().toString()}] 扫描完成")
 
     def process_json_report(self, report_path):
@@ -891,33 +783,22 @@ class Z0ScanGUI(QMainWindow):
             # 检查文件是否存在
             if not os.path.exists(report_path):
                 self.scan_output.append(f"错误: 报告文件不存在 - {report_path}")
-                return
-                
+                return    
             # 读取并解析JSON文件
             with open(report_path, 'r', encoding='utf-8') as f:
                 try:
-                    # 尝试将文件内容解析为单个漏洞对象
-                    vuln_data = json.load(f)
-                    # 如果是单个漏洞，包装成列表
-                    if isinstance(vuln_data, dict):
-                        vuln_list = [vuln_data]
-                    else:
-                        vuln_list = vuln_data
+                    vuln_list = json.load(f)
                 except json.JSONDecodeError:
                     self.scan_output.append(f"错误: 无法解析JSON报告 - {report_path}")
                     return
-            
             # 清空现有漏洞列表
             self.vulnerabilities = []
             self.results_list.clear()
-            
             # 添加所有漏洞到结果列表
             for vuln in vuln_list:
                 self.add_vulnerability(vuln)
-                
             self.scan_output.append(f"成功加载 {len(vuln_list)} 个漏洞信息")
             self.statusBar().showMessage(f"扫描完成，发现 {len(vuln_list)} 个漏洞")
-            
         except Exception as e:
             self.scan_output.append(f"处理报告时出错: {str(e)}")
             self.statusBar().showMessage("处理报告时出错")
@@ -931,7 +812,6 @@ class Z0ScanGUI(QMainWindow):
     def add_vulnerability(self, vuln_data):
         """添加漏洞到结果列表"""
         self.vulnerabilities.append(vuln_data)
-        
         # 创建列表项
         item = QTreeWidgetItem([
             vuln_data.get('name', '未知'),
@@ -939,7 +819,6 @@ class Z0ScanGUI(QMainWindow):
             str(vuln_data.get('risk', 0)),
             vuln_data.get('createtime', '')
         ])
-        
         # 根据风险等级设置颜色
         risk = vuln_data.get('risk', 0)
         if risk == 3:
@@ -950,7 +829,6 @@ class Z0ScanGUI(QMainWindow):
             item.setForeground(2, QColor(255, 255, 0))  # 低风险-黄色
         else:
             item.setForeground(2, QColor(0, 255, 0))  # 信息-绿色
-            
         item.setData(0, Qt.UserRole, vuln_data)  # 存储完整数据
         self.results_list.addTopLevelItem(item)
 
@@ -964,14 +842,11 @@ class Z0ScanGUI(QMainWindow):
         """根据风险等级和类型过滤漏洞"""
         risk_filter = self.risk_filter.currentIndex() - 1  # 转换为0-3或-1(全部)
         type_filter = self.type_filter.currentText()
-        
         # 保存当前选中项
         current_item = self.results_list.currentItem()
         current_data = current_item.data(0, Qt.UserRole) if current_item else None
-        
         # 清除现有列表
         self.results_list.clear()
-        
         # 重新添加符合条件的漏洞
         for vuln in self.vulnerabilities:
             # 风险过滤
@@ -982,9 +857,9 @@ class Z0ScanGUI(QMainWindow):
             if type_filter != "全部":
                 vuln_type = vuln.get('vultype', '').lower()
                 if (type_filter == "XSS" and "xss" not in vuln_type) or \
-                   (type_filter == "命令注入" and "cmd" not in vuln_type and "command" not in vuln_type) or \
-                   (type_filter == "路径遍历" and "path" not in vuln_type and "trave" not in vuln_type) or \
-                   (type_filter == "敏感信息泄露" and "sensi" not in vuln_type and "leak" not in vuln_type):
+                   (type_filter == "命令注入" and "cmdi" not in vuln_type) or \
+                   (type_filter == "路径遍历" and "trave" not in vuln_type) or \
+                   (type_filter == "敏感信息泄露" and "sensi" not in vuln_type):
                     continue
                 
             item = QTreeWidgetItem([

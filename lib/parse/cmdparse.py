@@ -52,6 +52,7 @@ def cmd_line_parser(argv=None):
     list_parser = subparsers.add_parser('list', help='List of plugins and dicts')
     console_parser = subparsers.add_parser('console', help='Z0Scan console')
     dbcmd_parser = subparsers.add_parser('dbcmd', help='Database manage console')
+    # update_parser = subparsers.add_parser('update', help='Update core with plugins')
 
     ## z0 scan
     # Proxy options
@@ -100,7 +101,7 @@ def cmd_line_parser(argv=None):
     args = parser.parse_args()
     dd = args.__dict__
 
-    if not (dd['command'] in ["version", "reverse", "dbcmd", "list", "console", "scan"]):
+    if not (dd['command'] in ["version", "reverse", "dbcmd", "list", "console", "scan", "update"]):
         errMsg = "An error command input (version, scan, reverse, dbcmd, list, console). "
         errMsg += "Use -h for help\n"
         parser.error(errMsg)

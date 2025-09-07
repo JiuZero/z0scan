@@ -70,8 +70,29 @@ class OutPut(object):
             return
         self.lock_file.acquire()
         # 写入json
-        with open(self.filename, "a+") as f:
-            f.write(json.dumps(output) + '\n')
+        if os.path.exists(self.filename):
+            try:
+                with open(self.filename, 'r', encoding='utf-8') as f:
+                    content = f.read().strip()
+                if content.endswith(']') and not content.endswith('[]'):
+                    content = content[:-1]
+                    if content and not content.endswith('['):
+                        content += ','
+                else:
+                    content = content.rstrip()
+                    if content.endswith(']'):
+                        content = content[:-1]
+                        if content and not content.endswith('['):
+                            content += ','
+                with open(self.filename, 'w', encoding='utf-8') as f:
+                    f.write(content + json.dumps(output) + "]")
+            except (json.JSONDecodeError, IOError) as e:
+                # 如果读取失败，重新创建文件
+                with open(self.filename, 'w', encoding='utf-8') as f:
+                    f.write("[" + [json.dumps(output)] + "]")
+        else:
+            with open(self.filename, 'w', encoding='utf-8') as f:
+                f.write("[" + json.dumps(output) + "]")
 
         if conf.html:
             # 写入html
@@ -137,13 +158,12 @@ class ResultObject(object):
         response = datas.get("response")
         desc = datas.get("desc")
         if name not in self.detail:
-            self.detail[name] = []
-        self.detail[name].append({
-            "position": position,#功能点位置
-            "request": request,#请求
-            "response": response,#响应
-            "desc": desc,#说明
-        })
+            self.detail[name] = {
+                "position": position,#功能点位置
+                "request": request,#请求
+                "response": response,#响应
+                "desc": desc,#说明
+            }
 
     def output(self):
         self.createtime = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())

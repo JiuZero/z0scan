@@ -1,10 +1,10 @@
-name: Build and Release with Nuitka
+name: Build by Nuitka & Release
 
 on:
   workflow_dispatch:  # 手动触发
     inputs:
       version:
-        description: 'Release version (e.g. v1.0.0)'
+        description: 'Release version (e.g. v0.1.0.0)'
         required: true
         default: 'v0.1.0.0'
       is_prerelease:
@@ -92,13 +92,16 @@ jobs:
           tag_name: ${{ github.event.inputs.version }}
           overwrite: true
           release_name: Release ${{ github.event.inputs.version }}
-          body: |
-            ### Platform Build Matrix
-            | Platform  | Arch      | File                      |
-            |-----------|-----------|---------------------------|
-            | Linux     | x86_64    | `z0scan-linux-x86_64.zip`     |
-            | Windows   | x86_64    | `z0scan-windows-amd64.zip`    |
-            | macOS     | ARM64     | `z0scan-darwin-arm64.zip`     |
+          body: |-
+            
+            **构建信息:**
+            - 提交哈希: ${{ github.sha }}
+            - 分支: ${{ github.ref_name }}
+      
+            **支持平台:**
+            - 💻 Windows (x86_64): `z0scan-windows-amd64.zip`
+            - 🐧 Linux (x86_64): `z0scan-linux-x86_64.zip`
+            - 🍎 macOS (ARM64): `z0scan-darwin-arm64.zip`
           files: |
             artifacts/z0scan-linux-x86_64.zip
             artifacts/z0scan-windows-amd64.zip

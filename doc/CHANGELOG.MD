@@ -365,8 +365,8 @@
 
 **2025.8.17**
 1. 整理并优化初始化流程
-2. 支持LDAP回连
-3. 支持开关DNS,LDAP等回连
+2. 支持LDAP反连
+3. 支持开关DNS,LDAP等反连
 
 **2025.8.20**
 1. 新增插件
@@ -399,4 +399,22 @@
 
 ### 0.1.8.9 发布 - 七夕快乐！
 
-TODO: JNDI
+**2025.9.1**
+1. 感谢**9Insomnie（n0irx）**
+* Fix SSL import error and socket_port configuration issue
+
+**2025.9.6**
+1. 版本更新提醒&获取(目前仅支持提醒)
+2. 新增插件
+* PerFile/other-redos 正则dos漏洞检测
+* PerFile/other-jndi-error 基于报错的jndi注入漏洞检测
+* PerFile/codei-java Java代码注入漏洞
+
+**2025.6.7**
+1. 修复json报告格式问题
+2. 修复ling对json报告的解析问题
+3. 美化HTML报告模板
+4. ling支持定位可执行文件z0
+5. build支持编译打包ling
+
+### 0.1.9.9 发布

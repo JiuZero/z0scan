@@ -27,7 +27,7 @@ HIDDEN_VUL_REMINDER = True # 漏洞隐患提醒
 BLOCK_COUNT = 20 # 请求多次失败后诊断为网站对本机IP封禁，加入请求黑名单
 STATUS_FLASH_TIME = 60 # 扫描状态输出间隔(>=60)
 NOTICE = {
-    # 微信推送
+    # 企业微信推送
     "wechat": {
         "enable": False, 
         "corp_id": "", 
@@ -39,6 +39,11 @@ NOTICE = {
     "dingtalk": {
         "enable": False, 
         "token": "", 
+    },
+    # Server酱推送
+    "ftqq": {
+        "enable": False,
+        "key": "",
     }
 }
 AUTOPROXY = {

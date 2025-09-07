@@ -1,28 +1,23 @@
 ![z0scan](https://socialify.git.ci/JiuZero/z0scan/image?description=1&font=Raleway&language=1&logo=https%3A%2F%2Fraw.githubusercontent.com%2FJiuZero%2Fz0scan%2Frefs%2Fheads%2Fmain%2Fdoc%2Flogo.png&owner=1&pattern=Solid&theme=Auto)
 
 <h4 align="center" dir="auto">
-  <a href="https://jiuzero.github.io/tags/z0scan/">Documentation</a> • <a href="https://github.com/JiuZero/z0scan/releases">Download</a> • <a href="https://github.com/JiuZero/z0scan/blob/master/doc/CHANGELOG.MD">ChangeLog</a> • <a href="https://github.com/JiuZero/z0scan-report">ReportSource</a>
+  <a href="https://jiuzero.github.io/tags/z0scan/">官方文档</a> • <a href="https://github.com/JiuZero/z0scan/releases">下载发行版</a> • <a href="https://github.com/JiuZero/z0scan/blob/master/doc/CHANGELOG.MD">更新日志</a> • <a href="https://github.com/JiuZero/z0scan-report">报告源码</a>
 </p>
 
-<p align="center">
-  <a href="https://www.python.org/">
-    <img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white">
-  </a>
-  <a href="https://github.com/JiuZero/z0scan/releases">
-    <img src="https://img.shields.io/github/v/release/JiuZero/z0scan.svg">
-  </a>
-  <a href="https://github.com/JiuZero/z0scan/releases">
-    <img src="https://img.shields.io/github/downloads/JiuZero/z0scan/total">
-  </a>
-  <a href="https://github.com/JiuZero/z0scan">
-    <img src="https://img.shields.io/github/stars/JiuZero/z0scan?style=flat&logo=github&color=yellow">
-  </a>
+<p>
+  <a href="https://github.com/JiuZero/z0scan/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/JiuZero/z0scan?style=for-the-badge"></a>
+  <a href="https://github.com/JiuZero/z0scan/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/JiuZero/z0scan/total?style=for-the-badge"></a>
+  <a href="https://github.com/JiuZero/z0scan/releases"><img src="https://img.shields.io/github/v/release/JiuZero/z0scan.svg?style=for-the-badge"></a>
+  <a href="https://github.com/JiuZero/z0scan/actions"><img alt="Build" src="https://img.shields.io/github/actions/workflow/status/JiuZero/z0scan/release.yml?style=for-the-badge&label=CI"></a>
+  <img alt="Python" src="https://img.shields.io/badge/python-3.0%2B-blue?style=for-the-badge">
+  <img alt="Platform" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-8A2BE2?style=for-the-badge">
+  <img alt="Last Commit" src="https://img.shields.io/github/last-commit/JiuZero/z0scan?style=for-the-badge">
+  <a href="https://github.com/JiuZero/z0scan/issues"><img alt="Issues" src="https://img.shields.io/github/issues/JiuZero/z0scan?style=for-the-badge"></a>
   <a href="https://www.gnu.org/licenses/gpl-2.0.en.html">
-    <img src="https://img.shields.io/badge/License-GPL2-red?style=flat&logo=gnu">
-  </a>
+  <img alt="PRs Welcome" src="https://img.shields.io/badge/License-GPL2-red?style=for-the-badge"></a>
 </p>
 
-## Contributors
+## 👨‍💻 贡献者
 
 <div><table frame=void>
 	<tr>
@@ -31,10 +26,15 @@
         <br>
         <a href="https://github.com/steveopen1/"><sub>steveopen1</sub></a>
     </td>
+    <td align="center">
+        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/2.jpg"alt="n0irx"/>
+        <br>
+        <a href="https://github.com/9Insomnie/"><sub>n0irx</sub></a>
+    </td>
   </tr>
 </table></div>
 
-## Acknowledgments
+## 😘 致谢
 
 <div><table frame=void>
 	<tr>
@@ -123,35 +123,96 @@
   </tr>
 </table></div>
 
-## Contact
+---
 
-| **WeChat**  | **QQ**        |   **Email**    | **QQGroup**  |
-|:--------:|:--------------:|  :--------------:|  :--------------:|
-| JiuZer1     | 1703417187       |  jiuzer0@qq.com | 1058256508 |
+## 🔗 联系
 
-## Advantages  
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
-1. Integration of WAF detection, fingerprint information, and plugin scanning  
-2. Supports parsing parameters in complex formats like Json, XML, and pseudo-static parameters  
-3. Provides data storage support (e.g., scan records) via SQLite3  
-4. Open-source Python3-based tool with full cross-platform compatibility  
-5. Interactive dynamic adjustment of passive scanning parameters  
-6. AI-powered post-validation for JS-sensitive information  
-7. Supports IPv6 domain resolution  
+<table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+    <tr style="background: linear-gradient(135deg, #6e8efb, #a777e3); color: white;">
+        <th style="padding: 15px; text-align: center; border-radius: 8px 0 0 0;">
+            <i class="fab fa-weixin" style="font-size: 24px; vertical-align: middle; margin-right: 8px;"></i>微信
+        </th>
+        <th style="padding: 15px; text-align: center;">
+            <i class="fab fa-qq" style="font-size: 24px; vertical-align: middle; margin-right: 8px;"></i>QQ
+        </th>
+        <th style="padding: 15px; text-align: center;">
+            <i class="fas fa-envelope" style="font-size: 24px; vertical-align: middle; margin-right: 8px;"></i>邮箱
+        </th>
+        <th style="padding: 15px; text-align: center; border-radius: 0 8px 0 0;">
+            <i class="fas fa-users" style="font-size: 24px; vertical-align: middle; margin-right: 8px;"></i>QQ交流群
+        </th>
+    </tr>
+    <tr style="background-color: #f8f9fa;">
+        <td style="padding: 20px; text-align: center; border: 1px solid #e9ecef; border-top: none;">
+            <div style="font-weight: bold; color: #2c3e50; font-size: 18px;">JiuZer1</div>
+        </td>
+        <td style="padding: 20px; text-align: center; border: 1px solid #e9ecef; border-top: none;">
+            <div style="font-weight: bold; color: #2c3e50; font-size: 18px;">1703417187</div>
+        </td>
+        <td style="padding: 20px; text-align: center; border: 1px solid #e9ecef; border-top: none;">
+            <div style="font-weight: bold; color: #2c3e50; font-size: 18px;">jiuzer0@qq.com</div>
+        </td>
+        <td style="padding: 20px; text-align: center; border: 1px solid #e9ecef; border-top: none;">
+            <div style="font-weight: bold; color: #2c3e50; font-size: 18px;">1058256508</div>
+        </td>
+    </tr>
+</table>
 
-## Installation  
+---
 
-### Recommended  
+## ✨ 核心特性
 
-Get the release version (**compiled with Nuitka for significantly improved speed & performance**): [Download](https://github.com/JiuZero/z0scan/releases)  
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>🛡️ 安全检测</h3>
+      <ul>
+        <li><b>集成指纹检测</b> - 自动识别指纹信息与WAF，插件精准切入</li>
+        <li><b>分布式与本地式一体化</b> - 灵活适应不同扫描需求</li>
+        <li><b>插件扫描</b> - 可外部扩展的插件系统</li>
+      </ul>
+    </td>
+    <td width="50%" valign="top">
+      <h3>📊 数据处理</h3>
+      <ul>
+        <li><b>复杂参数解析</b> - 支持Json、XML和伪静态参数解析</li>
+        <li><b>数据存储</b> - 通过SQLite3提供扫描记录存储支持</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3>🌐 部署架构</h3>
+      <ul>
+        <li><b>开源</b> - 基于Python开源、Nuitka编译</li>
+        <li><b>完全跨平台</b> - 支持Windows、Linux、macOS等系统</li>
+      </ul>
+    </td>
+    <td width="50%" valign="top">
+      <h3>🤖 智能验证</h3>
+      <ul>
+        <li><b>AI驱动的JS敏感信息后验证</b> - 智能识别JavaScript中的敏感数据</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
-- Want to build an executable tailored to your environment? See: [Documentation](https://jiuzero.github.io/tags/z0scan/)  
+---
 
-### Not Recommended  
+## 🚀 安装
 
-> PyPI updates have been discontinued since 2025.7.19  
+📢 请务必花一点时间阅读此文档，有助于你快速熟悉Z0SCAN！
 
-Install via **GitHub** clone:  
+### ✔ 发行版本 
+
+获取发布版本（**使用Nuitka编译，显著提高速度和性能**）：[下载](https://github.com/JiuZero/z0scan/releases)  
+
+- 想要构建适合您环境的可执行文件？请参阅：[文档](https://jiuzero.github.io/tags/z0scan/)  
+
+### ✔ GitHub克隆安装
+  
 ```bash  
 git clone https://github.com/JiuZero/z0scan
 cd z0scan  
@@ -159,46 +220,48 @@ pip install -r requirements.txt
 python3 z0.py help  
 ```  
 
-- For **special environment installations** (e.g., Termux), see: [Documentation](https://jiuzero.github.io/tags/z0scan/)  
+- 对于**特殊环境安装**（如Termux），请参阅：[文档](https://jiuzero.github.io/tags/z0scan/)  
 
-## Usage Examples  
+## 🧐 使用示例  
 
-### Passive Scanning  
+### ✔ 被动扫描  
 
-Default configuration for **passive scanning** (forward browser traffic to port 5920):  
+**被动扫描**的默认配置（将浏览器流量转发到端口5920）：  
 ```  
 z0 scan -s 127.0.0.1:5920  
 ```  
 
-![example](doc/example0.png)  
+![示例](doc/example0.png)  
 
-Commonly recommended:  
+常用推荐配置：  
 ```  
 z0 scan -s 127.0.0.1:5920 --risk 0,1,2,3 --level 2 --disable cmdi,unauth  
 ```  
 
-### Active Scanning  
+### ✔ 主动扫描  
 
-Default configuration for **active scanning**:  
+**主动扫描**的默认配置：  
 ```  
-# Active detection initiated via Burp/Yakit request traffic (recommended)  
+# 通过Burp/Yakit请求流量启动主动检测（推荐）  
 z0 scan -s 127.0.0.1:5920  
 ```  
 
-![example](doc/example1.png)  
+![示例](doc/example1.png)  
 
 ```  
-# Direct detection  
+# 直接检测  
 z0 scan -u https://example.com/?id=1  
-# Batch detection from a URL list  
+# 从URL列表进行批量检测  
 z0 scan -f urls.txt  
 ```  
 
-![example](doc/example2.png)  
+![示例](doc/example2.png)  
 
-- For more detailed information, see: [Documentation](https://jiuzero.github.io/tags/z0scan/)  
+- 更多详细信息，请参阅：[文档](https://jiuzero.github.io/tags/z0scan/)  
 
-## Plugin List  
+---
+
+## 🔖 插件列表 
 
 - **PerFile**  
 
@@ -235,6 +298,9 @@ z0 scan -f urls.txt
 |ssrf|SSRF plugin detects server-side request forgery vulnerabilities via crafted payloads.|2|
 |xxe|XXE plugin detects XML external entity injection vulnerabilities via malicious payloads.|3|
 |xxe-blind|Blind XXE plugin detects out-of-band data exfiltration.|3|
+|codei-java|Java Code Injection Vulnerability Scanner (EL/SpEL/OGNL)|3|
+|other-redos|Regular Expression Denial of Service (ReDoS) Vulnerability Scanner|0|
+|other-jndi-error|JNDI Injection Vulnerability Scanner|3|
 
 - **PerFolder**  
 
@@ -267,4 +333,14 @@ z0 scan -f urls.txt
 | other-clickjacking   | Clickjacking Vulnerability           | -1   |  
 | other-baseline       | Service Version Leak                 | -1   |  
 | other-smuggling      | Request Smuggling Vulnerability      | 3    |  
-| trave-list_3         | Directory Listing                    | 2    |  
+| trave-list_3         | Directory Listing                    | 2    | 
+
+---
+
+## 💖 星标趋势
+
+<p align="center">
+  <a href="https://star-history.com/#JiuZero/z0scan&Date">
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=JiuZero/z0scan&type=Date" width="85%">
+  </a>
+</p>

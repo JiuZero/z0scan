@@ -3,7 +3,7 @@
 # w8ay 2019/6/29
 # JiuZero 2025/6/17
 
-import os, sys
+import os, sys, shutil
 import threading, asyncio
 import time
 from queue import Queue
@@ -16,7 +16,7 @@ from lib.core.exection import PluginCheckError
 from lib.core.loader import load_file_to_module
 from lib.core.db import initdb, execute_sqlite_command
 from lib.core.output import OutPut
-from lib.core.settings import banner, DEFAULT_USER_AGENT
+from lib.core.settings import banner, DEFAULT_USER_AGENT, VERSION
 from lib.core.spiderset import SpiderSet
 from thirdpart.console import getTerminalSize
 from lib.patch.requests_patch import patch_all
@@ -25,6 +25,7 @@ from prettytable import PrettyTable
 from lib.core.console import Client, BackgroundServer
 from lib.core.aichat import chat
 from pathlib import Path
+from lib.core.updater import AutoUpdater
 
 def setPaths(root):
     path.root = root
@@ -301,7 +302,65 @@ def _commands(v):
         if conf.command == "version":
             sys.exit(0)
         return
+    if v == "update":
+        if conf.command == "update":
+            updater = AutoUpdater("JiuZero/z0scan", VERSION)
+            updater.main()
+            sys.exit(0)
+        else:
+            updater = AutoUpdater("JiuZero/z0scan", VERSION)
+            update_info = updater.check_for_updates()
+            if update_info:
+                logger.info(f"Discover a new version: {update_info['version']}")
+                logger.info(f"Updated content: {update_info['body']}")
+        return
     sys.exit(0)
+
+def _cleanup_update_backups():
+    """清理可能残留的更新备份文件"""
+    try:
+        if getattr(sys, 'frozen', False):
+            current_dir = os.path.dirname(sys.executable)
+            exe_name = os.path.basename(sys.executable)
+            backup_file = os.path.join(current_dir, f"{exe_name}.backup")
+            backup_dir = os.path.join(current_dir, "backup")
+            # 清理单个备份文件
+            if os.path.exists(backup_file):
+                try:
+                    os.remove(backup_file)
+                    logger.info("The remaining backup files have been cleared")
+                except Exception as e:
+                    logger.error(f"Failed to clean up the backup file: {e}")
+            # 清理备份目录
+            if os.path.exists(backup_dir):
+                try:
+                    if not os.listdir(backup_dir):
+                        os.rmdir(backup_dir)
+                        logger.info("The empty backup directory has been cleared")
+                    else:
+                        for file in os.listdir(backup_dir):
+                            if file.endswith('.backup'):
+                                try:
+                                    os.remove(os.path.join(backup_dir, file))
+                                except Exception:
+                                    pass
+                        if not os.listdir(backup_dir):
+                            os.rmdir(backup_dir)
+                            logger.info("The backup directory has been cleared")
+                except Exception as e:
+                    logger.error(f"Failed to clean up the backup directory: {e}")
+    except Exception as e:
+        logger.error(f"An error occurred while cleaning up the backup files: {e}")
+
+def check_update():
+    try:
+        updater = AutoUpdater("JiuZero/z0scan", VERSION)
+        update_info = updater.check_for_updates(force=True)
+        if update_info:
+            logger.info(f"{VERSION} -> {update_info['version']}", origin="updater")
+            logger.info(f"Desc: {update_info['body']}", origin="updater")
+    except Exception as e:
+        logger.error("Check for version update error: ", str(e))
         
 def init(root, cmdline):
     cinit(autoreset=True)
@@ -310,6 +369,8 @@ def init(root, cmdline):
     dataToStdout(banner) # version & logo
     _merge_options(cmdline) # 合并命令行与config中的参数
     _commands("version")
+    _cleanup_update_backups()
+    _commands("update")
     _commands("console")
     initdb(root) # 初始化数据库
     _commands("dbcmd")

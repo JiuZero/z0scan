@@ -42,10 +42,18 @@ def wechat(text, card=False, title="Z0Scan Notice", url="#"):
             tag_ids='', 
             content=text, 
         )
-        
+
+
+def ftqq(content):
+    resp = requests.post("https://sc.ftqq.com/{}.send".format(conf.notice["ftqq"]["key"]),
+                  data={"text": "Z0SCAN-Push-Vlu:", "desp": content})
+    if resp.json()["errno"] != 0:
+        raise ValueError("Push ftqq failed, %s" % resp.text)
+
 def notice_all(message):
     if conf.notice["wechat"]["enable"] == True:
         wechat(message)
-    elif conf.notice["dingtalk"]["enable"] == True:
+    if conf.notice["dingtalk"]["enable"] == True:
         dingtalk(message)
-    
+    if conf.notice["ftqq"]["enable"] == True:
+        ftqq(message)
