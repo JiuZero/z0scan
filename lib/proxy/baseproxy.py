@@ -21,6 +21,7 @@ import chardet
 from OpenSSL.crypto import load_certificate, FILETYPE_PEM, TYPE_RSA, PKey, X509, X509Extension, dump_privatekey, \
     dump_certificate, load_privatekey, X509Req
 
+from lib.controller.controller import task_push_from_name
 from lib.core.settings import VERSION
 from lib.core.log import dataToStdout, logger
 from lib.core.data import  path, conf, KB
@@ -455,7 +456,7 @@ class ProxyHandle(BaseHTTPRequestHandler):
         return ret
 
     def proxy_connect(self):
-        if not conf["proxy_config_bool"]:
+        if "proxy" in conf.keys():
             self._proxy_sock = socket()
         else:
             self._proxy_sock = socks5.socksocket()
@@ -577,7 +578,7 @@ class ProxyHandle(BaseHTTPRequestHandler):
                                     'requestsRaw': replaced_str
                                 }
                                 insertdb("cache", cv)
-                            KB['task_queue'].put(('loader', req, resp))
+                            task_push_from_name('loader', req, resp)
                         # 使用线程池异步执行
                         task_thread = threading.Thread(target=process_task, args=(request, response))
                         task_thread.daemon = True

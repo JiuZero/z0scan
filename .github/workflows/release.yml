@@ -58,6 +58,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install nuitka zstandard imageio pyinstaller
           pip install -r requirements.txt
+          pip install -r requirements-ling.txt
     
 
       - name: Build with Nuitka

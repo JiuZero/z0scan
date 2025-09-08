@@ -16,7 +16,7 @@ class Z0SCAN(PluginBase):
     risk = 1
     
     def audit(self):
-        if not conf.level == 0 and is_ipaddr(self.requests.hostname) and self.risk in conf.risk:
+        if not conf.level == 0 and not is_ipaddr(self.requests.hostname) and self.risk in conf.risk:
             domains = self.split_domain_and_check(self.requests.hostname)
             if domains:
                 for domain in domains:

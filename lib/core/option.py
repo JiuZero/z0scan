@@ -56,6 +56,7 @@ def initKb():
     KB["output"] = OutPut() # 报告信息
     KB.reverse_running_server = list() # 运行的反连服务
     KB.waf_detecting = list() # 限制单线程检测WAF
+    KB.pause = False # 暂停转发流量到插件
 
 def _list():
     """列出所有已注册的插件信息"""
@@ -244,7 +245,7 @@ def _init_stdout():
             # message为None时chat函数会警告
             sys.exit(0)
         elif "ok" in message.lower():
-            logger.info("Connect to AI model: {}[OK]".format(conf.smartscan_selector["model"]))
+            logger.info("Connect to AI model: {}[OK]".format(conf.smartscan["model"]))
         else:
             logger.info("AI return message is not True!")
             sys.exit(0)
@@ -370,7 +371,7 @@ def init(root, cmdline):
     _merge_options(cmdline) # 合并命令行与config中的参数
     _commands("version")
     _cleanup_update_backups()
-    _commands("update")
+    # _commands("update")
     _commands("console")
     initdb(root) # 初始化数据库
     _commands("dbcmd")
