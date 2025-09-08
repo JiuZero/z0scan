@@ -211,7 +211,7 @@ def build_ling():
         sys.exit(1)
     
     missing_modules = []
-    with open("requirements.txt", "r") as f:
+    with open("requirements-ling.txt", "r") as f:
         for line in f:
             line = line.split('#')[0].strip()
             if line:

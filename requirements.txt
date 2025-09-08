@@ -19,3 +19,4 @@ openai
 redis
 ldaptor
 wechatpy
+packaging
