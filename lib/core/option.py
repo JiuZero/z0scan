@@ -221,9 +221,13 @@ def _set_conf():
             conf["proxies"] = {
                 method.lower(): [ip]
             }
+            conf["proxy_config_bool"] = True
         else:
             from lib.proxy.autoproxy import AutoProxy
             conf["proxies"] = AutoProxy().import_proxies(conf["proxy"])
+            conf["proxy_config_bool"] = True
+    else:
+        conf["proxy_config_bool"] = False
     # user-agent
     if conf.random_agent:
         conf.agent = random_UA()
