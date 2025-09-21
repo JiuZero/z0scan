@@ -6,7 +6,7 @@ from lib.core.data import conf
 from bs4 import BeautifulSoup as BS
 import re
 from lib.core.log import logger
-from config.others.CmsLoginpage import rules as cmsLogin
+from config.others.cmsloginpage import rules as cmsLogin
 
 
 class Parser:

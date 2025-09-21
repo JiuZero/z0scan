@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+
 """
 总配置
 """
+
 THREADS = 15  # 默认线程数量
 EXCLUDES = ["google", '.gov.', 'baidu', 'firefox', 'microsoft', '.bing.', 'msn.cn']  # 排除包含关键字的网址
 DEFAULT_PROXY_PORT = 5920 # 被动模式默认监听端口
@@ -13,7 +15,6 @@ LEVEL = 2 # 0:纯被动分析模式，不做额外请求，即不加载Payload |
 RISK = [0, 1, 2] # -1:几乎无危害的常见漏洞，0:可能导致危害产生，1:低危害，2. 中等危害，3:高危害
 SKIP_WAF_RECHECK = False # 是否跳过曾经检测到WAF但在本次启动后的扫描中未检测的站点的WAF检测
 IPV6 = False # 需网络支持ipv6（使用此参数优先ipv6地址，ipv6无记录再使用ipv4地址）
-SKIP_SIMILAR_REQUEST = True # 是否跳过相似请求的扫描
 PSEUDO_STATIC_KEYWORDS = ['id', 'pid', 'cid', 'user', 'page', 'category', 'column_id', 'tty'] # 伪静态关键点参数（忽略大小写）
 SMARTSCAN = {
     "enable": False, 
@@ -21,7 +22,7 @@ SMARTSCAN = {
     "model": "gpt-3.5-turbo", 
     "api_key": "", 
 } # AI智能插件优化（支持所有openai库所能调用的模型）
-MAX_DIR = 2 # PerFolder插件的扫描深度(目录深度)
+MAX_DIR = 2 # PerDir插件的扫描深度(目录深度)
 CONSOLE_PORT = 9331 # console交互通信端口
 HIDDEN_VUL_REMINDER = True # 漏洞隐患提醒
 BLOCK_COUNT = 20 # 请求多次失败后诊断为网站对本机IP封禁，加入请求黑名单
@@ -63,9 +64,11 @@ AUTOPROXY = {
     }
 } # 自动代理获取
 
+
 """
 插件配置
 """
+
 PLUGIN_THREADS = 3 # 插件内线程（针对多参数情况）
 DISLOAD = ["unauth"]  # 不加载的插件
 # sqli-time
@@ -82,9 +85,11 @@ BRUTE_DELAY = 0.03  # 每次请求之后sleep的间隔
 # ssti
 SSTI_LEVEL = 0  # 0-5 扫描速度，越往后数据包越多，个别fuzz情况可配置大一些
 
+
 """
 服务端&客户端反连配置
 """
+
 REVERSE = {
     # 客户端
     "sleep": 5,  # 反连后延时检测时间，单位是(秒)

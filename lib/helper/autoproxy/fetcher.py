@@ -8,6 +8,7 @@ import re
 from bs4 import BeautifulSoup
 import json
 import time
+from lib.core.log import logger
 
 class ProxyFetcher:
     """获取在线代理源."""
@@ -85,25 +86,24 @@ class ProxyFetcher:
 
     def _fetch_from_url(self, url: str, log_queue):
         display_url = url.split('/')[2]
-        log_queue.put(f"[*] (API) 正在从 {display_url} 获取...")
+        logger.info(f"(API) From {display_url} ...")
         try:
             response = self.session.get(url, timeout=15)
             response.raise_for_status()
             proxies = self._parse_proxies_from_text(response.text)
             if proxies:
-                log_queue.put(f"[+] (API) 成功从 {display_url} 获取 {len(proxies)} 个代理。")
+                logger.info(f"(API) From {display_url} get proxies: {len(proxies)}", origin="fetcher")
                 return proxies
             else:
-                log_queue.put(f"[-] (API) 从 {display_url} 获取为空。")
                 return None
         except requests.RequestException as e:
-            log_queue.put(f"[!] (API) 从 {display_url} 获取失败: {e}")
+            logger.error(f"(API) From {display_url} Error: {e}", origin="fetcher")
             return None
             
     def _scrape_free_proxy_list(self, log_queue):
         url = 'https://free-proxy-list.net/'
         display_url = url.split('/')[2]
-        log_queue.put(f"[*] (Scrape) 正在从 {display_url} 获取...")
+        logger.info(f"(Scrape) From {display_url} ...")
         try:
             response = self.session.get(url, timeout=15)
             soup = BeautifulSoup(response.content, 'lxml')
@@ -115,16 +115,16 @@ class ProxyFetcher:
                     ip = cols[0].text.strip()
                     port = cols[1].text.strip()
                     proxies.add(f"{ip}:{port}")
-            log_queue.put(f"[+] (Scrape) 成功从 {display_url} 获取 {len(proxies)} 个代理。")
+            logger.info(f"(Scrape) From {display_url} get proxies: {len(proxies)}", origin="fetcher")
             return list(proxies)
         except Exception as e:
-            log_queue.put(f"[!] (Scrape) 从 {display_url} 获取失败: {e}")
+            logger.error(f"(Scrape) From {display_url} Error: {e}", origin="fetcher")
             return None
 
     def _scrape_kxdaili(self, log_queue):
         url = 'http://www.kxdaili.com/dailiip/1/1.html'
         display_url = url.split('/')[2]
-        log_queue.put(f"[*] (Scrape) 正在从 {display_url} 获取...")
+        logger.info(f"(Scrape) From {display_url} ...")
         try:
             response = self.session.get(url, timeout=15)
             response.encoding = 'gb2312'
@@ -137,34 +137,33 @@ class ProxyFetcher:
                     ip = cols[0].text.strip()
                     port = cols[1].text.strip()
                     proxies.add(f"{ip}:{port}")
-            log_queue.put(f"[+] (Scrape) 成功从 {display_url} 获取 {len(proxies)} 个代理。")
+            logger.info(f"(Scrape) From {display_url} get proxies: {len(proxies)}", origin="fetcher")
             return list(proxies)
         except Exception as e:
-            log_queue.put(f"[!] (Scrape) 从 {display_url} 获取失败: {e}")
+            logger.error(f"(Scrape) From {display_url} Error: {e}", origin="fetcher")
             return None
             
     def _scrape_66ip(self, log_queue):
         url = "http://www.66ip.cn/nmtq.php?get_num=300&isp=0&anonym=0&type=2"
         display_url = url.split('/')[2]
-        log_queue.put(f"[*] (API) 正在从 {display_url} 获取...")
+        logger.info(f"(API) From {display_url} ...")
         try:
             response = self.session.get(url, timeout=15)
             response.encoding = response.apparent_encoding
             proxies = re.findall(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{2,5}', response.text)
             if proxies:
-                log_queue.put(f"[+] (API) 成功从 {display_url} 获取 {len(proxies)} 个代理。")
+                logger.info(f"(API) From {display_url} get proxies: {len(proxies)}", origin="fetcher")
                 return proxies
             else:
-                log_queue.put(f"[-] (API) 从 {display_url} 获取为空。")
                 return None
         except Exception as e:
-            log_queue.put(f"[!] (API) 从 {display_url} 获取失败: {e}")
+            logger.error(f"(API) From {display_url} Error: {e}", origin="fetcher")
             return None
 
     def _scrape_fatezero(self, log_queue):
         url = "http://proxylist.fatezero.org/proxy.list"
         display_url = url.split('/')[2]
-        log_queue.put(f"[*] (Scrape) 正在从 {display_url} 获取...")
+        logger.info(f"(Scrape) From {display_url} ...")
         try:
             response = self.session.get(url, timeout=15)
             response.raise_for_status()
@@ -178,13 +177,12 @@ class ProxyFetcher:
                          proxies.add(f"{host}:{port}")
 
             if proxies:
-                log_queue.put(f"[+] (Scrape) 成功从 {display_url} 获取 {len(proxies)} 个代理。")
+                logger.info(f"(Scrape) From {display_url} get proxies: {len(proxies)}", origin="fetcher")
                 return list(proxies)
             else:
-                 log_queue.put(f"[-] (Scrape) 从 {display_url} 获取为空。")
                  return None
         except Exception as e:
-            log_queue.put(f"[!] (Scrape) 从 {display_url} 获取失败: {e}")
+            logger.error(f"(Scrape) From {display_url} Error: {e}", origin="fetcher")
             return None
 
     # --- 新增国内代理源爬虫 ---
@@ -192,7 +190,7 @@ class ProxyFetcher:
         """爬取快代理网站的国内高匿代理。"""
         proxies = set()
         display_url = "kuaidaili.com"
-        log_queue.put(f"[*] (Scrape) 正在从 {display_url} 获取...")
+        logger.info(f"(Scrape) From {display_url} ...")
         try:
             for page in range(1, 4):  # 爬取前3页
                 url = f"https://www.kuaidaili.com/free/inha/{page}/"
@@ -210,18 +208,18 @@ class ProxyFetcher:
                 time.sleep(1) # 友好爬取，避免被封
             
             if proxies:
-                log_queue.put(f"[+] (Scrape) 成功从 {display_url} 获取 {len(proxies)} 个代理。")
+                logger.info(f"(Scrape) From {display_url} get proxies: {len(proxies)}", origin="fetcher")
                 return list(proxies)
             return None
         except Exception as e:
-            log_queue.put(f"[!] (Scrape) 从 {display_url} 获取失败: {e}")
+            logger.error(f"(Scrape) From {display_url} Error: {e}", origin="fetcher")
             return None
 
     def _scrape_ip3366(self, log_queue):
         """爬取云代理(ip3366.net)的国内高匿代理。"""
         proxies = set()
         display_url = "ip3366.net"
-        log_queue.put(f"[*] (Scrape) 正在从 {display_url} 获取...")
+        logger.info(f"(Scrape) From {display_url} ...")
         try:
             for page in range(1, 4): # 爬取前3页
                 url = f"http://www.ip3366.net/free/?stype=1&page={page}"
@@ -240,18 +238,18 @@ class ProxyFetcher:
                 time.sleep(1)
             
             if proxies:
-                log_queue.put(f"[+] (Scrape) 成功从 {display_url} 获取 {len(proxies)} 个代理。")
+                logger.info(f"(Scrape) From {display_url} get proxies: {len(proxies)}", origin="fetcher")
                 return list(proxies)
             return None
         except Exception as e:
-            log_queue.put(f"[!] (Scrape) 从 {display_url} 获取失败: {e}")
+            logger.error(f"(Scrape) {display_url} Error: {e}", origin="fetcher")
             return None
 
     def _scrape_89ip(self, log_queue):
         """爬取89免费代理(89ip.cn)的代理。"""
         proxies = set()
         display_url = "89ip.cn"
-        log_queue.put(f"[*] (Scrape) 正在从 {display_url} 获取...")
+        logger.info(f"(Scrape) From {display_url}...")
         try:
             for page in range(1, 4): # 爬取前3页
                 url = f"https://www.89ip.cn/index_{page}.html"
@@ -269,11 +267,11 @@ class ProxyFetcher:
                 time.sleep(1)
             
             if proxies:
-                log_queue.put(f"[+] (Scrape) 成功从 {display_url} 获取 {len(proxies)} 个代理。")
+                logger.info(f"(Scrape) From {display_url} get proxies: {len(proxies)}", origin="fetcher")
                 return list(proxies)
             return None
         except Exception as e:
-            log_queue.put(f"[!] (Scrape) 从 {display_url} 获取失败: {e}")
+            logger.error(f"(Scrape) {display_url} Error: {e}", origin="fetcher")
             return None
 
     def fetch_all(self, log_queue, cancel_event=None):
@@ -311,7 +309,7 @@ class ProxyFetcher:
                         else:
                             all_proxies[protocol].update(proxies)
                 except Exception as exc:
-                    log_queue.put(f'[!] 获取器线程产生一个错误: {exc}')
+                    logger.error(f'{exc}', origin="fetcher")
         finally:
             executor.shutdown(wait=not (cancel_event and cancel_event.is_set()))
 

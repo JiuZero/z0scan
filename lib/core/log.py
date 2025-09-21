@@ -46,10 +46,11 @@ class logger:
         return time.strftime('%H:%M:%S', time.localtime(time.time()))
  
     @staticmethod
-    def warning(value, showtime=True):
+    def warning(value, origin=None, showtime=True):
         _time = f"[{colors.b}{logger._get_time()}{colors.e}] " if showtime else ""
+        _origin = f"[{colors.cy}{origin}{colors.e}] " if origin else ""
         dataToStdout(
-            f"{_time}[{colors.y}WAN{colors.e}] {value}"
+            f"{_time}[{colors.y}WAN{colors.e}] {_origin}{value}"
         )
  
     @staticmethod
@@ -61,10 +62,11 @@ class logger:
         )
  
     @staticmethod
-    def info(value, showtime=True):
+    def info(value, origin=None, showtime=True):
         _time = f"[{colors.b}{logger._get_time()}{colors.e}] " if showtime else ""
+        _origin = f"[{colors.cy}{origin}{colors.e}] " if origin else ""
         dataToStdout(
-            f"{_time}[{colors.g}INF{colors.e}] {value}"
+            f"{_time}[{colors.g}INF{colors.e}] {_origin}{value}"
         )
  
     @staticmethod

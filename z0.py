@@ -13,7 +13,6 @@ from urllib.parse import urlparse
 from lib.controller.controller import start, task_push_from_name
 from lib.core.enums import HTTPMETHOD
 
-from datetime import datetime
 from lib.parse.parse_request import FakeReq
 from lib.parse.parse_response import FakeResp
 from lib.proxy.baseproxy import AsyncMitmProxy

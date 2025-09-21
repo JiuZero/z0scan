@@ -5,7 +5,7 @@
 
 import re
 import json
-from config.others.JsSensi import rules
+from config.others.js_sensitive import rules
 from api import VulType, Type, PluginBase, conf, KB, logger, chat
 
 
@@ -43,7 +43,7 @@ class Z0SCAN(PluginBase):
                     context[match.end()-start_pos:]
                 )
 
-                if conf.smartscan_selector["enable"]:
+                if conf.smartscan["enable"]:
                     valid, type, reason = self._ai_validate_with_context(marked_context, name, pattern)
                     if not valid:
                         continue
@@ -55,11 +55,11 @@ class Z0SCAN(PluginBase):
                     "vultype": VulType.SENSITIVE, 
                     "show": {
                         "Match": f"{text}",
-                        "Type": str(name) if not conf.smartscan_selector["enable"] else type
+                        "Type": str(name) if not conf.smartscan["enable"] else type
                         }
                     })
                 description = f"Found valid sensitive information using pattern {pattern}: {text}"
-                if conf.smartscan_selector["enable"]:
+                if conf.smartscan["enable"]:
                     description += f", Analysis given by AI: {reason}"
                 result.step("Request Details", {
                     "request": self.requests.raw, 

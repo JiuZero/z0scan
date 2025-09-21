@@ -104,9 +104,10 @@ class SpiderSet(object):
 
     def __init__(self):
         self.spider_list = {
-            "PerFile": {},
-            "PerFolder": {},
-            "PerServer": {}
+            "PerPage": {},
+            "PerDir": {},
+            "PerDomain": {},
+            "perhost": {}
         }
         self.lock = threading.Lock()
 

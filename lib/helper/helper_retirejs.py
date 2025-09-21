@@ -11,7 +11,7 @@ class scan(object):
 
     def __init__(self):
         super().__init__()
-        with open(os.path.join(path.others, "JsVulns.json")) as f:
+        with open(os.path.join(path.others, "js_vulns.json")) as f:
             self.definitions = json.load(f)
     
     def is_defined(self, o):

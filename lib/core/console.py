@@ -12,7 +12,7 @@ from lib.core.exection import PluginCheckError
 from lib.core.loader import load_file_to_module
 
 class BackgroundServer:
-    def __init__(self, port: int = 9331):
+    def __init__(self, port: int = 9090):
         self.port = port
         self.socket = None
         self.running = False
@@ -146,12 +146,12 @@ class Command:
         Allowed parameters: level, timeout, retry, risk
     env       - Show current configuration
     status    - Scan status
-    load      - Load new plugins
-    disload   - Disable plugins that be loaded
+    enable      - Load new plugins
+    disable   - Disable plugins that be enableed
     
     Examples:
     set level=3
-    load sqli-error,sqli-bool
+    enable sqli-error,sqli-bool
     pause"""
             return help_text
         elif cmd == "pause":
@@ -177,10 +177,10 @@ class Command:
                 return f"Parameter set: {key} => {value}"
             except ValueError as e:
                 return f"Error: Invalid parameter value ({str(e)})"
-        elif cmd == "load":
-            load_new_plugins(args)
-        elif cmd == "disload":
-            disload_plugins(args)
+        elif cmd == "enable":
+            enable_new_plugins(args)
+        elif cmd == "disable":
+            disable_plugins(args)
         elif cmd == "env":
             env_info = "\n".join(
                 f"{k}: {getattr(conf, k, 'N/A')}"
@@ -194,10 +194,8 @@ class Command:
             return f"Error: Unknown command '{cmd}'. Type 'help' for available commands"
 
 
-def disload_plugins(disload_list: list):
-    for _dir in conf.scanner_folder:
-        if _dir not in ["PerFile", "PerFolder", "PerServer"]:
-            continue
+def disable_plugins(disable_list: list):
+    for _dir in ["PerPage", "PerDir", "PerDomain"]:
         for root, dirs, files in os.walk(os.path.join(path.scanners, _dir)):
             files = filter(lambda x: not x.startswith("__") and x.endswith(".py"), files)
             dis_list = ""
@@ -207,7 +205,7 @@ def disload_plugins(disload_list: list):
                 try:
                     mod = mod.Z0SCAN()
                     mod.checkImplemennted()
-                    if not mod.name in disload_list:
+                    if not mod.name in disable_list:
                         continue
                     if not mod.name in KB["registered"].keys:
                         logger.warning(f"Plugin {mod.name} hadn't been loaded. Skip.")
@@ -222,10 +220,8 @@ def disload_plugins(disload_list: list):
                     raise
         logger.info(f'Disable plugins:{dis_list}.')
 
-def load_new_plugins(load_list: list):
-    for _dir in conf.scanner_folder:
-        if _dir not in ["PerFile", "PerFolder", "PerServer"]:
-            continue
+def enable_new_plugins(enable_list: list):
+    for _dir in ["PerPage", "PerDir", "PerDomain"]:
         for root, dirs, files in os.walk(os.path.join(path.scanners, _dir)):
             files = filter(lambda x: not x.startswith("__") and x.endswith(".py"), files)
             new_add = ""
@@ -237,9 +233,9 @@ def load_new_plugins(load_list: list):
                     mod = mod.Z0SCAN()
                     mod.checkImplemennted()
                     if not mod.name in KB["registered"].keys:
-                        logger.warning(f"Plugin {mod.name} had been loaded. Skip.")
+                        logger.warning(f"Plugin {mod.name} had been enableed. Skip.")
                         continue
-                    if not mod.name in load_list:
+                    if not mod.name in enable_list:
                         continue
                     new_add += f" {mod.name}"
                     plugin = os.path.splitext(_)[0]
@@ -255,4 +251,4 @@ def load_new_plugins(load_list: list):
                 except AttributeError as e:
                     logger.error('Filename: {} not class "{}", Reason: {}'.format(filename, 'Z0SCAN', e))
                     raise
-        logger.info(f'New load plugins:{new_add}.')
+        logger.info(f'New enable plugins:{new_add}.')

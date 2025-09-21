@@ -26,6 +26,13 @@ def find_nuitka():
         return [nuitka_path]
     return [sys.executable, '-m', 'nuitka']
 
+def find_pyinstaller():
+    """查找nuitka可执行文件的完整路径"""
+    pyinstaller_path = which('pyinstaller')
+    if pyinstaller_path:
+        return [pyinstaller_path]
+    return [sys.executable, '-m', 'pyinstaller']
+
 def get_platform_specific_args():
     """返回平台特定的Nuitka编译参数"""
     args = []
@@ -185,64 +192,29 @@ def build():
 
 
 def build_ling():
-    nuitka_cmd = find_nuitka()
+    pyinstaller_cmd = find_pyinstaller()
     
     # 基础编译参数
     base_args = [
-        # '--lto=yes' if platform.system().lower() != 'darwin' else '--lto=no',  # macOS下禁用LTO
-        '--lto=no',
-        '--output-dir=z0scan', 
-        '--standalone',
-        '--onefile',
-        '--python-flag=-u', 
-        '--remove-output', 
-        '--nofollow-import-to=*.tests,*.test', 
-        '--assume-yes-for-downloads',
+        '-F',
+        '-w', 
+        '--icon=doc/logo.png',
+        '--distpath=z0scan',
+        '--add-data="doc/logo.png"',
     ]
-    nuitka_cmd.extend(base_args)
+    pyinstaller_cmd.extend(base_args)
     
     # 添加平台特定参数
     platform_args = get_platform_specific_args()
-    nuitka_cmd.extend(platform_args)
+    pyinstaller_cmd.extend(platform_args)
 
-    # 依赖处理（与release.yml配合）
-    if not os.path.isfile("requirements-ling.txt"):
-        print("Error: requirements-ling.txt not found!")
-        sys.exit(1)
-    
-    missing_modules = []
-    with open("requirements-ling.txt", "r") as f:
-        for line in f:
-            line = line.split('#')[0].strip()
-            if line:
-                pkg_name = re.split(r'[=<>~\[\]]', line)[0]
-                actual_name = get_actual_module_name(pkg_name)
-                
-                if not verify_import(pkg_name, actual_name):
-                    missing_modules.append(f"{pkg_name} -> {actual_name}")
-                    continue
-                
-                # 添加包含指令（优化插件支持）
-                nuitka_cmd.extend([
-                    f"--include-module={actual_name}",
-                    f"--include-package={actual_name}",
-                ])
-
-    if missing_modules:
-        print("\n:: Warning: Missing modules detected (will continue for CI):")
-        for mod in missing_modules:
-            print(f"  - {mod}")
-        if not os.getenv('CI'):  # 非CI环境才询问
-            if input("Continue compiling? (y/n): ").lower() != 'y':
-                sys.exit(1)
-
-    nuitka_cmd.append('ling.py')
+    pyinstaller_cmd.append('ling.py')
     # 在CI环境中显示完整命令
     if os.getenv('CI'):
-        print('\n:: NUITKA COMMAND :', ' '.join(nuitka_cmd))
+        print('\n:: PYINSTALLER COMMAND :', ' '.join(pyinstaller_cmd))
     
     try:
-        subprocess.run(nuitka_cmd, check=True)
+        subprocess.run(pyinstaller_cmd, check=True)
     except subprocess.CalledProcessError as e:
         print(f'\n:: BUILD FAILED (CODE {e.returncode})')
         sys.exit(1)

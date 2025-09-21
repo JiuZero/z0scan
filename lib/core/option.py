@@ -41,7 +41,8 @@ def setPaths(root):
     
 def initKb():
     KB['continue'] = False  # 线程一直继续
-    KB['registered'] = dict()  # 注册的漏洞插件列表
+    KB['registered'] = dict()  # 注册的插件列表
+    KB['portscan'] = dict()  # 注册的端口漏洞插件信息统计
     KB['fingerprint'] = dict()  # 注册的指纹插件列表
     KB['task_queue'] = Queue()  # 初始化队列
     KB["spiderset"] = SpiderSet()  # 去重复爬虫
@@ -56,7 +57,6 @@ def initKb():
     KB["output"] = OutPut() # 报告信息
     KB.reverse_running_server = list() # 运行的反连服务
     KB.waf_detecting = list() # 限制单线程检测WAF
-    KB.pause = False # 暂停转发流量到插件
 
 def _list():
     """列出所有已注册的插件信息"""
@@ -97,10 +97,9 @@ def _list():
     dataToStdout(f"Total dictionaries: {colors.y}{len(conf.lists)}{colors.e}\n")
 
 def initPlugins():
-    if conf.command == "list" or conf.get("redis_server"):
-        conf.scanner_folder = ["PerFile", "PerFolder", "PerServer"]
     require_reverse_list = []
-    # 加载loader
+    require_risk_list = []
+    # 优先加载loader
     loader_path = os.path.join(path.scanners, "loader.py")
     if os.path.exists(loader_path):
         try:
@@ -108,7 +107,7 @@ def initPlugins():
             loader_instance = loader_mod.Z0SCAN()
             loader_instance.checkImplemennted()
             setattr(loader_instance, 'type', 'loader')
-            setattr(loader_instance, 'path', 'loader.py')
+            setattr(loader_instance, 'path', loader_path)
             setattr(loader_instance, 'name', 'loader')
             KB["registered"]["loader"] = loader_instance
             logger.info("Loader plugin loaded successfully")
@@ -119,10 +118,7 @@ def initPlugins():
         logger.error("Loader file not found at: {}".format(loader_path))
         raise FileNotFoundError("Loader plugin is required but not found")
     # 加载漏洞扫描插件
-    for _dir in conf.scanner_folder:
-        if _dir not in ["PerFile", "PerFolder", "PerServer"]:
-            logger.error(f"Can't load plugins from {_dir}.")
-            continue
+    for _dir in ["PerPage", "PerDir", "PerDomain"]:
         for root, dirs, files in os.walk(os.path.join(path.scanners, _dir)):
             files = filter(lambda x: not x.startswith("__") and x.endswith(".py"), files)
             for _ in files:
@@ -131,12 +127,47 @@ def initPlugins():
                 try:
                     mod = mod.Z0SCAN()
                     mod.checkImplemennted()
-                    if conf.get("load") and conf.get("load") != [] != []:
-                        if mod.name not in conf.get("load") and conf.get("load") != []:
+                    if conf.get("enable", []) != []:
+                        if mod.name not in conf.get("enable", []):
                             continue
                     if mod.risk not in conf.risk:
-                        if conf.get("load") and conf.get("load") != [] != []:
-                            logger.warning(f"Plugin {mod.name} can't be loaded because of risk.")
+                        if conf.get("enable", []) == []:
+                            require_risk_list.append(mod.name)
+                            continue
+                    if mod.name in conf.get("disable", []):
+                        continue
+                    if conf.command != "reverse_client":
+                        try:
+                            if mod.require_reverse is True:
+                                require_reverse_list.append(mod.name)
+                                continue
+                        except:
+                            pass
+                    plugin_type = os.path.split(root)[1]
+                    relative_path = ltrim(filename, path.root)
+                    if getattr(mod, 'type', None) is None:
+                        setattr(mod, 'type', plugin_type)
+                    if getattr(mod, 'path', None) is None:
+                        setattr(mod, 'path', relative_path)
+                    KB["registered"][mod.name] = mod
+                except PluginCheckError as e:
+                    logger.error('Not "{}" attribute in the plugin: {}'.format(e, filename))
+                except AttributeError as e:
+                    logger.error('Filename: {} not class "{}", Reason: {}'.format(filename, 'Z0SCAN', e))
+                    raise
+    for _dir in ["perhost"]:
+        for root, dirs, files in os.walk(os.path.join(path.scanners, _dir)):
+            files = filter(lambda x: not x.startswith("__") and x.endswith(".py"), files)
+            for _ in files:
+                filename = os.path.join(root, _)
+                mod = load_file_to_module(filename)
+                try:
+                    mod = mod.Z0SCAN()
+                    mod.checkImplemennted()
+                    if conf.get("enable", []) != []:
+                        if mod.name not in conf.get("enable", []):
+                            continue
+                    if mod.name in conf.get("disable", []):
                         continue
                     plugin_type = os.path.split(root)[1]
                     relative_path = ltrim(filename, path.root)
@@ -144,13 +175,11 @@ def initPlugins():
                         setattr(mod, 'type', plugin_type)
                     if getattr(mod, 'path', None) is None:
                         setattr(mod, 'path', relative_path)
-                    if conf.command == "reverse_client":
-                        try:
-                            if mod.require_reverse is True:
-                                require_reverse_list.append(mod.name)
-                                continue
-                        except:
-                            pass
+                    """
+                    ports = [23]
+                    fingers = ["connection refused by remote host.", "^SSH-"]
+                    """
+                    KB["portscan"][mod.name] = (mod.ports, mod.fingers)
                     KB["registered"][mod.name] = mod
                 except PluginCheckError as e:
                     logger.error('Not "{}" attribute in the plugin: {}'.format(e, filename))
@@ -158,7 +187,9 @@ def initPlugins():
                     logger.error('Filename: {} not class "{}", Reason: {}'.format(filename, 'Z0SCAN', e))
                     raise
     if not require_reverse_list == []:
-        logger.info(f'Skip scanner plugins that require of reverse: {colors.y}{require_reverse_list}{colors.e}')
+        logger.warning(f'Skip scanner plugins that require of reverse: {colors.y}{require_reverse_list}{colors.e}')
+    if not require_risk_list == []:
+        logger.warning(f"Skip to load scanner plugins because of risk: {colors.y}{require_risk_list}{colors.e}")
     if not conf.command == "list":
         logger.info(f'Load scanner plugins: {colors.y}{len(KB["registered"])-1}{colors.e}')
     # 加载指纹识别插件
@@ -210,14 +241,14 @@ def _merge_options(cmdline):
 
 def _set_conf():
     # server_addr
-    if isinstance(conf["server_addr"], str):
+    if conf.get("server_addr", False):
         if ":" in conf["server_addr"]:
             splits = conf["server_addr"].split(":", 2)
             conf["server_addr"] = tuple([splits[0], int(splits[1])])
         else:
             conf["server_addr"] = tuple([conf["server_addr"], conf.default_proxy_port])
     # proxy
-    if isinstance(conf["proxy"], str):
+    if conf.get("proxy", False):
         if "://" in conf["proxy"]:
             method, ip = conf["proxy"].split("://")
             conf["proxies"] = {
@@ -227,18 +258,17 @@ def _set_conf():
             from lib.proxy.autoproxy import AutoProxy
             conf["proxies"] = AutoProxy().import_proxies(conf["proxy"])
     # user-agent
-    if conf.random_agent:
+    if conf.get("random_agent", False):
         conf.agent = random_UA()
     else:
         conf.agent = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.101'
-    if conf.get("server_addr"):
-        conf.pause_upload = False # 暂停提交扫描任务
+    if conf.get("server_addr", False):
+        conf.pause_scanners = False # 仅队列不扫描
 
 def _init_stdout():
-    logger.info(f"Current WorkDir: {path.root}")
-    logger.info(f"Number of Threads: {conf.threads} / {conf.plugin_threads}")
-    logger.info(f"Scan Level: [#{conf.level}]")
-    logger.info(f"Scan Risk: {conf.risk}")
+    logger.info(f"Number of Threads: {colors.y}{conf.threads}{colors.e} / {colors.y}{conf.plugin_threads}{colors.e}")
+    logger.info(f"Scan Level: {colors.y}[#{conf.level}]{colors.e}")
+    logger.info(f"Scan Risk: {colors.y}{conf.risk}{colors.e}")
     if conf.smartscan["enable"]:
         message = chat("API validity verification: If you can receive this message, please reply 'OK'")
         if message is None:
@@ -247,12 +277,12 @@ def _init_stdout():
         elif "ok" in message.lower():
             logger.info("Connect to AI model: {}[OK]".format(conf.smartscan["model"]))
         else:
-            logger.info("AI return message is not True!")
+            logger.error("AI return message is not True!")
             sys.exit(0)
     if conf.ignore_waf:
-        logger.info(f'Ignore WAF Status: True')
+        logger.info(f'Ignore WAF Status: {colors.y}True{colors.e}')
     if conf.ignore_fingerprint:
-        logger.info(f'Ignore Fingerprints Status: True')
+        logger.info(f'Ignore Fingerprints Status: {colors.y}True{colors.e}')
     # 不扫描网址
     if len(conf["excludes"]):
         logger.info("Skip Scan: {}".format(repr(conf["excludes"])))
@@ -306,14 +336,10 @@ def _commands(v):
     if v == "update":
         if conf.command == "update":
             updater = AutoUpdater("JiuZero/z0scan", VERSION)
-            updater.main()
+            updater.update()
             sys.exit(0)
         else:
-            updater = AutoUpdater("JiuZero/z0scan", VERSION)
-            update_info = updater.check_for_updates()
-            if update_info:
-                logger.info(f"Discover a new version: {update_info['version']}")
-                logger.info(f"Updated content: {update_info['body']}")
+            check_update()
         return
     sys.exit(0)
 
@@ -356,9 +382,9 @@ def _cleanup_update_backups():
 def check_update():
     try:
         updater = AutoUpdater("JiuZero/z0scan", VERSION)
-        update_info = updater.check_for_updates(force=True)
+        update_info = updater.check_for_updates()
         if update_info:
-            logger.info(f"{VERSION} -> {update_info['version']}", origin="updater")
+            logger.info(f"Version update: {VERSION} -> {update_info['version']}", origin="updater")
             logger.info(f"Desc: {update_info['body']}", origin="updater")
     except Exception as e:
         logger.error("Check for version update error: ", str(e))
@@ -371,7 +397,7 @@ def init(root, cmdline):
     _merge_options(cmdline) # 合并命令行与config中的参数
     _commands("version")
     _cleanup_update_backups()
-    # _commands("update")
+    _commands("update")
     _commands("console")
     initdb(root) # 初始化数据库
     _commands("dbcmd")

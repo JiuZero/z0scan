@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # @File    : z0scan_gui.py
 
+from time import sleep
 import sys
 import os
 import subprocess
@@ -14,7 +15,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget, QVB
                             QTreeWidget, QTreeWidgetItem, QButtonGroup,
                             QMessageBox, QHeaderView, QDialog, QDialogButtonBox)
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QDateTime
-from PyQt5.QtGui import QFont, QColor
+from PyQt5.QtGui import QFont, QColor, QIcon
 
 # 插件信息提取正则表达式
 PLUGIN_INFO_PATTERNS = {
@@ -36,6 +37,15 @@ INFO = """
 <hr>
 <p style="text-align: center;">© 2025 JiuZero</p>
 """
+
+def get_resource_path(relative_path):
+    if getattr(sys, 'frozen', False):
+        # 打包后的环境
+        base_path = sys._MEIPASS
+    else:
+        # 开发环境
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return os.path.join(base_path, relative_path)
 
 class AboutDialog(QDialog):
     """关于页面对话框"""
@@ -202,6 +212,7 @@ class Z0ScanGUI(QMainWindow):
     """z0scan 主界面"""
     def __init__(self):
         super().__init__()
+        self.setWindowIcon(QIcon(get_resource_path('doc/logo.png')))
         self.scan_thread = None
         self.vulnerabilities = []  # 存储发现的漏洞
         self.plugin_info_cache = {}  # 插件信息缓存
@@ -457,23 +468,29 @@ class Z0ScanGUI(QMainWindow):
         # 创建分类标签页
         self.plugins_tabs = QTabWidget()
         
-        # PerFile 插件
-        self.perfile_plugins = QListWidget()
-        self.perfile_plugins.setAlternatingRowColors(True)
-        self.perfile_plugins.setSelectionMode(QListWidget.ExtendedSelection)
-        self.plugins_tabs.addTab(self.perfile_plugins, "PerFile")
+        # perpage 插件
+        self.perpage_plugins = QListWidget()
+        self.perpage_plugins.setAlternatingRowColors(True)
+        self.perpage_plugins.setSelectionMode(QListWidget.ExtendedSelection)
+        self.plugins_tabs.addTab(self.perpage_plugins, "perpage")
         
-        # PerFolder 插件
-        self.perfolder_plugins = QListWidget()
-        self.perfolder_plugins.setAlternatingRowColors(True)
-        self.perfolder_plugins.setSelectionMode(QListWidget.ExtendedSelection)
-        self.plugins_tabs.addTab(self.perfolder_plugins, "PerFolder")
+        # perdir 插件
+        self.perdir_plugins = QListWidget()
+        self.perdir_plugins.setAlternatingRowColors(True)
+        self.perdir_plugins.setSelectionMode(QListWidget.ExtendedSelection)
+        self.plugins_tabs.addTab(self.perdir_plugins, "perdir")
         
-        # PerServer 插件
-        self.perserver_plugins = QListWidget()
-        self.perserver_plugins.setAlternatingRowColors(True)
-        self.perserver_plugins.setSelectionMode(QListWidget.ExtendedSelection)
-        self.plugins_tabs.addTab(self.perserver_plugins, "PerServer")
+        # PerDomain 插件
+        self.perdomain_plugins = QListWidget()
+        self.perdomain_plugins.setAlternatingRowColors(True)
+        self.perdomain_plugins.setSelectionMode(QListWidget.ExtendedSelection)
+        self.plugins_tabs.addTab(self.perdomain_plugins, "PerDomain")
+        
+        # PerHost 插件 - 新增的PerHost类型支持
+        self.perhost_plugins = QListWidget()
+        self.perhost_plugins.setAlternatingRowColors(True)
+        self.perhost_plugins.setSelectionMode(QListWidget.ExtendedSelection)
+        self.plugins_tabs.addTab(self.perhost_plugins, "PerHost")
         
         # 加载插件列表（从目录扫描获取）
         self.load_plugins()
@@ -502,9 +519,10 @@ class Z0ScanGUI(QMainWindow):
         layout.addWidget(self.plugin_detail)
         
         # 绑定插件选择事件
-        self.perfile_plugins.itemClicked.connect(self.show_plugin_detail)
-        self.perfolder_plugins.itemClicked.connect(self.show_plugin_detail)
-        self.perserver_plugins.itemClicked.connect(self.show_plugin_detail)
+        self.perpage_plugins.itemClicked.connect(self.show_plugin_detail)
+        self.perdir_plugins.itemClicked.connect(self.show_plugin_detail)
+        self.perdomain_plugins.itemClicked.connect(self.show_plugin_detail)
+        self.perhost_plugins.itemClicked.connect(self.show_plugin_detail)  # 绑定PerHost插件点击事件
         
         self.tabs.addTab(plugins_tab, "插件管理")
 
@@ -534,24 +552,30 @@ class Z0ScanGUI(QMainWindow):
             line_edit.setText(path)
 
     def load_plugins(self):
-        """从scanner目录下的PerFile、PerFolder和PerServer文件夹加载插件列表"""
+        """从scanner目录下的perpage、perdir、PerDomain和PerHost文件夹加载插件列表"""
         # 清空现有列表
-        self.perfile_plugins.clear()
-        self.perfolder_plugins.clear()
-        self.perserver_plugins.clear()
+        self.perpage_plugins.clear()
+        self.perdir_plugins.clear()
+        self.perdomain_plugins.clear()
+        self.perhost_plugins.clear()  # 清空PerHost列表
         self.plugin_info_cache.clear()
-        # 插件类型与目录的映射
+        
+        # 插件类型与目录的映射 - 添加PerHost支持
         plugin_types = {
-            "PerFile": self.perfile_plugins,
-            "PerFolder": self.perfolder_plugins,
-            "PerServer": self.perserver_plugins
+            "perpage": self.perpage_plugins,
+            "perdir": self.perdir_plugins,
+            "PerDomain": self.perdomain_plugins,
+            "PerHost": self.perhost_plugins  # 添加PerHost映射
         }
+        
         # 遍历每种插件类型对应的目录
         for plugin_type, list_widget in plugin_types.items():
             plugin_dir = os.path.join(self.scanner_dir, plugin_type)
             # 检查目录是否存在
             if not os.path.exists(plugin_dir) or not os.path.isdir(plugin_dir):
+                print(f"警告: {plugin_type} 目录不存在: {plugin_dir}")
                 continue
+                
             # 遍历目录中的所有插件
             for filename in os.listdir(plugin_dir):
                 if filename.endswith(".py") and not filename.startswith("__"):
@@ -646,8 +670,9 @@ class Z0ScanGUI(QMainWindow):
         """获取禁用的插件列表"""
         disabled = []
         
-        # 检查所有标签页的插件
-        for list_widget in [self.perfile_plugins, self.perfolder_plugins, self.perserver_plugins]:
+        # 检查所有标签页的插件（包括PerHost）
+        for list_widget in [self.perpage_plugins, self.perdir_plugins, 
+                          self.perdomain_plugins, self.perhost_plugins]:
             for i in range(list_widget.count()):
                 item = list_widget.item(i)
                 if not item.isHidden() and item.checkState() == Qt.Unchecked:
@@ -663,7 +688,6 @@ class Z0ScanGUI(QMainWindow):
         for i in range(current_tab.count()):
             item = current_tab.item(i)
             if not item.isHidden():
-                item.setCheckState(state)
                 item.setCheckState(state)
 
     def refresh_plugins(self):
@@ -946,6 +970,15 @@ class Z0ScanGUI(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    try:
+        with open("ling.qss", "r", encoding="utf-8") as f:
+            app.setStyleSheet(f.read())
+    except FileNotFoundError:
+        print("警告: 样式文件 'ling_win11.qss' 未找到，将使用默认样式。")
+        sleep(3)
+    except Exception as e:
+        print(f"警告: 加载样式文件时出错: {e}")
+        sleep(3)
     window = Z0ScanGUI()
     window.show()
     sys.exit(app.exec_())

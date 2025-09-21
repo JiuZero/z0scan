@@ -5,7 +5,7 @@
 from lib.core.data import conf, KB
 from lib.core.log import logger, colors
 from lib.core.db import insertdb, selectdb
-from config.others.WafFingers import rules
+from config.others.waf_fingers import rules
 import requests, random, string, re
 from urllib.parse import quote
 
@@ -27,12 +27,11 @@ def detector(self):
     
     # 存在WAF但本次启动后没有检测过
     elif history1 and not history2:
-        if conf.skip_waf_recheck:
+        if conf.skip_waf_recheck is True:
             self.fingerprints.waf = str(history1[0])
             return
         
     # 不存在WAF但本次启动后没有检测（未知情况）
-    KB.waf_detecting.append(self.requests.hostname)
     rand_param = '/?' + ''.join(random.choices(string.ascii_lowercase, k=4)) + '='
     payload = "UNION ALL SELECT 1,'<script>alert(\"XSS\")</script>' FROM information_schema WHERE --/**/ EXEC xp_cmdshell('cat ../../../etc/passwd')#"
     try:
@@ -45,7 +44,6 @@ def detector(self):
                 if re.search(regex, str(self.requests.raw)):
                     logger.warning("<{}{}{}> Protected by {}".format(colors.m, self.requests.hostname, colors.e, name))
                     self.fingerprints.waf = name
-                    KB.waf_detecting.remove(self.requests.hostname)
                     return
             else:
                 if self.requests.headers is not None:
@@ -54,7 +52,6 @@ def detector(self):
                         if re.search(regex, headers.get(position).lower()) is not None:
                             logger.warning("<{}{}{}> Protected by {}".format(colors.m, self.requests.hostname, colors.e, name))
                             self.fingerprints.waf = name
-                            KB.waf_detecting.remove(self.requests.hostname)
                             return
         # 2. 非正常响应码
         if r.status_code in (404, 403, 503) or r.status_code >= 500:
@@ -62,14 +59,12 @@ def detector(self):
             self.fingerprints.waf = "UNKNOW"
             cv = {"hostname": self.requests.hostname,"waf": "UNKNOW"}
             insertdb("info", cv)
-            KB.waf_detecting.remove(self.requests.hostname)
             return
         '''
         # 3. 关键字符
         keys = ['攻击行为', '创宇盾', '拦截提示', '非法', '安全威胁', '防火墙', '黑客', '不合法', "Illegal operation"]
         '''
         self.fingerprints.waf = False
-        KB.waf_detecting.remove(self.requests.hostname)
         return
         
     # 超时与连接问题很可能产生于WAF
@@ -79,5 +74,4 @@ def detector(self):
         cv = {"hostname": self.requests.hostname,
               "waf": "UNKNOW"}
         insertdb("info", cv)
-        KB.waf_detecting.remove(self.requests.hostname)
         return

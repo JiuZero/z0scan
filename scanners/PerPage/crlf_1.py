@@ -65,7 +65,7 @@ class Z0SCAN(PluginBase):
                 "position": position,
                 "payload": payload,
             })
-            r = self.req(position, injected)
+            r = self.req(position, injected, quote=False)
             is_vuln, location = self._check_response(r, test_header)
             if not is_vuln:
                 continue

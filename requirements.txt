@@ -20,3 +20,6 @@ redis
 ldaptor
 wechatpy
 packaging
+psycopg2
+pysmb
+pymongo

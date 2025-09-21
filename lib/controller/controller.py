@@ -3,7 +3,7 @@
 # w8ay 2019/6/28
 # JiuZero 2025/5/7
 
-import copy, threading, time, traceback, pickle
+import copy, threading, time, traceback, pickle, time
 from lib.core.data import KB, conf
 from lib.core.log import logger, dataToStdout, colors
 from lib.core.red import gredis
@@ -73,9 +73,9 @@ def task_run():
             if data is None:
                 time.sleep(0.1)
                 continue
-            poc_module_name, request, response, fingerprints = pickle.loads(data)
+            poc_module_name, _ = pickle.loads(data)
         else:
-            poc_module_name, request, response, fingerprints = KB["task_queue"].get()
+            poc_module_name, _ = KB["task_queue"].get()
         if poc_module_name not in KB["registered"].keys():
             continue
         KB.lock.acquire()
@@ -85,13 +85,15 @@ def task_run():
         KB.running_plugins[poc_module_name] += 1
         KB.lock.release()
         poc_module = copy.deepcopy(KB["registered"][poc_module_name])
-        poc_module.execute(request, response, fingerprints)
+        poc_module.execute(_)
         KB.lock.acquire()
         KB.finished += 1
         KB.running -= 1
         KB.running_plugins[poc_module_name] -= 1
         if KB.running_plugins[poc_module_name] == 0:
             del KB.running_plugins[poc_module_name]
+        while conf.get("pause_taskrun", False) is True:
+            time.sleep(0.5)
         KB.lock.release()
 
 def count_status():
@@ -115,16 +117,23 @@ def task_push(plugin_type, request, response, fingerprints):
     for _ in KB["registered"].keys():
         module = KB["registered"][_]
         if module.type == plugin_type:
-            if conf.get("redis_client"):
-                data = pickle.dumps((_, request, response, fingerprints))
+            if conf.get("redis_client", False):
+                data = pickle.dumps((_, (request, response, fingerprints)))
                 gredis().lpush("task", data)
             else:
-                KB['task_queue'].put((_, copy.deepcopy(request), copy.deepcopy(response), fingerprints))
+                KB['task_queue'].put((_, (copy.deepcopy(request), copy.deepcopy(response), fingerprints)))
 
 
 def task_push_from_name(pluginName, req, resp, fingerprints=SimpleNamespace(waf=False, os=[], programing=[], webserver=[])):
-    if conf.get("redis_client") and pluginName != "loader":
+    if conf.get("redis_client", False) and pluginName != "loader":
         data = pickle.dumps((pluginName, req, resp, fingerprints))
         gredis().lpush("task", data)
     else:
-        KB['task_queue'].put((pluginName, copy.deepcopy(req), copy.deepcopy(resp), fingerprints))
+        KB['task_queue'].put((pluginName, (copy.deepcopy(req), copy.deepcopy(resp), fingerprints)))
+        
+def task_push_for_portscan(pluginName, host, sockrecv):
+    if conf.get("redis_client", False) and pluginName != "loader":
+        data = pickle.dumps((pluginName, (host, sockrecv)))
+        gredis().lpush("task", data)
+    else:
+        KB['task_queue'].put((pluginName, (host, sockrecv)))

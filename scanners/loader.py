@@ -3,9 +3,8 @@
 # w8ay 2019/7/4
 # JiuZero 2025/5/7
 
-from urllib.parse import urlparse
 from copy import deepcopy
-import requests, re, os
+import requests, threading
 from lib.controller.controller import task_push
 from lib.core.common import get_parent_paths, get_links
 from lib.core.data import conf, KB
@@ -18,6 +17,7 @@ from lib.parse.parse_response import FakeResp
 from lib.core.db import selectdb, insertdb
 from lib.core.settings import notAcceptedExt, logoutParams
 from lib.helper.paramanalyzer import VulnDetector
+from lib.core.portscan import ScanPort
 
 # 欺骗 in 操作
 class CheatIn:
@@ -37,7 +37,9 @@ class Z0SCAN(PluginBase):
         if not conf.ignore_waf:
             while self.requests.hostname in KB.waf_detecting:
                 pass
+            KB.waf_detecting.append(self.requests.hostname)
             detector(self)
+            KB.waf_detecting.remove(self.requests.hostname)
             if self.fingerprints.waf == "None":
                 self.fingerprints.waf = False
 
@@ -56,9 +58,9 @@ class Z0SCAN(PluginBase):
                     if _result:
                         setattr(self.fingerprints, name, _result)
 
-        # PerFile
-        if KB["spiderset"].add(url, 'PerFile'):
-            task_push('PerFile', self.requests, self.response, self.fingerprints)
+        # PerPage
+        if KB["spiderset"].add(url, 'PerPage'):
+            task_push('PerPage', self.requests, self.response, self.fingerprints)
             iterdatas = self.generateItemdatas()
             for _ in iterdatas:
                 k, v, position = _
@@ -66,16 +68,8 @@ class Z0SCAN(PluginBase):
                 VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_file_access(k, v)
                 VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_redirect(k, v)
                 VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_ssrf(k, v)
-
-        # PerServer
-        domain = deepcopy(self.requests.netloc)
-        if KB["spiderset"].add(domain, 'PerServer'):
-            req = requests.get(domain, headers=headers, allow_redirects=False)
-            fake_req = FakeReq(domain, headers, HTTPMETHOD.GET, "")
-            fake_resp = FakeResp(req.status_code, req.content, req.headers)
-            task_push('PerServer', fake_req, fake_resp, self.fingerprints)
             
-        # PerFolder
+        # PerDir
         urls = set(get_parent_paths(url))
         for parent_url in urls:
             """
@@ -85,8 +79,21 @@ class Z0SCAN(PluginBase):
             """
             if not KB["spiderset"].add(parent_url, 'get_link_directory'):
                 continue
-            if KB["spiderset"].add(parent_url, 'PerFolder'):
+            if KB["spiderset"].add(parent_url, 'PerDir'):
                 req = requests.get(parent_url, headers=headers, allow_redirects=False)
                 fake_req = FakeReq(req.url, headers, HTTPMETHOD.GET, "")
                 fake_resp = FakeResp(req.status_code, req.content, req.headers)
-                task_push('PerFolder', fake_req, fake_resp, self.fingerprints)
+                task_push('PerDir', fake_req, fake_resp, self.fingerprints)
+                
+        # PerDomain
+        domain = deepcopy(self.requests.netloc) # 保留端口去重
+        if KB["spiderset"].add(domain, 'PerDomain'):
+            req = requests.get(domain, headers=headers, allow_redirects=False)
+            fake_req = FakeReq(domain, headers, HTTPMETHOD.GET, "")
+            fake_resp = FakeResp(req.status_code, req.content, req.headers)
+            task_push('PerDomain', fake_req, fake_resp, self.fingerprints)
+        
+        # perhost
+        hostname = deepcopy(self.requests.hostname) # 无端口去重
+        if KB["spiderset"].add(hostname, 'perhost'):
+            ScanPort(hostname).run()

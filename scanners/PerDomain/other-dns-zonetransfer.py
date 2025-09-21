@@ -5,6 +5,7 @@
 import dns.resolver
 import dns.zone
 import dns.exception
+import re
 from lib.core.common import is_ipaddr
 from api import generateResponse, VulType, PluginBase, conf, KB, Type
 
@@ -37,23 +38,33 @@ class Z0SCAN(PluginBase):
                 
     def nameservers(self, fqdn):
         try:
-            ans = dns.resolver.query(fqdn, 'NS')
+            ans = dns.resolver.resolve(fqdn, 'NS')
             return [a.to_text() for a in ans]
         except dns.exception.DNSException:
             return []
 
     def axfr(self, domain, ns):
         try:
-            z = dns.zone.from_xfr(dns.query.xfr(ns, domain, lifetime=conf.timeout))
+            # 确保 ns 是有效的 DNS 服务器格式，若 ns 是域名，尝试解析为 IP
+            if not re.match(r'^\d+\.\d+\.\d+\.\d+$', ns):
+                try:
+                    ns_ip = dns.resolver.resolve(ns, 'A')[0].to_text()
+                except:
+                    return None
+            else:
+                ns_ip = ns
+            z = dns.zone.from_xfr(dns.query.xfr(ns_ip, domain, lifetime=conf.timeout))
             return [z[n].to_text(n) for n in z.nodes.keys()]
         except:
             return None
 
     def check_dns_zone_transfer(self, domain):
-        # domain = "sxau.edu.cn"
-        nservers = [n for n in self.nameservers(domain)]
+        nservers = self.nameservers(domain)
         result = []
         for ns in nservers:
+            # 过滤无效的 DNS 服务器格式
+            if not ns:
+                continue
             recs = self.axfr(domain, ns)
             if recs is not None:
                 result.append(

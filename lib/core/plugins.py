@@ -7,6 +7,7 @@ import copy
 import platform
 import socket
 import sys, re, json
+from typing import Tuple
 import traceback
 import copy
 from types import SimpleNamespace
@@ -326,7 +327,7 @@ class PluginBase(object):
             url = re.sub(r'/{}[-_/]([^-_/?#&=]+)'.format(re.escape(key), re.escape(value)),r'/{}[-_/]([^-_/?#&=]+)'.format(key, parse.quote(value + payload)), self.requests.url)
             return url
 
-    def req(self, position, payload, allow_redirects=True):
+    def req(self, position, payload, allow_redirects=True, quote=True):
         '''
         sess = requests.Session()
         sess.mount('http://', HTTPAdapter(max_retries=conf.retry)) 
@@ -347,40 +348,37 @@ class PluginBase(object):
         data = copy.deepcopy(self.requests.post_data)
 
         if position == PLACE.PARAM:
-            r = requests.get(url, params=payload, data=self.requests.post_data, headers=self.requests.headers, allow_redirects=allow_redirects)
+            r = requests.get(url, params=payload, data=self.requests.post_data, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
         
         if position == PLACE.NORMAL_DATA:
-            r = requests.post(url, params=params, data=payload, headers=self.requests.headers, allow_redirects=allow_redirects)
+            r = requests.post(url, params=params, data=payload, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
         elif position == PLACE.JSON_DATA:
-            r = requests.post(url, params=params, json=payload, headers=self.requests.headers, allow_redirects=allow_redirects)
+            r = requests.post(url, params=params, json=payload, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
         elif position == PLACE.XML_DATA:
-            r = requests.post(url, params=params, data=payload, headers=self.requests.headers, allow_redirects=allow_redirects)
+            r = requests.post(url, params=params, data=payload, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
         elif position == PLACE.MULTIPART_DATA:
-            r = requests.post(url, params=params, data=payload, headers=self.requests.headers, allow_redirects=allow_redirects)
+            r = requests.post(url, params=params, data=payload, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
         elif position == PLACE.COOKIE:
             if self.requests.method == HTTPMETHOD.GET:
-                r = requests.get(url, params=params, data=self.requests.post_data, headers=payload, allow_redirects=allow_redirects)
+                r = requests.get(url, params=params, data=self.requests.post_data, headers=payload, allow_redirects=allow_redirects, quote=quote)
             elif self.requests.method == HTTPMETHOD.POST:
-                r = requests.post(url, params=params, data=data, headers=payload, allow_redirects=allow_redirects)
+                r = requests.post(url, params=params, data=data, headers=payload, allow_redirects=allow_redirects, quote=quote)
         elif position == PLACE.URL:
             if self.requests.method == HTTPMETHOD.GET:
-                r = requests.get(payload, params=params, data=self.requests.post_data, headers=self.requests.headers, allow_redirects=allow_redirects)
+                r = requests.get(payload, params=params, data=self.requests.post_data, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
             elif self.requests.method == HTTPMETHOD.POST:
-                r = requests.post(payload, params=params, data=self.requests.post_data, headers=self.requests.headers, allow_redirects=allow_redirects)
+                r = requests.post(payload, params=params, data=self.requests.post_data, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
         # sess.close()
         return r
     
-    def execute(self, request: FakeReq, response: FakeResp, fingerprints):
-        self.requests = request
-        self.response = response
-        self.fingerprints = fingerprints
+    def execute(self, _: Tuple[FakeReq, FakeResp, SimpleNamespace]):
+        self.requests, self.response, self.fingerprints = _
         output = None
         try:
             output = self.audit()
         except NotImplementedError:
             msg = 'Plugin: {0} not defined "{1} mode'.format(self.name, 'audit')
             logger.error(msg)
-
         except (ConnectTimeout, requests.exceptions.ReadTimeout, urllib3.exceptions.ReadTimeoutError, socket.timeout):
             retry = conf.retry
             while retry > 0:
@@ -399,7 +397,6 @@ class PluginBase(object):
                 # msg = "connect target '{0}' failed!".format(self.requests.hostname)
                 return
                 # Share.dataToStdout('\r' + msg + '\n\r')
-
         except HTTPError as e:
             msg = 'Plugin: {0} HTTPError occurs, start it over.'.format(self.requests.hostname)
             logger.warning(msg)
@@ -437,11 +434,110 @@ class PluginBase(object):
             errMsg += "    Running version: {}\n".format(VERSION)
             errMsg += "    Python version: {}\n".format(sys.version.split()[0])
             errMsg += "    Operating system: {}\n".format(platform.platform())
-            if request:
+            if self.requests:
                 errMsg += '\n\nrequest raw:\n'
-                errMsg += request.raw
+                errMsg += self.requests.raw
             excMsg = traceback.format_exc()
             logger.error(errMsg)
             logger.error(excMsg)
             sys.exit(0)
         return output
+
+# 为PerPort适配的父类
+class _PluginBase(object):
+    def __init__(self):
+        self.type = None
+        self.path = None
+        self.target = None
+        self.allow = None
+        
+        self.host = str()
+        self.sockrecv = None
+
+    def generate_result(self) -> ResultObject:
+        return ResultObject(self)
+
+    def success(self, msg: ResultObject):
+        if isinstance(msg, ResultObject):
+            msg = msg.output()
+        elif isinstance(msg, dict):
+            pass
+        else:
+            raise PluginCheckError('self.success() not ResultObject')
+        KB.output.success(msg)
+
+    def checkImplemennted(self):
+        name = getattr(self, 'name')
+        if not name:
+            raise PluginCheckError('name')
+
+    def audit(self):
+        raise NotImplementedError
+    
+    def execute(self, _):
+        self.host , self.sockrecv = _
+        output = None
+        try:
+            output = self.audit()
+        except NotImplementedError:
+            msg = 'Plugin: {0} not defined "{1} mode'.format(self.name, 'audit')
+            logger.error(msg)
+        except (ConnectTimeout, requests.exceptions.ReadTimeout, urllib3.exceptions.ReadTimeoutError, socket.timeout):
+            retry = conf.retry
+            while retry > 0:
+                msg = 'Plugin: {0} timeout, start it over.'.format(self.name)
+                logger.debug(msg)
+                try:
+                    output = self.audit()
+                    break
+                except (
+                        ConnectTimeout, requests.exceptions.ReadTimeout, urllib3.exceptions.ReadTimeoutError,
+                        socket.timeout):
+                    retry -= 1
+                except Exception:
+                    return
+            else:
+                # msg = "connect target '{0}' failed!".format(self.requests.hostname)
+                return
+                # Share.dataToStdout('\r' + msg + '\n\r')
+        except HTTPError as e:
+            msg = 'Plugin: {0} HTTPError occurs, start it over.'.format(self.requests.hostname)
+            logger.warning(msg)
+        except ConnectionError as e:
+            msg = "connect target '{}' failed!".format(self.requests.hostname)
+            logger.warning(msg)
+            return
+        except requests.exceptions.ChunkedEncodingError:
+            pass
+        except ConnectionResetError:
+            pass
+        except TooManyRedirects as e:
+            pass
+        except NewConnectionError as ex:
+            pass
+        except PoolError as ex:
+            pass
+        except UnicodeDecodeError:
+            # 这是由于request redirect没有处理编码问题，导致一些网站编码转换被报错,又不能hook其中的关键函数
+            # 暂时先pass这个错误
+            pass
+        except UnicodeError:
+            # bypass unicode奇葩错误
+            pass
+        except (
+                requests.exceptions.InvalidURL, requests.exceptions.InvalidSchema,
+                requests.exceptions.ContentDecodingError):
+            # 出现在跳转上的一个奇葩错误，一些网站会在收到敏感操作后跳转到不符合规范的网址，request跟进时就会抛出这个异常
+            # 奇葩的ContentDecodingError
+            pass
+        except KeyboardInterrupt:
+            raise
+        except Exception:
+            errMsg = "Z0SCAN plugin traceback:\n"
+            errMsg += "    Running version: {}\n".format(VERSION)
+            errMsg += "    Python version: {}\n".format(sys.version.split()[0])
+            errMsg += "    Operating system: {}\n".format(platform.platform())
+            logger.error(errMsg)
+            sys.exit(0)
+        return output
+

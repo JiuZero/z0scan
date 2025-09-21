@@ -4,7 +4,7 @@
 
 import re
 import requests
-from config.others.SensiFile import rules
+from config.others.sensitive_files import rules
 from api import conf, generateResponse, VulType, KB, PluginBase, Type, Threads
 
 

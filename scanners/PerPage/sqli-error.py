@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # w8ay 2020/5/10
 # JiuZero 2025/7/29
-from config.others.SqlError import rules
+from config.others.sqli_errors import rules
 from api import generateResponse, random_num, random_str, VulType, Type, PluginBase, conf, logger, Threads, KB
 from lib.helper.helper_sensitive import sensitive_page_error_message_check
 from lib.helper.paramanalyzer import VulnDetector
@@ -101,7 +101,10 @@ class Z0SCAN(PluginBase):
                 "position": position, 
                 "payload": _payload
                 })
-            r = self.req(position, payload)
+            if "鎈" in _payload or "%" in _payload:
+                quote = False
+            else: quote = True
+            r = self.req(position, payload, quote=quote)
             if not r:
                 continue
             html = r.text

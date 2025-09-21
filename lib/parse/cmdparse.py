@@ -85,12 +85,11 @@ def cmd_line_parser(argv=None):
     optimization.add_argument("-c", "--console", dest="console_port", help=f"Start console server and set port (Default {config.CONSOLE_PORT})", default=config.CONSOLE_PORT)
     optimization.add_argument('-t', "--threads", dest="threads", type=int, default=config.THREADS, help="Threads of plugins tasks (Default {})".format(config.THREADS))
     optimization.add_argument('-pt', "--plugin-threads", dest="threads", type=int, default=config.PLUGIN_THREADS, help="Threads in plugins (Default {})".format(config.PLUGIN_THREADS))
-    optimization.add_argument("-sf", '--scanner-folder', dest='scanner_folder', type=str_list, default=["PerFile", "PerFolder", "PerServer"], help="Load these scanner folders. (e.g. PerFile,PerFolder,PerServer)")
     optimization.add_argument("-iw", '--ignore-waf', dest='ignore_waf', action="store_true", default=False, help="Ignore the WAF during detection")
     optimization.add_argument("-if", '--ignore-fingerprint', dest='ignore_fingerprint', action="store_true", default=False, help="Ignore fingerprint element scanning")
     optimization.add_argument("-sc", '--scan-cookie', dest='scan_cookie', action="store_true", default=False, help="Scan cookie during detection")
-    optimization.add_argument('--disload', dest='disload', type=str_list, default=config.DISLOAD, help="Disload some scanners.")
-    optimization.add_argument('--only-load', dest='load', type=str_list, default=[], help="Only load scanners")
+    optimization.add_argument('--disable', dest='disable', type=str_list, default=config.DISLOAD, help="Disload some scanners.")
+    optimization.add_argument('--enable', dest='enable', type=str_list, default=[], help="Only load scanners")
     optimization.add_argument('--redis-clean', dest='redis_clean', action="store_true", default=False, help="Clean Redis")
     optimization.add_argument("--debug", dest="debug", type=int, choices=list(range(1, 4)), help="Show programs's exception: 1-3")
 
@@ -109,17 +108,6 @@ def cmd_line_parser(argv=None):
     if args.command == 'scan' and not any((dd.get("server_addr"), dd.get("url"), dd.get("url_file"), dd.get("redis_server"))):
         errMsg = "Missing a mandatory option (-s, --server-addr, -u, --url, -f, --file, -Rs, --redis_server). "
         errMsg += "Use -h for basic and -hh for advanced help\n"
-        parser.error(errMsg)
-    
-    if dd.get("load") and dd.get("disload"):
-        if dd["load"] != []:
-            errMsg = "Not allow to use options \"--disload\" with \"--only-load\"! "
-            errMsg += "Use -h for help\n"
-            parser.error(errMsg)
-        
-    if "loader" in dd.get("disload", []):
-        errMsg = "Don't disable the core of plugins -- loader! "
-        errMsg += "Use -h for help\n"
         parser.error(errMsg)
     
     if dd.get("proxy") and dd.get("auto_proxy"):

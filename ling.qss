@@ -1,0 +1,201 @@
+/* ============================================================
+ * Ling - Z0GUI 漏洞扫描工具 QSS 样式表
+ * 主题: 专业深色
+ * 作者: Doubao
+ * ============================================================ */
+
+/* --- 全局基础样式 --- */
+QApplication {
+    background-color: #121212;
+    color: #E0E0E0;
+}
+
+QWidget {
+    background-color: #121212;
+    color: #E0E0E0;
+    font-family: "Segoe UI", "Microsoft YaHei", "SimHei", sans-serif;
+    font-size: 12px;
+}
+
+/* --- 主窗口与状态栏 --- */
+QMainWindow {
+    background-color: #121212;
+}
+
+QStatusBar {
+    background-color: #1A1A1A;
+    color: #B0B0B0;
+    border-top: 1px solid #282828;
+}
+
+/* --- 标签页控件 --- */
+QTabWidget::pane {
+    border-top: 2px solid #282828;
+}
+
+QTabBar::tab {
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                stop: 0 #1E1E1E, stop: 0.4 #1A1A1A,
+                                stop: 0.5 #151515, stop: 1.0 #121212);
+    color: #B0B0B0;
+    border: 1px solid #282828;
+    border-bottom-color: #282828;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    min-width: 8ex;
+    padding: 6px;
+    margin-right: 2px;
+}
+
+QTabBar::tab:selected, QTabBar::tab:hover {
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                stop: 0 #2A2A2A, stop: 0.4 #252525,
+                                stop: 0.5 #202020, stop: 1.0 #1A1A1A);
+    color: #FFFFFF;
+    border-color: #3A3A3A;
+}
+
+/* --- 分组框 --- */
+QGroupBox {
+    font-size: 13px;
+    font-weight: bold;
+    color: #FFFFFF;
+    margin-top: 1ex;
+    border: 1px solid #282828;
+    border-radius: 6px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 3px;
+    left: 10px;
+}
+
+/* --- 按钮 --- */
+QPushButton {
+    background-color: #2A2A2A;
+    color: #FFFFFF;
+    border: 1px solid #3A3A3A;
+    border-radius: 4px;
+    padding: 6px 12px;
+    min-width: 80px;
+}
+
+QPushButton:hover {
+    background-color: #323232;
+    border-color: #4A4A4A;
+}
+
+QPushButton:pressed {
+    background-color: #1E1E1E;
+}
+
+QPushButton:disabled {
+    background-color: #1E1E1E;
+    color: #888888;
+    border-color: #282828;
+}
+
+/* --- 文本输入框与下拉框 --- */
+QLineEdit, QTextEdit, QComboBox {
+    background-color: #1A1A1A;
+    color: #E0E0E0;
+    border: 1px solid #282828;
+    border-radius: 4px;
+    padding: 6px;
+}
+
+QLineEdit:focus, QTextEdit:focus, QComboBox:focus {
+    border-color: #4A90E2;
+}
+
+QTextEdit {
+    background-color: #1E1E1E; /* 扫描输出框和详情框 */
+}
+
+/* --- 复选框与单选按钮 --- */
+QCheckBox, QRadioButton {
+    spacing: 8px;
+}
+
+QCheckBox::indicator, QRadioButton::indicator {
+    width: 16px;
+    height: 16px;
+    background-color: #1A1A1A;
+    border: 1px solid #282828;
+    border-radius: 3px; /* 复选框 */
+}
+
+QRadioButton::indicator {
+    border-radius: 8px; /* 单选按钮 */
+}
+
+QCheckBox::indicator:checked, QRadioButton::indicator:checked {
+    background-color: #4A90E2;
+    border-color: #4A90E2;
+}
+
+/* --- 列表与树控件 --- */
+QListWidget, QTreeWidget {
+    background-color: #1A1A1A;
+    color: #E0E0E0;
+    border: 1px solid #282828;
+    border-radius: 4px;
+}
+
+QListWidget::item, QTreeWidget::item {
+    padding: 5px;
+}
+
+QListWidget::item:selected, QTreeWidget::item:selected {
+    background-color: #2A2A2A;
+    color: #FFFFFF;
+}
+
+QListWidget::item:alternate {
+    background-color: #1B1B1B;
+}
+
+QHeaderView::section {
+    background-color: #1E1E1E;
+    color: #B0B0B0;
+    border: 1px solid #282828;
+    padding: 4px;
+}
+
+/* --- 分割器 --- */
+QSplitter::handle {
+    background-color: #1E1E1E;
+}
+
+QSplitter::handle:horizontal {
+    width: 1px;
+}
+
+QSplitter::handle:vertical {
+    height: 1px;
+}
+
+/* --- 进度条 --- */
+QProgressBar {
+    background-color: #1A1A1A;
+    border: 1px solid #282828;
+    border-radius: 4px;
+    padding: 2px;
+}
+
+QProgressBar::chunk {
+    background-color: #4A90E2;
+    border-radius: 2px;
+}
+
+/* --- 自定义风险等级颜色 (代码中已设置，此处为备选) --- */
+/* 高风险 */
+.risk-high { color: #FF5252; }
+/* 中风险 */
+.risk-medium { color: #FFB74D; }
+/* 低风险 */
+.risk-low { color: #FFF59D; }
+/* 信息 */
+.risk-info { color: #81C784; }

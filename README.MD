@@ -17,23 +17,6 @@
   <img alt="PRs Welcome" src="https://img.shields.io/badge/License-GPL2-red?style=for-the-badge"></a>
 </p>
 
-## 👨‍💻 贡献者
-
-<div><table frame=void>
-	<tr>
-    <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/1.png"alt="steveopen1"/>
-        <br>
-        <a href="https://github.com/steveopen1/"><sub>steveopen1</sub></a>
-    </td>
-    <td align="center">
-        <img src="https://images.weserv.nl/?mask=circle&w=60&h=60&url=raw.githubusercontent.com/JiuZero/z0scan/main/doc/contributors/2.jpg"alt="n0irx"/>
-        <br>
-        <a href="https://github.com/9Insomnie/"><sub>n0irx</sub></a>
-    </td>
-  </tr>
-</table></div>
-
 ## 😘 致谢
 
 <div><table frame=void>
@@ -127,37 +110,36 @@
 
 ## 🔗 联系
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+- 高三在校，项目不定期维护更新QAQ
+- 欢迎大师傅们向我申请协作位吖~
 
-<table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-    <tr style="background: linear-gradient(135deg, #6e8efb, #a777e3); color: white;">
-        <th style="padding: 15px; text-align: center; border-radius: 8px 0 0 0;">
-            <i class="fab fa-weixin" style="font-size: 24px; vertical-align: middle; margin-right: 8px;"></i>微信
-        </th>
-        <th style="padding: 15px; text-align: center;">
-            <i class="fab fa-qq" style="font-size: 24px; vertical-align: middle; margin-right: 8px;"></i>QQ
-        </th>
-        <th style="padding: 15px; text-align: center;">
-            <i class="fas fa-envelope" style="font-size: 24px; vertical-align: middle; margin-right: 8px;"></i>邮箱
-        </th>
-        <th style="padding: 15px; text-align: center; border-radius: 0 8px 0 0;">
-            <i class="fas fa-users" style="font-size: 24px; vertical-align: middle; margin-right: 8px;"></i>QQ交流群
-        </th>
-    </tr>
-    <tr style="background-color: #f8f9fa;">
-        <td style="padding: 20px; text-align: center; border: 1px solid #e9ecef; border-top: none;">
-            <div style="font-weight: bold; color: #2c3e50; font-size: 18px;">JiuZer1</div>
-        </td>
-        <td style="padding: 20px; text-align: center; border: 1px solid #e9ecef; border-top: none;">
-            <div style="font-weight: bold; color: #2c3e50; font-size: 18px;">1703417187</div>
-        </td>
-        <td style="padding: 20px; text-align: center; border: 1px solid #e9ecef; border-top: none;">
-            <div style="font-weight: bold; color: #2c3e50; font-size: 18px;">jiuzer0@qq.com</div>
-        </td>
-        <td style="padding: 20px; text-align: center; border: 1px solid #e9ecef; border-top: none;">
-            <div style="font-weight: bold; color: #2c3e50; font-size: 18px;">1058256508</div>
-        </td>
-    </tr>
+<table>
+  <tr>
+    <td width="25%" valign="top">
+      <h3>微信</h3>
+      <ul>
+        <li><b>JiuZer1</b> - 不怎么看…</li>
+      </ul>
+    </td>
+    <td width="25%" valign="top">
+      <h3>QQ</h3>
+      <ul>
+        <li><b>1703417187</b> - 偶尔在线</li>
+      </ul>
+    </td>
+    <td width="25%" valign="top">
+      <h3>QQ交流群</h3>
+      <ul>
+        <li><b>1058256508</b> - 问题咨询&反馈</li>
+      </ul>
+    </td>
+    <td width="25%" valign="top">
+      <h3>邮箱</h3>
+      <ul>
+        <li><b>1703417187@qq.com</b> - 表白开发者</li>
+      </ul>
+    </td>
+  </tr>
 </table>
 
 ---
@@ -167,7 +149,7 @@
 <table>
   <tr>
     <td width="50%" valign="top">
-      <h3>🛡️ 安全检测</h3>
+      <h3>🔍 安全检测</h3>
       <ul>
         <li><b>集成指纹检测</b> - 自动识别指纹信息与WAF，插件精准切入</li>
         <li><b>分布式与本地式一体化</b> - 灵活适应不同扫描需求</li>
@@ -191,7 +173,7 @@
       </ul>
     </td>
     <td width="50%" valign="top">
-      <h3>🤖 智能验证</h3>
+      <h3>💡 智能验证</h3>
       <ul>
         <li><b>AI驱动的JS敏感信息后验证</b> - 智能识别JavaScript中的敏感数据</li>
       </ul>
@@ -207,7 +189,7 @@
 
 ### ✔ 发行版本 
 
-获取发布版本（**使用Nuitka编译，显著提高速度和性能**）：[下载](https://github.com/JiuZero/z0scan/releases)  
+获取发布版本（**使用Nuitka编译，速度显著提高**）：[下载](https://github.com/JiuZero/z0scan/releases)  
 
 - 想要构建适合您环境的可执行文件？请参阅：[文档](https://jiuzero.github.io/tags/z0scan/)  
 
@@ -215,14 +197,23 @@
   
 ```bash  
 git clone https://github.com/JiuZero/z0scan
-cd z0scan  
-pip install -r requirements.txt  
-python3 z0.py help  
+cd z0scan
+pip install -r requirements.txt
+# 命令行界面
+python3 z0.py help
+# 可视化界面
+python3 ling.py
 ```  
 
-- 对于**特殊环境安装**（如Termux），请参阅：[文档](https://jiuzero.github.io/tags/z0scan/)  
+- 对于**Termux**等环境，请参阅：[文档](https://jiuzero.github.io/tags/z0scan/)  
 
-## 🧐 使用示例  
+## 📝 使用示例  
+
+### **ling - 可视化**
+
+![示例](doc/example3.png)  
+
+### **z0 - 命令行**
 
 ### ✔ 被动扫描  
 
@@ -263,7 +254,7 @@ z0 scan -f urls.txt
 
 ## 🔖 插件列表 
 
-- **PerFile**  
+- **PerPage**  
 
 | Plugin Name          | Description                          | Risk |  
 |:--------------------:|:------------------------------------:|:----:|  
@@ -302,17 +293,17 @@ z0 scan -f urls.txt
 |other-redos|Regular Expression Denial of Service (ReDoS) Vulnerability Scanner|0|
 |other-jndi-error|JNDI Injection Vulnerability Scanner|3|
 
-- **PerFolder**  
+- **PerDir**  
 
 | Plugin Name          | Description                          | Risk |  
 |:--------------------:|:------------------------------------:|:----:|  
 | sensi-backup_2       | Backup File Scan (Directory-based)   | 1    |  
 | trave-list_2         | Directory Listing                    | 2    |  
-| sensi-file           | Sensitive File Leak (e.g., phpinfo, .git) | /    |  
+| sensi-files           | Sensitive File Leak (e.g., phpinfo, .git) | 1   |  
 | upload-oss           | OSS Bucket Arbitrary File Upload     | 2    |  
 | sensi-frontpage      | FrontPage Configuration Leak         | 1    |  
 
-- **PerServer**  
+- **PerDomain**  
 
 | Plugin Name          | Description                          | Risk |  
 |:--------------------:|:------------------------------------:|:----:|  
@@ -334,6 +325,26 @@ z0 scan -f urls.txt
 | other-baseline       | Service Version Leak                 | -1   |  
 | other-smuggling      | Request Smuggling Vulnerability      | 3    |  
 | trave-list_3         | Directory Listing                    | 2    | 
+
+- **perhost**  
+- 
+| Plugin Name             | Description                           |
+|-------------------------|--------------------------------------|
+| leakpwd-mssql          | Weak Password on MSSQL Server        |
+| leakpwd-mysql          | Weak Password on MySQL Server        |
+| leakpwd-postgresql     | Weak Password on PostgreSQL Server   |
+| leakpwd-redis          | Weak Password on Redis Server        |
+| leakpwd-smb            | Weak Password on SMB Server          |
+| other-ftp-anonymous    | FTP anonymous Login                  |
+| other-solr-rce         | Apache Solr RCE via Velocity         |
+| unauth-docker          | Docker Unauthorized Access           |
+| unauth-jenkins         | Jenkins Unauthorized Access          |
+| unauth-memcached       | Memcached Unauthorized Access        |
+| unauth-mongodb         | Mongodb Unauthorized Access          |
+| unauth-resis           | Redis Unauthorized Access            |
+| unauth-rsync           | Rsync Unauthorized Access            |
+| unauth-solr            | Apache Solr Unauthorized Access      |
+| unauth-zookeeper       | Zookeeper Unauthorized access        |
 
 ---
 
