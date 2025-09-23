@@ -752,19 +752,18 @@ class Z0ScanGUI(QMainWindow):
         if self.ignore_waf_check.isChecked():
             command += " --ignore-waf"
         
+        '''
         if self.ipv6_check.isChecked():
             command += " --ipv6"
+        '''
         
         if self.fingerprint_check.isChecked():
             command += " --ignore-fingerprint"
         
-        if self.passive_scan_radio.isChecked():
-            command += " --console"
-        
         # 添加禁用的插件
         disabled_plugins = self.get_disabled_plugins()
         if disabled_plugins:
-            command += f" --disload {','.join(disabled_plugins)}"
+            command += f" --disable {','.join(disabled_plugins)}"
         
         # 显示命令并开始扫描
         self.scan_output.append(f"[{QDateTime.currentDateTime().toString()}] 扫描命令: {command}")

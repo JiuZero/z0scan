@@ -200,7 +200,8 @@ def build_ling():
         '-w', 
         '--icon=doc/logo.png',
         '--distpath=z0scan',
-        '--add-data=doc/logo.png:.',
+        '--add-data=doc/logo.png:doc',
+        '--add-data=ling.qss:.',
     ]
     pyinstaller_cmd.extend(base_args)
 

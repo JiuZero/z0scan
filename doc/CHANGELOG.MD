@@ -473,3 +473,10 @@
 * other-dns-zonetransfer 实现逻辑存在问题
 
 ### 0.2.2.3 发布
+
+**2025.9.23**
+1. 设置Pyinstaller绑定ling的qss与logo文件
+2. 同步ling对于z0的绑定参数变更
+3. 修复pymysql模块丢失
+
+### 0.2.2.5 发布
