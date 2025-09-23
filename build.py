@@ -77,6 +77,7 @@ def get_actual_module_name(pkg_name):
         'PySocks': 'socks', 
         'requests-toolbelt': 'requests_toolbelt', 
         'psycopg2-binary': 'psycopg2', 
+        'pysmb': 'smb', 
     }
     if pkg_name in common_variants:
         return common_variants[pkg_name]
