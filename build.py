@@ -203,10 +203,6 @@ def build_ling():
         '--add-data=doc/logo.png:.',
     ]
     pyinstaller_cmd.extend(base_args)
-    
-    # 添加平台特定参数
-    platform_args = get_platform_specific_args()
-    pyinstaller_cmd.extend(platform_args)
 
     pyinstaller_cmd.append('ling.py')
     # 在CI环境中显示完整命令
