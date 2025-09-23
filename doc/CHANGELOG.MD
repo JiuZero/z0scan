@@ -432,23 +432,23 @@
 
 **2025.9.12**
 1. 修复版本更新提醒
-2. 针对服务器主机端口漏洞: perhost
+2. 针对服务器主机端口漏洞: PerHost
 3. 新增插件
-* perhost/unauth-docker
-* perhost/unauth-redis
-* perhost/unauth-junkins
-* perhost/unauth-rsync
-* perhost/unauth-memcached
-* perhost/unauth-mongodb
-* perhost/unauth-zookeeper
-* perhost/unauth-solr
-* perhost/leakpwd-redis
-* perhost/leakpwd-mssql
-* perhost/leakpwd-mysql
-* perhost/leakpwd-postgresql
-* perhost/leakpwd-smb
-* perhost/other-solr-rce
-* perhost/other-ftp-anonymous
+* PerHost/unauth-docker
+* PerHost/unauth-redis
+* PerHost/unauth-junkins
+* PerHost/unauth-rsync
+* PerHost/unauth-memcached
+* PerHost/unauth-mongodb
+* PerHost/unauth-zookeeper
+* PerHost/unauth-solr
+* PerHost/leakpwd-redis
+* PerHost/leakpwd-mssql
+* PerHost/leakpwd-mysql
+* PerHost/leakpwd-postgresql
+* PerHost/leakpwd-smb
+* PerHost/other-solr-rce
+* PerHost/other-ftp-anonymous
 
 **2025.9.13**
 1. 感谢****反馈
@@ -467,5 +467,9 @@
 
 **2025.9.22**
 1. QSS美化ling的界面
+
+**2025.9.24**
+1. 感谢**dsal15326770**反馈
+* other-dns-zonetransfer 实现逻辑存在问题
 
 ### 0.2.2.3 发布

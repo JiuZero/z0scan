@@ -93,7 +93,7 @@ class Z0SCAN(PluginBase):
             fake_resp = FakeResp(req.status_code, req.content, req.headers)
             task_push('PerDomain', fake_req, fake_resp, self.fingerprints)
         
-        # perhost
+        # PerHost
         hostname = deepcopy(self.requests.hostname) # 无端口去重
-        if KB["spiderset"].add(hostname, 'perhost'):
+        if KB["spiderset"].add(hostname, 'PerHost'):
             ScanPort(hostname).run()

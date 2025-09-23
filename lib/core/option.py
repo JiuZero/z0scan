@@ -155,7 +155,7 @@ def initPlugins():
                 except AttributeError as e:
                     logger.error('Filename: {} not class "{}", Reason: {}'.format(filename, 'Z0SCAN', e))
                     raise
-    for _dir in ["perhost"]:
+    for _dir in ["PerHost"]:
         for root, dirs, files in os.walk(os.path.join(path.scanners, _dir)):
             files = filter(lambda x: not x.startswith("__") and x.endswith(".py"), files)
             for _ in files:

@@ -20,6 +20,6 @@ redis
 ldaptor
 wechatpy
 packaging
-psycopg2
+psycopg2-binary
 pysmb
 pymongo

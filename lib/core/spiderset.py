@@ -107,7 +107,7 @@ class SpiderSet(object):
             "PerPage": {},
             "PerDir": {},
             "PerDomain": {},
-            "perhost": {}
+            "PerHost": {}
         }
         self.lock = threading.Lock()
 

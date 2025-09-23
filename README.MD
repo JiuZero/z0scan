@@ -326,7 +326,7 @@ z0 scan -f urls.txt
 | other-smuggling      | Request Smuggling Vulnerability      | 3    |  
 | trave-list_3         | Directory Listing                    | 2    | 
 
-- **perhost**  
+- **PerHost**  
 - 
 | Plugin Name             | Description                           |
 |-------------------------|--------------------------------------|
