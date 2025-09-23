@@ -3,11 +3,8 @@
 # w8ay 2019/6/29
 # JiuZero 2025/3/17
 
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning, module="dateutil.zoneinfo")
 import collections
 import json, os, time
-from datetime import datetime
 from threading import Lock
 from urllib.parse import quote
 from lib.core.common import md5
@@ -25,7 +22,7 @@ class OutPut(object):
         self.lock_file = Lock()
         self.result_set = set()
 
-        folder_name = datetime.today().strftime("%m_%d_%Y")
+        folder_name = time.strftime("%m_%d_%Y")
         folder_path = os.path.join(path.output, folder_name)
         if not os.path.isdir(folder_path):
             os.mkdir(folder_path)
