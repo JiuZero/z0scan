@@ -198,7 +198,7 @@ def build_ling():
     base_args = [
         '-F',
         '-w', 
-        '--icon=doc/logo.png',
+        '--add-data="doc/logo.png;."',
         '--distpath=z0scan',
         '--add-data="doc/logo.png;."',
     ]
