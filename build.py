@@ -198,9 +198,9 @@ def build_ling():
     base_args = [
         '-F',
         '-w', 
-        '--add-data="doc/logo.png;."',
+        '--icon=doc/logo.png',
         '--distpath=z0scan',
-        '--add-data="doc/logo.png;."',
+        '--add-data="doc/logo.png:."',
     ]
     pyinstaller_cmd.extend(base_args)
     
