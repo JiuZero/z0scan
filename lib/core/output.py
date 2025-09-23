@@ -3,6 +3,8 @@
 # w8ay 2019/6/29
 # JiuZero 2025/3/17
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="dateutil.zoneinfo")
 import collections
 import json, os, time
 from datetime import datetime
