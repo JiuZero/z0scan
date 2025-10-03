@@ -86,13 +86,13 @@ class PluginBase(object):
         if self.requests.params:
             for k, v in self.requests.params.items():
                 iterdatas.append([k, v, PLACE.PARAM])
-        if self.requests.data:
+        if self.requests.body:
             if self.requests.post_hint == POST_HINT.NORMAL or self.requests.post_hint == POST_HINT.ARRAY_LIKE:
-                for k, v in self.requests.post_data.items():
+                for k, v in self.requests.data.items():
                     iterdatas.append([k, v, PLACE.NORMAL_DATA])
             elif self.requests.post_hint == POST_HINT.JSON:
                 try:
-                    json_data = json.loads(self.requests.data)
+                    json_data = json.loads(self.requests.body)
                     if isinstance(json_data, dict):
                         # 处理字典类型
                         for key_path, value in _flatten_json_items(json_data):
@@ -111,7 +111,7 @@ class PluginBase(object):
                     pass
             elif self.requests.post_hint == POST_HINT.XML:
                 try:
-                    root = ET.fromstring(self.requests.data)
+                    root = ET.fromstring(self.requests.body)
                     for elem in root.iter():
                         if elem.text and elem.text.strip():
                             iterdatas.append([elem.tag, elem.text.strip(), PLACE.XML_DATA])
@@ -131,7 +131,7 @@ class PluginBase(object):
                 if 'boundary=' in content_type:
                     boundary = content_type.split('boundary=')[1].split(';')[0].strip()
                 if boundary:
-                    parts = self.requests.data.split(f'--{boundary}')
+                    parts = self.requests.body.split(f'--{boundary}')
                     for part in parts:
                         if 'name="' in part:
                             name = part.split('name="')[1].split('"')[0]
@@ -282,7 +282,7 @@ class PluginBase(object):
         payload = str(datas.get("payload", ""))
         position = str(datas.get("position", ""))
         if position == PLACE.NORMAL_DATA:
-            data = copy.deepcopy(self.requests.post_data)
+            data = copy.deepcopy(self.requests.data)
             data[key] = value + payload
             return data
         elif position == PLACE.PARAM:
@@ -291,7 +291,7 @@ class PluginBase(object):
             return params
         elif position == PLACE.JSON_DATA:
             modified_json = self.inject_json_payload(
-                original_json=self.requests.data,
+                original_json=self.requests.body,
                 target_key=key,
                 payload=payload
             )
@@ -300,7 +300,7 @@ class PluginBase(object):
             return modified_json if isinstance(modified_json, (dict, list)) else json.loads(modified_json) # json=modified
         elif position == PLACE.XML_DATA:
             modified_xml = self.inject_xml_payload(
-                xml_data=self.requests.data,
+                xml_data=self.requests.body,
                 target_path=key,  # 如 "root/elem" 或 "elem@attr"
                 payload=payload
             )
@@ -309,7 +309,7 @@ class PluginBase(object):
             return ET.tostring(modified_xml, encoding='unicode') # data=ET.tostring(modified_xml, encoding='unicode')
         elif position == PLACE.MULTIPART_DATA:
             modified_multipart = self.inject_multipart_payload(
-                original_data=self.requests.data,
+                original_data=self.requests.body,
                 content_type=self.requests.headers.get('Content-Type', ''),
                 target_field=key,  # multipart 字段名
                 payload=payload
@@ -345,10 +345,10 @@ class PluginBase(object):
             }
         
         params = copy.deepcopy(self.requests.params)
-        data = copy.deepcopy(self.requests.post_data)
+        data = copy.deepcopy(self.requests.data)
 
         if position == PLACE.PARAM:
-            r = requests.get(url, params=payload, data=self.requests.post_data, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
+            r = requests.get(url, params=payload, data=self.requests.data, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
         
         if position == PLACE.NORMAL_DATA:
             r = requests.post(url, params=params, data=payload, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
@@ -360,14 +360,14 @@ class PluginBase(object):
             r = requests.post(url, params=params, data=payload, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
         elif position == PLACE.COOKIE:
             if self.requests.method == HTTPMETHOD.GET:
-                r = requests.get(url, params=params, data=self.requests.post_data, headers=payload, allow_redirects=allow_redirects, quote=quote)
+                r = requests.get(url, params=params, data=self.requests.data, headers=payload, allow_redirects=allow_redirects, quote=quote)
             elif self.requests.method == HTTPMETHOD.POST:
                 r = requests.post(url, params=params, data=data, headers=payload, allow_redirects=allow_redirects, quote=quote)
         elif position == PLACE.URL:
             if self.requests.method == HTTPMETHOD.GET:
-                r = requests.get(payload, params=params, data=self.requests.post_data, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
+                r = requests.get(payload, params=params, data=self.requests.data, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
             elif self.requests.method == HTTPMETHOD.POST:
-                r = requests.post(payload, params=params, data=self.requests.post_data, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
+                r = requests.post(payload, params=params, data=self.requests.data, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
         # sess.close()
         return r
     

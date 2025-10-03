@@ -19,7 +19,7 @@ class Z0SCAN(PluginBase):
                 result = self.generate_result()
                 result.main({
                     "type": Type.ANALYZE,
-                    "url": self.requests.netloc,
+                    "url": self.requests.protocol + "://" + self.requests.hostname + str(self.requests.port),
                     "vultype": VulType.CORS,
                 })
                 result.step("Request1", {

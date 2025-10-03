@@ -22,7 +22,7 @@ from lib.core.data import conf, KB
 from lib.core.log import logger, dataToStdout
 from lib.core.option import init
 from lib.core.settings import banner
-from lib.core.console import BackgroundServer
+from lib.core.console import start_web_console
 
 def version_check():
     # Check Python version
@@ -76,7 +76,7 @@ def main():
             task_push_from_name('loader', fake_req, fake_resp)
         start()
     elif conf.server_addr:
-        server = BackgroundServer(port=conf.console_port).start()
+        server = start_web_console(host="127.0.0.1", port=9090)
         KB["continue"] = True
         # 启动漏洞扫描器
         scanner = threading.Thread(target=start)

@@ -86,7 +86,7 @@ class Z0SCAN(PluginBase):
                 task_push('PerDir', fake_req, fake_resp, self.fingerprints)
                 
         # PerDomain
-        domain = deepcopy(self.requests.netloc) # 保留端口去重
+        domain = deepcopy(self.requests.protocol + "://" + self.requests.hostname + str(self.requests.port)) # 保留端口去重
         if KB["spiderset"].add(domain, 'PerDomain'):
             req = requests.get(domain, headers=headers, allow_redirects=False)
             fake_req = FakeReq(domain, headers, HTTPMETHOD.GET, "")

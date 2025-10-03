@@ -44,10 +44,10 @@ class Z0SCAN(PluginBase):
                 for position in positions:
                     iterdatas += [(k, v, position)]
         elif self.requests.method == HTTPMETHOD.POST:
-            parse_params = (parse_params) - set(self.requests.post_data.keys())
+            parse_params = (parse_params) - set(self.requests.data.keys())
             for key in parse_params:
                 params_data[key] = random_str(6)
-            params_data.update(self.requests.post_data)
+            params_data.update(self.requests.data)
             resp = requests.post(self.requests.url, data=params_data, headers=self.requests.headers).text
             iterdatas = self.generateItemdatas()
             for k, v in params_data.items():

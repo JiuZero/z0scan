@@ -11,6 +11,36 @@ from lib.core.settings import DEFAULT_GET_POST_DELIMITER, DEFAULT_COOKIE_DELIMIT
 from fake_useragent import UserAgent
 from lib.core.data import conf, KB
 from lib.api.reverse_api import reverseApi
+import subprocess
+
+def run_cmd(cmd, shell=True, timeout=None):
+    """
+    Execute command line commands without capturing output.
+    
+    Args:
+        cmd: Command string to execute
+        shell: Whether to use shell execution, defaults to True
+        timeout: Timeout in seconds
+    
+    Returns:
+        bool: True if command executed successfully, False otherwise
+    """
+    try:
+        result = subprocess.run(
+            cmd,
+            shell=shell,
+            timeout=timeout,
+            capture_output=False,  # 不捕获输出
+            text=True,
+            encoding='utf-8'
+        )
+        return result.returncode == 0
+    except subprocess.TimeoutExpired:
+        logger.error(f"Command execution timeout: {cmd}")
+        return False
+    except Exception as e:
+        logger.error(f"Error executing command: {e}")
+        return False
 
 def check_reverse():
     ver = platform.system()
@@ -30,12 +60,12 @@ def check_reverse():
     res_dns = rA.check(dns_token)
     # 此处需添加RMI&LDAP服务的检测代码
     if res_http[0]:
-        logger.critical("Client connect HTTP reverse: Success")
+        logger.info("Client connect HTTP reverse: Success")
         KB.reverse_running_server.append("http")
     else:
         logger.warning("Client connect HTTP reverse: Fail")
     if res_dns[0]:
-        logger.critical("Client connect DNS reverse: Success")
+        logger.info("Client connect DNS reverse: Success")
         KB.reverse_running_server.append("dns")
     else:
         logger.warning("Client disconnect DNS reverse: Fail")

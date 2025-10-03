@@ -15,9 +15,9 @@ class Z0SCAN(PluginBase):
         if not "IIS" in self.fingerprints.webserver and self.risk in conf.risk and conf.level != 0:
             existed_path = '/*~1*/a.aspx'
             not_existed_path = '/JiuZer0~1*/a.aspx'
-            r1 = requests.get(self.requests.netloc + existed_path)
+            r1 = requests.get(self.requests.protocol + "://" + self.requests.hostname + str(self.requests.port) + existed_path)
             status_1 = r1.status_code
-            r2 = requests.get(self.requests.netloc + not_existed_path)
+            r2 = requests.get(self.requests.protocol + "://" + self.requests.hostname + str(self.requests.port) + not_existed_path)
             status_2 = r2.status_code
             if status_1 == 404 and status_2 != 404:
                 result = self.generate_result()
@@ -38,9 +38,9 @@ class Z0SCAN(PluginBase):
                     })
                 self.success(result)
                 return True
-            r1 = requests.options(self.requests.netloc + existed_path)
+            r1 = requests.options(self.requests.protocol + "://" + self.requests.hostname + str(self.requests.port) + existed_path)
             status_1 = r1.status_code
-            r2 = requests.options(self.requests.netloc + not_existed_path)
+            r2 = requests.options(self.requests.protocol + "://" + self.requests.hostname + str(self.requests.port) + not_existed_path)
             status_2 = r2.status_code
             if status_1 == 404 and status_2 != 404:
                 result = self.generate_result()

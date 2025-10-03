@@ -19,7 +19,7 @@ class Z0SCAN(PluginBase):
             result = self.generate_result()
             result.main({
                 "type": Type.REQUEST,
-                "url": self.requests.netloc,
+                "url": self.requests.protocol + "://" + self.requests.hostname + str(self.requests.port),
                 "vultype": VulType.CORS,
                 "show": {
                     "Module": module,
@@ -38,14 +38,14 @@ class Z0SCAN(PluginBase):
     def test_reflect_origin(self):
         module_name = inspect.stack()[0][3].replace('test_','')
         test_url = self.requests.url
-        test_origin = self.requests.scheme + "://" + "evil.com"
+        test_origin = self.requests.protocol + "://" + "evil.com"
         msg = self.is_cors_permissive(test_origin, test_url)
         self.cors_result(module_name, msg, "")
 
     def test_prefix_match(self):
         module_name = inspect.stack()[0][3].replace('test_','')
         test_url = self.requests.url
-        test_origin = self.requests.scheme + "://" + self.netloc_split_port + ".evil.com"
+        test_origin = self.requests.protocol + "://" + self.netloc_split_port + ".evil.com"
         msg = self.is_cors_permissive(test_origin, test_url)
         self.cors_result(module_name, msg, "")
             
@@ -53,7 +53,7 @@ class Z0SCAN(PluginBase):
         module_name = inspect.stack()[0][3].replace('test_','')
         test_url = self.requests.url
         sld = tldextract.extract(test_url.strip()).registered_domain
-        test_origin = self.requests.scheme + "://" + "evil" + sld
+        test_origin = self.requests.protocol + "://" + "evil" + sld
         msg = self.is_cors_permissive(test_origin, test_url)
         self.cors_result(module_name, msg, "")
 
@@ -68,7 +68,7 @@ class Z0SCAN(PluginBase):
         module_name = inspect.stack()[0][3].replace('test_','')
         test_url = self.requests.url
         sld = tldextract.extract(test_url.strip()).registered_domain
-        test_origin = self.requests.scheme + "://" + sld[1:]
+        test_origin = self.requests.protocol + "://" + sld[1:]
         msg = self.is_cors_permissive(test_origin, test_url)
         self.cors_result(module_name, msg, "")
 
@@ -77,21 +77,21 @@ class Z0SCAN(PluginBase):
         test_url = self.requests.url
         sld = tldextract.extract(test_url.strip()).registered_domain
         domain = self.netloc_split_port
-        test_origin = self.requests.scheme + "://" + domain[::-1].replace('.', 'a', 1)[::-1]
+        test_origin = self.requests.protocol + "://" + domain[::-1].replace('.', 'a', 1)[::-1]
         msg = self.is_cors_permissive(test_origin, test_url)
         self.cors_result(module_name, msg, "")
 
     def test_trust_any_subdomain(self):
         module_name = inspect.stack()[0][3].replace('test_','')
         test_url = self.requests.url
-        test_origin = self.requests.scheme + "://" + "evil." + self.netloc_split_port
+        test_origin = self.requests.protocol + "://" + "evil." + self.netloc_split_port
         msg = self.is_cors_permissive(test_origin, test_url)
         self.cors_result(module_name, msg, "")
 
     def test_https_trust_http(self):
         module_name = inspect.stack()[0][3].replace('test_','')
         test_url = self.requests.url
-        if self.requests.scheme != "https":
+        if self.requests.protocol != "https":
             return
         test_origin = "http://" + self.netloc_split_port
         msg = self.is_cors_permissive(test_origin, test_url)
@@ -114,7 +114,7 @@ class Z0SCAN(PluginBase):
         special_characters = ['_','-','"','{','}','+','^','%60','!','~','`',';','|','&',"'",'(',')','*',',','$','=','+',"%0b"]
         origins = []
         for char in special_characters:
-            attempt = self.requests.scheme + "://" + self.netloc_split_port + char + ".evil.com"
+            attempt = self.requests.protocol + "://" + self.netloc_split_port + char + ".evil.com"
             origins.append(attempt)
         is_cors_perm = False
         for test_origin in origins:

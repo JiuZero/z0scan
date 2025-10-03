@@ -50,9 +50,7 @@ def cmd_line_parser(argv=None):
     scan_parser = subparsers.add_parser('scan', help='Scan command')
     reverse_parser = subparsers.add_parser('reverse', help='Reverse command')
     list_parser = subparsers.add_parser('list', help='List of plugins and dicts')
-    console_parser = subparsers.add_parser('console', help='Z0Scan console')
     dbcmd_parser = subparsers.add_parser('dbcmd', help='Database manage console')
-    # update_parser = subparsers.add_parser('update', help='Update core with plugins')
 
     ## z0 scan
     # Proxy options
@@ -70,7 +68,6 @@ def cmd_line_parser(argv=None):
     # Requests options
     request = scan_parser.add_argument_group("Request", "Network request options")
     request.add_argument("-p", "--proxy", dest="proxy", type=str, help="Use a proxy/proxies from file to connect to the target URL, Support http,https,socks5,socks4 & txt,json (e.g. http://127.0.0.1:8080 or proxy.txt)")
-    request.add_argument("-Ap", "--auto-proxy", dest="auto_proxy", type=int, choices=list(range(0, 2)), help="Use free proxies in auto. Mode 1: Fetch by free. Mode 2: Fetch by searching.")
     request.add_argument("--timeout", dest="timeout", default=config.TIMEOUT, help="Seconds to wait before timeout connection (Default {})".format(config.TIMEOUT), type=int)
     request.add_argument("--retry", dest="retry", type=list, default=config.RETRY, help="Time out retrials times (Default {})".format(config.RETRY))
     request.add_argument("--random-agent", dest="random_agent", action="store_true", default=False, help="Use randomly selected HTTP User-Agent header value")
@@ -92,15 +89,11 @@ def cmd_line_parser(argv=None):
     optimization.add_argument('--enable', dest='enable', type=str_list, default=[], help="Only load scanners")
     optimization.add_argument('--redis-clean', dest='redis_clean', action="store_true", default=False, help="Clean Redis")
     optimization.add_argument("--debug", dest="debug", type=int, choices=list(range(1, 4)), help="Show programs's exception: 1-3")
-
-    ## z0 console
-    client = console_parser.add_argument_group('Client', 'Client Options')
-    client.add_argument("-p", "--port", dest="console_port", help=f"Console client port (Default {config.CONSOLE_PORT})", default=config.CONSOLE_PORT)
-
+    
     args = parser.parse_args()
     dd = args.__dict__
 
-    if not (dd['command'] in ["version", "reverse", "dbcmd", "list", "console", "scan", "update"]):
+    if not (dd['command'] in ["version", "reverse", "dbcmd", "list", "scan", "update"]):
         errMsg = "An error command input (version, scan, reverse, dbcmd, list, console). "
         errMsg += "Use -h for help\n"
         parser.error(errMsg)

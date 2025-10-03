@@ -45,7 +45,7 @@ class Z0SCAN(PluginBase):
         if not self.risk in conf.risk or conf.level == 0:
             return
         params = deepcopy(self.requests.params)
-        data = deepcopy(self.requests.post_data)
+        data = deepcopy(self.requests.data)
         cookies = deepcopy(self.requests.cookies)
         if params:
             for k, v in params.items():

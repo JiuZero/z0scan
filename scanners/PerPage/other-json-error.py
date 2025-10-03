@@ -19,7 +19,7 @@ class Z0SCAN(PluginBase):
         if self.requests.suffix in acceptedExt:
             test_args = []
             if self.requests.post_hint == POST_HINT.JSON:
-                payload = self.requests.data.replace(b"}", b"", 1)
+                payload = self.requests.body.replace(b"}", b"", 1)
                 r = requests.get(self.requests.url, params=self.requests.params, data=payload, headers=self.requests.headers)
                 if not r:
                     return
@@ -52,7 +52,7 @@ class Z0SCAN(PluginBase):
                     # 判断参数值是否为json格式
                     if isjson(v):
                         test_args.append(_)     
-                z0thread = Threads(name="other-fastjson-blind")
+                z0thread = Threads(name="other-json-error")
                 z0thread.submit(self.process, test_args)
                 
     def process(self, _):

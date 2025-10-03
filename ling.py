@@ -14,8 +14,9 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QTabWidget, QWidget, QVB
                             QFileDialog, QSplitter, QListWidget, QListWidgetItem,
                             QTreeWidget, QTreeWidgetItem, QButtonGroup,
                             QMessageBox, QHeaderView, QDialog, QDialogButtonBox)
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QDateTime
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QDateTime, QTimer
 from PyQt5.QtGui import QFont, QColor, QIcon
+from qfluentwidgets import CheckBox, ComboBox, PushButton, PrimaryPushButton, LineEdit, TextEdit, ProgressBar, TreeWidget, ListWidget, InfoBar, InfoBarPosition, FluentWindow, NavigationItemPosition, FluentIcon, Theme, setTheme, SplashScreen, IndeterminateProgressBar
 
 # 插件信息提取正则表达式
 PLUGIN_INFO_PATTERNS = {
@@ -55,7 +56,7 @@ class AboutDialog(QDialog):
         self.setMinimumSize(400, 300)
         layout = QVBoxLayout(self)
         # 程序信息
-        info_text = QTextEdit()
+        info_text = TextEdit()
         info_text.setReadOnly(True)
         info_text.setStyleSheet("background-color: transparent; border: none;")
         info_text.setHtml(INFO)
@@ -75,10 +76,10 @@ class RiskSelectionDialog(QDialog):
         layout = QVBoxLayout(self)
         # 风险等级选项
         self.risk_options = {
-            0: QCheckBox("0 (极低&信息)"),
-            1: QCheckBox("1 (低)"),
-            2: QCheckBox("2 (中)"),
-            3: QCheckBox("3 (高)")
+            0: CheckBox("0 (极低&信息)"),
+            1: CheckBox("1 (低)"),
+            2: CheckBox("2 (中)"),
+            3: CheckBox("3 (高)")
         }
         # 默认全选
         for cb in self.risk_options.values():
@@ -106,11 +107,12 @@ class ScanThread(QThread):
         self.command = command
         self.running = True
         self.json_report_path = None  # 存储JSON报告路径
+        self.process = None  # 子进程句柄
 
     def run(self):
         try:
             # 执行扫描命令
-            process = subprocess.Popen(
+            self.process = subprocess.Popen(
                 self.command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
@@ -119,8 +121,8 @@ class ScanThread(QThread):
                 bufsize=1
             )
             # 实时读取输出并查找JSON报告路径
-            while self.running and process.poll() is None:
-                line = process.stdout.readline()
+            while self.running and self.process.poll() is None:
+                line = self.process.stdout.readline()
                 if line:
                     self.output_signal.emit(line)
                     # 检查是否包含JSON报告路径
@@ -128,7 +130,7 @@ class ScanThread(QThread):
                     if path_match:
                         self.json_report_path = path_match.group(1)
             # 处理剩余输出
-            remaining = process.stdout.read()
+            remaining = self.process.stdout.read()
             if remaining:
                 self.output_signal.emit(remaining)
         except Exception as e:
@@ -138,7 +140,27 @@ class ScanThread(QThread):
             self.finish_signal.emit(self.json_report_path)
 
     def stop(self):
+        # 标记线程结束，并尽力终止子进程
         self.running = False
+        try:
+            if self.process is not None and self.process.poll() is None:
+                try:
+                    self.process.terminate()
+                except Exception:
+                    pass
+                # 等待短暂时间，若仍未退出则强制杀死
+                try:
+                    import time
+                    for _ in range(10):
+                        if self.process.poll() is not None:
+                            break
+                        time.sleep(0.1)
+                    if self.process.poll() is None:
+                        self.process.kill()
+                except Exception:
+                    pass
+        except Exception:
+            pass
 
 
 class VulnerabilityDetailWidget(QWidget):
@@ -152,11 +174,11 @@ class VulnerabilityDetailWidget(QWidget):
         # 创建标签页
         self.tabs = QTabWidget()
         # 基本信息标签页
-        self.basic_info = QTextEdit()
+        self.basic_info = TextEdit()
         self.basic_info.setReadOnly(True)
         self.tabs.addTab(self.basic_info, "基本信息")
         # 验证步骤标签页
-        self.verification_steps = QTreeWidget()
+        self.verification_steps = TreeWidget()
         self.verification_steps.setHeaderLabel("验证步骤")
         self.tabs.addTab(self.verification_steps, "验证")
         layout.addWidget(self.tabs)
@@ -208,11 +230,11 @@ class VulnerabilityDetailWidget(QWidget):
             self.verification_steps.addTopLevelItem(detail_item)
     
 
-class Z0ScanGUI(QMainWindow):
+class Z0ScanGUI(FluentWindow):
     """z0scan 主界面"""
     def __init__(self):
         super().__init__()
-        self.setWindowIcon(QIcon(get_resource_path('doc/logo.png')))
+        self.setWindowIcon(QIcon(get_resource_path('doc/ling.png')))
         self.scan_thread = None
         self.vulnerabilities = []  # 存储发现的漏洞
         self.plugin_info_cache = {}  # 插件信息缓存
@@ -231,23 +253,39 @@ class Z0ScanGUI(QMainWindow):
         # 设置字体
         font = QFont("SimHei", 9)
         self.setFont(font)
-        # 创建主部件和布局
-        main_widget = QWidget()
-        main_layout = QVBoxLayout(main_widget)
-        self.setCentralWidget(main_widget)
-        # 创建标签页
-        self.tabs = QTabWidget()
-        main_layout.addWidget(self.tabs)
-        # 创建扫描配置标签页
-        self.create_scan_tab()
-        # 创建扫描结果标签页
-        self.create_results_tab()
-        # 创建插件管理标签页
-        self.create_plugins_tab()
-        # 创建关于标签页（移除了设置标签页）
-        self.create_about_tab()
-        # 创建状态栏
-        self.statusBar().showMessage("就绪")
+        # 应用 Ling 主题设置
+        try:
+            import json, os
+            ling_cfg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "ling_settings.json")
+            if os.path.isfile(ling_cfg_path):
+                with open(ling_cfg_path, "r", encoding="utf-8") as _f:
+                    _cfg = json.load(_f)
+                    if _cfg.get("theme", "LIGHT").upper() == "DARK":
+                        setTheme(Theme.DARK)
+                    else:
+                        setTheme(Theme.LIGHT)
+        except Exception:
+            pass
+        # 创建各页面并注册到 FluentWindow 侧栏
+        scan_page = self.create_scan_tab()
+        results_page = self.create_results_tab()
+        plugins_page = self.create_plugins_tab()
+        about_page = self.create_about_tab()
+        # 设置页
+        try:
+            from interface.settings import SettingsInterface
+            settings_page = SettingsInterface(self)
+        except Exception:
+            settings_page = QWidget()
+            settings_page.setObjectName("settingsInterface")
+
+        # 使用 FluentWindow 的侧栏导航
+        from qfluentwidgets import FluentIcon
+        self.addSubInterface(scan_page, FluentIcon.SEARCH, "扫描", NavigationItemPosition.TOP)
+        self.addSubInterface(results_page, FluentIcon.VIEW, "扫描结果", NavigationItemPosition.TOP)
+        self.addSubInterface(plugins_page, FluentIcon.APPLICATION, "插件管理", NavigationItemPosition.TOP)
+        self.addSubInterface(about_page, FluentIcon.INFO, "关于", NavigationItemPosition.BOTTOM)
+        self.addSubInterface(settings_page, FluentIcon.SETTING, "设置", NavigationItemPosition.BOTTOM)
 
     def create_scan_tab(self):
         """创建扫描配置标签页"""
@@ -260,9 +298,9 @@ class Z0ScanGUI(QMainWindow):
         self.mode_group = QButtonGroup(self)
         self.mode_group.setExclusive(True)  # 设置为互斥
 
-        self.active_scan_radio = QCheckBox("主动扫描")
+        self.active_scan_radio = CheckBox("主动扫描")
         self.active_scan_radio.setChecked(True)
-        self.passive_scan_radio = QCheckBox("被动扫描")
+        self.passive_scan_radio = CheckBox("被动扫描")
 
         # 将复选框添加到按钮组
         self.mode_group.addButton(self.active_scan_radio, 1)
@@ -281,35 +319,87 @@ class Z0ScanGUI(QMainWindow):
         config_layout = QFormLayout()
         
         # 目标输入（主动扫描）
-        self.target_input = QLineEdit()
-        self.target_input.setPlaceholderText("例如: https://example.com 或从文件导入: -f urls.txt")
+        self.target_input = LineEdit()
+        self.target_input.setPlaceholderText("例如: https://example.com 或从文件导入: urls.txt")
         config_layout.addRow("目标URL/文件:", self.target_input)
         
         # 代理设置（被动扫描）
-        self.proxy_input = QLineEdit("127.0.0.1:5920")
+        self.proxy_input = LineEdit()
+        self.proxy_input.setText("127.0.0.1:5920")
         self.proxy_input.setPlaceholderText("例如: 127.0.0.1:5920")
         self.proxy_input.setEnabled(False)  # 默认隐藏，被动模式下显示
-        config_layout.addRow("代理端口:", self.proxy_input)
+        config_layout.addRow("被动服务地址(-s):", self.proxy_input)
         
         # 扫描级别选择
-        self.level_combo = QComboBox()
+        self.level_combo = ComboBox()
         self.level_combo.addItems(["0 (静态分析)", "1 (基础)", "2 (中等)", "3 (深入)"])
         config_layout.addRow("扫描级别:", self.level_combo)
         
         # 风险等级选择
         risk_layout = QHBoxLayout()
-        self.risk_display = QLineEdit("0,1,2,3")
+        self.risk_display = LineEdit()
+        self.risk_display.setText("0,1,2,3")
         self.risk_display.setReadOnly(True)
-        self.risk_button = QPushButton("选择风险等级")
+        self.risk_button = PushButton("选择风险等级")
         self.risk_button.clicked.connect(self.open_risk_dialog)
         risk_layout.addWidget(self.risk_display)
         risk_layout.addWidget(self.risk_button)
         config_layout.addRow("风险等级:", risk_layout)
         
         # 线程数设置
-        self.threads_input = QLineEdit("10")
+        self.threads_input = LineEdit()
+        self.threads_input.setText("10")
         config_layout.addRow("线程数:", self.threads_input)
         
+        # 请求代理(-p)
+        self.request_proxy_input = LineEdit()
+        self.request_proxy_input.setPlaceholderText("http://127.0.0.1:8080 或 proxy.txt")
+        config_layout.addRow("请求代理(-p):", self.request_proxy_input)
+
+        # 超时(--timeout)
+        self.timeout_input = LineEdit()
+        self.timeout_input.setPlaceholderText("例如: 15")
+        config_layout.addRow("超时秒数(--timeout):", self.timeout_input)
+
+        # 控制台端口(-c)
+        self.console_port_input = LineEdit()
+        self.console_port_input.setPlaceholderText("留空使用默认")
+        config_layout.addRow("控制台端口(-c):", self.console_port_input)
+
+        # 插件线程(-pt)
+        self.plugin_threads_input = LineEdit()
+        self.plugin_threads_input.setPlaceholderText("例如: 5")
+        config_layout.addRow("插件线程(-pt):", self.plugin_threads_input)
+
+        # 输出选项
+        self.html_check = CheckBox("生成HTML报告(--html)")
+        self.json_path_input = LineEdit()
+        self.json_path_input.setPlaceholderText("自定义JSON输出路径 (留空使用默认)")
+        config_layout.addRow("HTML输出:", self.html_check)
+        config_layout.addRow("JSON路径(--json):", self.json_path_input)
+
+        # 连接/Redis
+        self.reverse_client_check = CheckBox("连接反连服务器(-R)")
+        self.redis_client_input = LineEdit()
+        self.redis_client_input.setPlaceholderText("password@host:port:db")
+        config_layout.addRow("Redis客户端(-Rc):", self.redis_client_input)
+
+        self.redis_server_input = LineEdit()
+        self.redis_server_input.setPlaceholderText("password@host:port:db")
+        config_layout.addRow("Redis服务端(-Rs):", self.redis_server_input)
+
+        self.redis_clean_check = CheckBox("清理Redis(--redis-clean)")
+        config_layout.addRow("Redis清理:", self.redis_clean_check)
+
+        # 扫描Cookie
+        self.scan_cookie_check = CheckBox("扫描Cookie(-sc)")
+        config_layout.addRow("Cookie:", self.scan_cookie_check)
+
+        # 仅加载插件
+        self.enable_scanners_input = LineEdit()
+        self.enable_scanners_input.setPlaceholderText("仅加载的插件名, 逗号分隔")
+        config_layout.addRow("仅加载(--enable):", self.enable_scanners_input)
+
         config_group.setLayout(config_layout)
         
         # 高级选项
@@ -320,16 +410,16 @@ class Z0ScanGUI(QMainWindow):
         
         # 左侧选项
         left_layout = QVBoxLayout()
-        self.random_agent_check = QCheckBox("使用随机User-Agent")
-        self.ignore_waf_check = QCheckBox("忽略WAF检测")
+        self.random_agent_check = CheckBox("使用随机User-Agent")
+        self.ignore_waf_check = CheckBox("忽略WAF检测")
         
         left_layout.addWidget(self.random_agent_check)
         left_layout.addWidget(self.ignore_waf_check)
         
         # 右侧选项
         right_layout = QVBoxLayout()
-        self.fingerprint_check = QCheckBox("忽略指纹要素")
-        self.ipv6_check = QCheckBox("启用IPv6支持")
+        self.fingerprint_check = CheckBox("忽略指纹要素")
+        self.ipv6_check = CheckBox("启用IPv6支持")
         
         right_layout.addWidget(self.fingerprint_check)
         right_layout.addWidget(self.ipv6_check)
@@ -340,9 +430,9 @@ class Z0ScanGUI(QMainWindow):
         
         # 按钮区域
         btn_layout = QHBoxLayout()
-        self.start_btn = QPushButton("开始扫描")
+        self.start_btn = PrimaryPushButton("开始扫描")
         self.start_btn.clicked.connect(self.start_scan)
-        self.stop_btn = QPushButton("停止扫描")
+        self.stop_btn = PushButton("停止扫描")
         self.stop_btn.clicked.connect(self.stop_scan)
         self.stop_btn.setEnabled(False)
         
@@ -353,12 +443,12 @@ class Z0ScanGUI(QMainWindow):
         output_group = QGroupBox("扫描输出")
         output_layout = QVBoxLayout()
         
-        self.scan_output = QTextEdit()
+        self.scan_output = TextEdit()
         self.scan_output.setReadOnly(True)
         self.scan_output.setStyleSheet("background-color: #1E1E1E; color: #FFFFFF;")
         
         # 进度条
-        self.progress_bar = QProgressBar()
+        self.progress_bar = ProgressBar()
         self.progress_bar.setRange(0, 0)  # 不确定进度
         self.progress_bar.setVisible(False)
         
@@ -373,7 +463,20 @@ class Z0ScanGUI(QMainWindow):
         layout.addLayout(btn_layout)
         layout.addWidget(output_group)
         
-        self.tabs.addTab(scan_tab, "扫描")
+        # 使用可滚动容器包裹页面，允许上下滚动
+        try:
+            from qfluentwidgets import SmoothScrollArea as _ScrollArea
+        except Exception:
+            try:
+                from qfluentwidgets import ScrollArea as _ScrollArea
+            except Exception:
+                from PyQt5.QtWidgets import QScrollArea as _ScrollArea
+
+        scroll_area = _ScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(scan_tab)
+        scroll_area.setObjectName("scanInterface")
+        return scroll_area
 
     def open_risk_dialog(self):
         """打开风险等级选择对话框"""
@@ -395,13 +498,13 @@ class Z0ScanGUI(QMainWindow):
         # 结果过滤
         filter_layout = QHBoxLayout()
         filter_layout.addWidget(QLabel("风险等级过滤:"))
-        self.risk_filter = QComboBox()
+        self.risk_filter = ComboBox()
         self.risk_filter.addItems(["全部", "0 (信息)", "1 (低)", "2 (中)", "3 (高)"])
         self.risk_filter.currentIndexChanged.connect(self.filter_vulnerabilities)
         filter_layout.addWidget(self.risk_filter)
         
         filter_layout.addWidget(QLabel("漏洞类型过滤:"))
-        self.type_filter = QComboBox()
+        self.type_filter = ComboBox()
         self.type_filter.addItems(["全部", "SQLi", "SSTi", "CSRF", "SSRF", "XSS", "命令注入", "路径遍历", "敏感信息泄露", "其他"])
         self.type_filter.currentIndexChanged.connect(self.filter_vulnerabilities)
         filter_layout.addWidget(self.type_filter)
@@ -412,7 +515,7 @@ class Z0ScanGUI(QMainWindow):
         splitter = QSplitter(Qt.Vertical)
         
         # 结果列表
-        self.results_list = QTreeWidget()
+        self.results_list = TreeWidget()
         self.results_list.setHeaderLabels(["漏洞名称", "URL", "风险等级", "发现时间"])
         self.results_list.header().setSectionResizeMode(QHeaderView.Stretch)
         self.results_list.itemClicked.connect(self.show_vulnerability_detail)
@@ -426,11 +529,11 @@ class Z0ScanGUI(QMainWindow):
         
         # 结果操作按钮
         btn_layout = QHBoxLayout()
-        self.save_result_btn = QPushButton("保存结果")
+        self.save_result_btn = PushButton("保存结果")
         self.save_result_btn.clicked.connect(self.save_results)
-        self.export_html_btn = QPushButton("导出HTML报告")
+        self.export_html_btn = PushButton("导出HTML报告")
         self.export_html_btn.clicked.connect(self.export_html)
-        self.clear_results_btn = QPushButton("清空结果")
+        self.clear_results_btn = PushButton("清空结果")
         self.clear_results_btn.clicked.connect(self.clear_results)
         
         btn_layout.addWidget(self.save_result_btn)
@@ -441,7 +544,8 @@ class Z0ScanGUI(QMainWindow):
         layout.addLayout(btn_layout)
         layout.addWidget(splitter)
         
-        self.tabs.addTab(results_tab, "扫描结果")
+        results_tab.setObjectName("resultsInterface")
+        return results_tab
 
     def create_plugins_tab(self):
         """创建插件管理标签页（按分类展示）"""
@@ -451,13 +555,13 @@ class Z0ScanGUI(QMainWindow):
         # 插件过滤
         filter_layout = QHBoxLayout()
         filter_layout.addWidget(QLabel("风险等级过滤:"))
-        self.plugin_risk_filter = QComboBox()
+        self.plugin_risk_filter = ComboBox()
         self.plugin_risk_filter.addItems(["全部", "0 (信息)", "1 (低)", "2 (中)", "3 (高)"])
         self.plugin_risk_filter.currentIndexChanged.connect(self.filter_plugins)
         filter_layout.addWidget(self.plugin_risk_filter)
         
         filter_layout.addWidget(QLabel("搜索:"))
-        self.plugin_search = QLineEdit()
+        self.plugin_search = LineEdit()
         self.plugin_search.setPlaceholderText("输入插件名称或描述关键词")
         self.plugin_search.textChanged.connect(self.filter_plugins)
         filter_layout.addWidget(self.plugin_search)
@@ -469,25 +573,25 @@ class Z0ScanGUI(QMainWindow):
         self.plugins_tabs = QTabWidget()
         
         # perpage 插件
-        self.perpage_plugins = QListWidget()
+        self.perpage_plugins = ListWidget()
         self.perpage_plugins.setAlternatingRowColors(True)
         self.perpage_plugins.setSelectionMode(QListWidget.ExtendedSelection)
-        self.plugins_tabs.addTab(self.perpage_plugins, "perpage")
+        self.plugins_tabs.addTab(self.perpage_plugins, "PerPage")
         
         # perdir 插件
-        self.perdir_plugins = QListWidget()
+        self.perdir_plugins = ListWidget()
         self.perdir_plugins.setAlternatingRowColors(True)
         self.perdir_plugins.setSelectionMode(QListWidget.ExtendedSelection)
-        self.plugins_tabs.addTab(self.perdir_plugins, "perdir")
+        self.plugins_tabs.addTab(self.perdir_plugins, "PerDir")
         
         # PerDomain 插件
-        self.perdomain_plugins = QListWidget()
+        self.perdomain_plugins = ListWidget()
         self.perdomain_plugins.setAlternatingRowColors(True)
         self.perdomain_plugins.setSelectionMode(QListWidget.ExtendedSelection)
         self.plugins_tabs.addTab(self.perdomain_plugins, "PerDomain")
         
         # PerHost 插件 - 新增的PerHost类型支持
-        self.perhost_plugins = QListWidget()
+        self.perhost_plugins = ListWidget()
         self.perhost_plugins.setAlternatingRowColors(True)
         self.perhost_plugins.setSelectionMode(QListWidget.ExtendedSelection)
         self.plugins_tabs.addTab(self.perhost_plugins, "PerHost")
@@ -497,11 +601,11 @@ class Z0ScanGUI(QMainWindow):
         
         # 插件操作按钮
         btn_layout = QHBoxLayout()
-        self.enable_all_btn = QPushButton("全部启用")
+        self.enable_all_btn = PushButton("全部启用")
         self.enable_all_btn.clicked.connect(lambda: self.set_all_plugins(True))
-        self.disable_all_btn = QPushButton("全部禁用")
+        self.disable_all_btn = PushButton("全部禁用")
         self.disable_all_btn.clicked.connect(lambda: self.set_all_plugins(False))
-        self.refresh_plugins_btn = QPushButton("刷新插件列表")
+        self.refresh_plugins_btn = PushButton("刷新插件列表")
         self.refresh_plugins_btn.clicked.connect(self.refresh_plugins)
         
         btn_layout.addWidget(self.enable_all_btn)
@@ -512,7 +616,7 @@ class Z0ScanGUI(QMainWindow):
         layout.addWidget(self.plugins_tabs)
         
         # 插件详情
-        self.plugin_detail = QTextEdit()
+        self.plugin_detail = TextEdit()
         self.plugin_detail.setReadOnly(True)
         self.plugin_detail.setMaximumHeight(100)
         layout.addWidget(QLabel("插件详情:"))
@@ -524,19 +628,21 @@ class Z0ScanGUI(QMainWindow):
         self.perdomain_plugins.itemClicked.connect(self.show_plugin_detail)
         self.perhost_plugins.itemClicked.connect(self.show_plugin_detail)  # 绑定PerHost插件点击事件
         
-        self.tabs.addTab(plugins_tab, "插件管理")
+        plugins_tab.setObjectName("pluginsInterface")
+        return plugins_tab
 
     def create_about_tab(self):
         """创建关于标签页"""
         about_tab = QWidget()
         layout = QVBoxLayout(about_tab)
         # 使用AboutDialog的内容创建标签页
-        about_text = QTextEdit()
+        about_text = TextEdit()
         about_text.setReadOnly(True)
         about_text.setStyleSheet("background-color: transparent; border: none;")
         about_text.setHtml(INFO)
         layout.addWidget(about_text)
-        self.tabs.addTab(about_tab, "关于")
+        about_tab.setObjectName("aboutInterface")
+        return about_tab
 
     # 辅助方法
     def toggle_scan_mode(self):
@@ -562,8 +668,8 @@ class Z0ScanGUI(QMainWindow):
         
         # 插件类型与目录的映射 - 添加PerHost支持
         plugin_types = {
-            "perpage": self.perpage_plugins,
-            "perdir": self.perdir_plugins,
+            "PerPage": self.perpage_plugins,
+            "PerDir": self.perdir_plugins,
             "PerDomain": self.perdomain_plugins,
             "PerHost": self.perhost_plugins  # 添加PerHost映射
         }
@@ -693,27 +799,43 @@ class Z0ScanGUI(QMainWindow):
     def refresh_plugins(self):
         """刷新插件列表"""
         self.load_plugins()
-        self.statusBar().showMessage("插件列表已刷新")
+        InfoBar.success(title="提示", content="插件列表已刷新", position=InfoBarPosition.TOP, parent=self, duration=2000)
 
     def start_scan(self):
         """开始扫描"""
         current_dir = os.getcwd()
+        # 读取 Ling 设置的可执行路径
+        exe_override = ""
+        try:
+            import json as _json
+            ling_cfg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "ling_settings.json")
+            if os.path.isfile(ling_cfg_path):
+                with open(ling_cfg_path, "r", encoding="utf-8") as _f:
+                    _cfg = _json.load(_f)
+                    exe_override = _cfg.get("exe_path", "").strip()
+        except Exception:
+            pass
+
         # 根据平台确定可能的可执行文件
         if sys.platform.startswith('win'):
-            exe_candidates = [os.path.join(current_dir, "z0.exe")]
+            default_name = "z0.exe"
         else:
-            exe_candidates = [
-                os.path.join(current_dir, "z0"),
-                os.path.join(current_dir, "z0.bin")
-            ]
-        if (getattr(sys, 'frozen', False) and 
-            any(os.path.isfile(candidate) for candidate in exe_candidates)):
-            # 找到第一个存在的可执行文件
-            executable_path = next(c for c in exe_candidates if os.path.isfile(c))
-            command = f"{executable_path} scan"
+            default_name = "z0"
+
+        candidates = []
+        if exe_override:
+            candidates.append(exe_override)
+        candidates.append(os.path.join(current_dir, default_name))
+        candidates.append(os.path.join(current_dir, "z0.py"))
+
+        # 选择命令
+        if candidates and os.path.isfile(candidates[0]) and not candidates[0].endswith(".py"):
+            command = f"{candidates[0]} scan"
+        elif os.path.isfile(os.path.join(current_dir, default_name)):
+            command = f"{os.path.join(current_dir, default_name)} scan"
         else:
             python_cmd = "python" if sys.platform.startswith('win') else "python3"
-            command = f"{python_cmd} z0.py scan"
+            command = f"{python_cmd} {os.path.join(current_dir, 'z0.py')} scan"
         
         # 主动/被动模式
         if self.active_scan_radio.isChecked():
@@ -759,6 +881,54 @@ class Z0ScanGUI(QMainWindow):
         
         if self.fingerprint_check.isChecked():
             command += " --ignore-fingerprint"
+
+        # 请求代理(-p)
+        p = self.request_proxy_input.text().strip()
+        if p:
+            command += f" -p {p}"
+
+        # 超时(--timeout)
+        timeout = self.timeout_input.text().strip()
+        if timeout.isdigit():
+            command += f" --timeout {timeout}"
+
+        # 控制台端口(-c)
+        cport = self.console_port_input.text().strip()
+        if cport:
+            command += f" -c {cport}"
+
+        # 插件线程(-pt)
+        pt = self.plugin_threads_input.text().strip()
+        if pt.isdigit():
+            command += f" -pt {pt}"
+
+        # 输出(--html/--json)
+        if self.html_check.isChecked():
+            command += " --html"
+        json_path = self.json_path_input.text().strip()
+        if json_path:
+            command += f" --json {json_path}"
+
+        # 扫描Cookie(-sc)
+        if self.scan_cookie_check.isChecked():
+            command += " -sc"
+
+        # 连接/Redis
+        if self.reverse_client_check.isChecked():
+            command += " -R"
+        rc = self.redis_client_input.text().strip()
+        if rc:
+            command += f" -Rc {rc}"
+        rs = self.redis_server_input.text().strip()
+        if rs:
+            command += f" -Rs {rs}"
+        if self.redis_clean_check.isChecked():
+            command += " --redis-clean"
+
+        # 仅加载插件(--enable)
+        enable_list = self.enable_scanners_input.text().strip()
+        if enable_list:
+            command += f" --enable {enable_list}"
         
         # 添加禁用的插件
         disabled_plugins = self.get_disabled_plugins()
@@ -779,7 +949,7 @@ class Z0ScanGUI(QMainWindow):
         self.start_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.progress_bar.setVisible(True)
-        self.statusBar().showMessage("扫描中...")
+        InfoBar.info(title="提示", content="扫描中...", position=InfoBarPosition.TOP, parent=self, duration=2000)
 
     def stop_scan(self):
         """停止扫描"""
@@ -794,10 +964,10 @@ class Z0ScanGUI(QMainWindow):
         self.stop_btn.setEnabled(False)
         self.progress_bar.setVisible(False)
         if json_report_path:
-            self.statusBar().showMessage(f"扫描结束，正在处理报告: {json_report_path}")
+            InfoBar.info(title="提示", content=f"扫描结束，正在处理报告: {json_report_path}", position=InfoBarPosition.TOP, parent=self, duration=3000)
             self.process_json_report(json_report_path)
         else:
-            self.statusBar().showMessage("扫描结束，未找到JSON报告")
+            InfoBar.warning(title="提示", content="扫描结束，未找到JSON报告", position=InfoBarPosition.TOP, parent=self, duration=3000)
         self.scan_output.append(f"\n[{QDateTime.currentDateTime().toString()}] 扫描完成")
 
     def process_json_report(self, report_path):
@@ -821,10 +991,10 @@ class Z0ScanGUI(QMainWindow):
             for vuln in vuln_list:
                 self.add_vulnerability(vuln)
             self.scan_output.append(f"成功加载 {len(vuln_list)} 个漏洞信息")
-            self.statusBar().showMessage(f"扫描完成，发现 {len(vuln_list)} 个漏洞")
+            InfoBar.success(title="成功", content=f"扫描完成，发现 {len(vuln_list)} 个漏洞", position=InfoBarPosition.TOP, parent=self, duration=3000)
         except Exception as e:
             self.scan_output.append(f"处理报告时出错: {str(e)}")
-            self.statusBar().showMessage("处理报告时出错")
+            InfoBar.error(title="错误", content="处理报告时出错", position=InfoBarPosition.TOP, parent=self, duration=3000)
 
     def update_output(self, text):
         """更新输出内容"""
@@ -913,7 +1083,7 @@ class Z0ScanGUI(QMainWindow):
     def save_results(self):
         """保存结果"""
         if not self.vulnerabilities:
-            QMessageBox.information(self, "提示", "没有结果可保存")
+            InfoBar.warning(title="提示", content="没有结果可保存", position=InfoBarPosition.TOP, parent=self, duration=3000)
             return
             
         filename, _ = QFileDialog.getSaveFileName(
@@ -924,14 +1094,14 @@ class Z0ScanGUI(QMainWindow):
                 import json
                 with open(filename, 'w', encoding='utf-8') as f:
                     json.dump(self.vulnerabilities, f, ensure_ascii=False, indent=2)
-                QMessageBox.information(self, "成功", f"结果已保存到 {filename}")
+                InfoBar.success(title="成功", content=f"结果已保存到 {filename}", position=InfoBarPosition.TOP, parent=self, duration=3000)
             except Exception as e:
-                QMessageBox.critical(self, "错误", f"保存失败: {str(e)}")
+                InfoBar.error(title="错误", content=f"保存失败: {str(e)}", position=InfoBarPosition.TOP, parent=self, duration=4000)
 
     def export_html(self):
         """导出HTML报告"""
         if not self.vulnerabilities:
-            QMessageBox.information(self, "提示", "没有结果可导出")
+            InfoBar.warning(title="提示", content="没有结果可导出", position=InfoBarPosition.TOP, parent=self, duration=3000)
             return
             
         filename, _ = QFileDialog.getSaveFileName(
@@ -956,9 +1126,9 @@ class Z0ScanGUI(QMainWindow):
                 
                 with open(filename, 'w', encoding='utf-8') as f:
                     f.write(html)
-                QMessageBox.information(self, "成功", f"HTML报告已导出到 {filename}")
+                InfoBar.success(title="成功", content=f"HTML报告已导出到 {filename}", position=InfoBarPosition.TOP, parent=self, duration=3000)
             except Exception as e:
-                QMessageBox.critical(self, "错误", f"导出失败: {str(e)}")
+                InfoBar.error(title="错误", content=f"导出失败: {str(e)}", position=InfoBarPosition.TOP, parent=self, duration=4000)
 
     def clear_results(self):
         """清空结果"""
@@ -967,17 +1137,121 @@ class Z0ScanGUI(QMainWindow):
             self.vulnerabilities = []
             self.vuln_detail.update_detail({})
 
+    def closeEvent(self, e):
+        """拦截窗口关闭：如有扫描进行，先询问，确认后停止扫描再退出"""
+        running = False
+        try:
+            running = self.scan_thread is not None and self.scan_thread.isRunning()
+        except Exception:
+            running = False
+
+        if running:
+            try:
+                # 优先使用 QFluentWidgets 的 MessageBox
+                from qfluentwidgets import MessageBox
+                box = MessageBox("正在扫描", "当前有扫描正在进行，确定要停止并退出吗？", self)
+                try:
+                    box.yesButton.setText("退出并停止")
+                    box.cancelButton.setText("取消")
+                except Exception:
+                    pass
+                if box.exec():
+                    try:
+                        self.stop_scan()
+                    except Exception:
+                        pass
+                    e.accept()
+                else:
+                    e.ignore()
+                    try:
+                        InfoBar.info(title="已取消", content="已取消退出操作", position=InfoBarPosition.TOP, parent=self, duration=2000)
+                    except Exception:
+                        pass
+            except Exception:
+                # 回退到原生对话框
+                reply = QMessageBox.question(self, "正在扫描", "当前有扫描正在进行，确定要停止并退出吗？", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                if reply == QMessageBox.Yes:
+                    try:
+                        self.stop_scan()
+                    except Exception:
+                        pass
+                    e.accept()
+                else:
+                    e.ignore()
+        else:
+            e.accept()
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+
+    # 创建并展示启动页（SplashScreen），包含不确定进度条（稳定版：先 Splash，后主窗体，延时关闭，不阻塞UI）
     try:
-        with open("ling.qss", "r", encoding="utf-8") as f:
-            app.setStyleSheet(f.read())
-    except FileNotFoundError:
-        print("警告: 样式文件 'ling_win11.qss' 未找到，将使用默认样式。")
-        sleep(3)
-    except Exception as e:
-        print(f"警告: 加载样式文件时出错: {e}")
-        sleep(3)
-    window = Z0ScanGUI()
-    window.show()
+        icon = QIcon(get_resource_path('doc/ling.png')) if os.path.exists(get_resource_path('doc/ling.png')) else QIcon()
+        splash = SplashScreen(icon)
+        try:
+            # 去除系统标题栏，避免与组件样式重复的最小化/关闭按钮
+            splash.setWindowFlag(Qt.FramelessWindowHint, True)
+            splash.setAttribute(Qt.WA_TranslucentBackground, True)
+        except Exception:
+            pass
+        try:
+            splash.setTitle("正在启动 Ling · Z0Scan")
+        except Exception:
+            pass
+        # 添加不确定进度条
+        from PyQt5.QtWidgets import QVBoxLayout
+        bar = IndeterminateProgressBar(splash)
+        bar.setFixedHeight(12)
+        lay = QVBoxLayout(splash)
+        lay.setContentsMargins(24, 24, 24, 24)
+        lay.addStretch(1)
+        lay.addWidget(bar)
+        splash.resize(520, 320)
+        splash.show()
+
+        # 创建主窗体（在 Splash 显示后创建）
+        window = Z0ScanGUI()
+        # 将 Splash 的大小与位置同步为与主窗口一致
+        try:
+            splash.setGeometry(window.geometry())
+            splash.raise_()
+        except Exception:
+            pass
+
+        # 3 秒后关闭 Splash 并显示主窗体（避免 sleep 阻塞）
+        def _finish():
+            try:
+                splash.close()
+            except Exception:
+                pass
+            window.show()
+
+        QTimer.singleShot(3000, _finish)
+    except Exception:
+        # 回退：若 SplashScreen 创建失败，直接进入主窗体
+        window = Z0ScanGUI()
+        window.show()
+
+    # 显示欢迎 InfoBar，2 秒后自动消失（Toast 替代）
+    try:
+        import random
+        phrases = [
+            "解铃还须系铃人",
+            "道路千万条，安全第一条",
+            "安全即责任，细节见真章",
+            "愿有人问粥可温，愿有人与共黄昏",
+            "人生苦短，我用 Ling",
+            "发愤识遍天下洞，立志夺尽人间旗",
+        ]
+        msg = random.choice(phrases)
+        InfoBar.success(
+            title="欢迎",
+            content=msg,
+            position=InfoBarPosition.TOP,
+            parent=window,
+            duration=3000
+        )
+    except Exception:
+        pass
+
     sys.exit(app.exec_())

@@ -23,8 +23,8 @@ class Z0SCAN(PluginBase):
         for pattern in patterns:
             found.extend(pattern.findall(self.response.text))
         # 从POST参数中获取
-        if self.requests.post_data:
-            found.extend(v for k, v in self.requests.post_data.items() if k.lower() == "__viewstate")
+        if self.requests.data:
+            found.extend(v for k, v in self.requests.data.items() if k.lower() == "__viewstate")
         return list(set(found))
     
     def audit(self):

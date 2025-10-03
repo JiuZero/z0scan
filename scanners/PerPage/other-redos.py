@@ -8,7 +8,7 @@ class Z0SCAN(PluginBase):
     name = "other-redos"
     desc = "Regular Expression Denial of Service (ReDoS) Vulnerability Scanner"
     version = "2025.9.2"
-    risk = 0
+    risk = -1
 
     def audit(self):
         if (conf.level != 0) and (self.risk in conf.risk or 3 in conf.risk):

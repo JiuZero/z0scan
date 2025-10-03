@@ -162,7 +162,7 @@ class Z0SCAN(PluginBase):
             if count > self.retry:
                 return
             if self.requests.method == HTTPMETHOD.POST:
-                r = requests.post(self.requests.url, data=self.requests.data, headers=self.requests.headers)
+                r = requests.post(self.requests.url, data=self.requests.body, headers=self.requests.headers)
             else:
                 r = requests.get(self.requests.url, headers=self.requests.headers)
             html = removeDynamicContent(r.text, self.dynamic)

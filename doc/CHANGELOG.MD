@@ -404,8 +404,7 @@
 * Fix SSL import error and socket_port configuration issue
 
 **2025.9.6**
-1. 版本更新提醒&获取(目前仅支持提醒)
-2. 新增插件
+1. 新增插件
 * PerPage/other-redos 正则dos漏洞检测
 * PerPage/other-jndi-error 基于报错的jndi注入漏洞检测
 * PerPage/codei-java Java代码注入漏洞
@@ -422,18 +421,16 @@
 ### 0.2.0.0 发布
 
 **2025.6.8**
-1. 先将更新检测功能注释下（有时间再修）
-2. 感谢**dsal15326770**反馈
+1. 感谢**dsal15326770**反馈
 * baseproxy 代理变量缺失问题
 * other-dns-zonetransfer 逻辑判断问题
-3. 修复多处变量未定义问题
+2. 修复多处变量未定义问题
 
 ### 0.2.0.3 发布
 
 **2025.9.12**
-1. 修复版本更新提醒
-2. 针对服务器主机端口漏洞: PerHost
-3. 新增插件
+1. 针对服务器主机端口漏洞: PerHost
+2. 新增插件
 * PerHost/unauth-docker
 * PerHost/unauth-redis
 * PerHost/unauth-junkins
@@ -480,3 +477,18 @@
 3. 修复pymysql模块丢失
 
 ### 0.2.2.5 发布
+
+**2025.9.27**
+1. 移除autoproxy - 维护要求高
+2. 重新设定部分self.requests与self.response中的数据名 - 增加代码可读性
+3. 支持版本更新检测(不考虑实现版本更新获取功能)
+
+### 10.1 - 祝愿祖国繁荣昌盛
+
+**2025.10.1**
+1. ling 界面改用qfluentwidgets组件
+2. ling 做出大量功能性更新（包括界面、功能、性能）
+3. 修复大量插件Bug
+4. console改用Web界面
+
+### 0.3.1.1 发布

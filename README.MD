@@ -116,6 +116,12 @@
 <table>
   <tr>
     <td width="25%" valign="top">
+      <h3>公众号</h3>
+      <ul>
+        <li><b>90Safe</b> - 安全资讯</li>
+      </ul>
+    </td>
+    <td width="25%" valign="top">
       <h3>微信</h3>
       <ul>
         <li><b>JiuZer1</b> - 不怎么看…</li>
@@ -130,13 +136,7 @@
     <td width="25%" valign="top">
       <h3>QQ交流群</h3>
       <ul>
-        <li><b>1058256508</b> - 问题咨询&反馈</li>
-      </ul>
-    </td>
-    <td width="25%" valign="top">
-      <h3>邮箱</h3>
-      <ul>
-        <li><b>1703417187@qq.com</b> - 表白开发者</li>
+        <li><b>1058256508</b> - 问题咨询</li>
       </ul>
     </td>
   </tr>
@@ -211,7 +211,7 @@ python3 ling.py
 
 ### **ling - 可视化**
 
-![示例](doc/example3.png)  
+![示例](doc/example3.png)
 
 ### **z0 - 命令行**
 
@@ -228,6 +228,10 @@ z0 scan -s 127.0.0.1:5920
 ```  
 z0 scan -s 127.0.0.1:5920 --risk 0,1,2,3 --level 2 --disable cmdi,unauth  
 ```  
+
+被动扫描**控制台界面**
+
+![示例](doc/example4.png)
 
 ### ✔ 主动扫描  
 
@@ -290,7 +294,7 @@ z0 scan -f urls.txt
 |xxe|XXE plugin detects XML external entity injection vulnerabilities via malicious payloads.|3|
 |xxe-blind|Blind XXE plugin detects out-of-band data exfiltration.|3|
 |codei-java|Java Code Injection Vulnerability Scanner (EL/SpEL/OGNL)|3|
-|other-redos|Regular Expression Denial of Service (ReDoS) Vulnerability Scanner|0|
+|other-redos|Regular Expression Denial of Service (ReDoS) Vulnerability Scanner|-1|
 |other-jndi-error|JNDI Injection Vulnerability Scanner|3|
 
 - **PerDir**  
@@ -327,7 +331,7 @@ z0 scan -f urls.txt
 | trave-list_3         | Directory Listing                    | 2    | 
 
 - **PerHost**  
-- 
+
 | Plugin Name             | Description                           |
 |-------------------------|--------------------------------------|
 | leakpwd-mssql          | Weak Password on MSSQL Server        |
@@ -345,6 +349,12 @@ z0 scan -f urls.txt
 | unauth-rsync           | Rsync Unauthorized Access            |
 | unauth-solr            | Apache Solr Unauthorized Access      |
 | unauth-zookeeper       | Zookeeper Unauthorized access        |
+
+---
+
+## 🔀 被动扫描工作流
+
+![流程图](doc/lct.png)
 
 ---
 

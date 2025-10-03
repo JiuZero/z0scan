@@ -17,7 +17,7 @@ class FakeResp(object):
         return self._status_code
 
     @property
-    def content(self):
+    def body(self):
         return self._body
 
     @property

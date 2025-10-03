@@ -15,7 +15,7 @@ class Z0SCAN(PluginBase):
     def audit(self):
         # 尝试主动未授权
         if not conf.level == 0 and self.risk in conf.risk:
-            r = requests.request("PROPFIND", self.requests.netloc, headers={"Host": "localhost", "Content-Length": "0"})
+            r = requests.request("PROPFIND", self.requests.protocol + "://" + self.requests.hostname + str(self.requests.port) + "/", headers={"Host": "localhost", "Content-Length": "0"})
             if re.search("<a:href>http://localhost/</a:href>", r.text, re.I):
                 result = self.generate_result()
                 result.main({

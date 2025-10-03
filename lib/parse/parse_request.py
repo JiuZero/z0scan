@@ -82,12 +82,14 @@ class FakeReq(object):
             self._uri = p.path + "?" + p.query
             self._params = paramToDict(p.query, place=PLACE.PARAM)
 
-        self._netloc = "{}://{}{}".format(p.scheme, p.netloc, p.path)
+        self._netloc = "{}://{}".format(p.scheme, p.netloc)
+        self._path = p.path
         if "cookie" in self._headers or "Cookie" in self._headers:
             _cookies = self._headers.get("cookie", self._headers.get("Cookie", {}))
             if _cookies:
                 self._cookies = paramToDict(_cookies, place=PLACE.COOKIE)
 
+    # 原始请求体
     @property
     def raw(self):
         # Build request
@@ -99,65 +101,80 @@ class FakeReq(object):
         req_data += self._body
         return req_data
 
+    # 请求方法
     @property
     def method(self) -> str:
         return self._method
 
+    # 后缀名
     @property
     def suffix(self) -> str:
         exi = os.path.splitext(self._urlparse.path)[1]
         return exi
 
+    # 头部参数
     @property
     def headers(self) -> dict:
         return self._headers
 
+    # 域名/主机地址
     @property
     def hostname(self) -> str:
         return self._hostname
 
+    # 端口
     @property
     def port(self) -> int:
         return self._port
 
+    # cookies参数
     @property
     def cookies(self) -> dict:
         return self._cookies
 
+    # GET请求参数(不含伪静态)
     @property
     def params(self) -> dict:
         return self._params
-        
-    @property
-    def scheme(self) -> str:
-        return self._scheme
-
     @params.setter
     def params(self, value):
         self._params = value
+    
+    # 请求协议
+    @property
+    def protocol(self) -> str:
+        return self._scheme
 
+    # POST请求类型
     @property
     def post_hint(self) -> str:
         return self._post_hint
 
+    # data请求参数
     @property
-    def post_data(self) -> dict:
+    def data(self) -> dict:
         return self._post_data
-
-    @post_data.setter
-    def datas(self, postdata):
+    @data.setter
+    def data(self, postdata):
         self._post_data = postdata
 
+    # 路径
+    @property
+    def path(self) -> str:
+        return self._path
+
+    # 完整URL
+    @property
+    def url(self) -> str:
+        return self._url
+
+    # 请求Body
+    @property
+    def body(self) -> str:
+        return self._body
+    
     @property
     def netloc(self) -> str:
         p = self._urlparse
         netloc = "{}://{}{}".format(p.scheme, p.netloc, p.path)
         return netloc
-
-    @property
-    def url(self) -> str:
-        return self._url
-
-    @property
-    def data(self) -> str:
-        return self._body

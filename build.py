@@ -78,6 +78,7 @@ def get_actual_module_name(pkg_name):
         'requests-toolbelt': 'requests_toolbelt', 
         'psycopg2-binary': 'psycopg2', 
         'pysmb': 'smb', 
+        'PyQt-Fluent-Widgets[full]': 'qfluentwidgets', 
     }
     if pkg_name in common_variants:
         return common_variants[pkg_name]
@@ -200,10 +201,9 @@ def build_ling():
     base_args = [
         '-F',
         '-w', 
-        '--icon=doc/logo.png',
+        '--icon=doc/ling.png',
         '--distpath=z0scan',
-        '--add-data=doc/logo.png:doc',
-        '--add-data=ling.qss:.',
+        '--add-data=doc/ling.png:doc',
     ]
     pyinstaller_cmd.extend(base_args)
 

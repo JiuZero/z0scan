@@ -18,11 +18,9 @@ from lib.core.db import initdb, execute_sqlite_command
 from lib.core.output import OutPut
 from lib.core.settings import banner, DEFAULT_USER_AGENT, VERSION
 from lib.core.spiderset import SpiderSet
-from thirdpart.console import getTerminalSize
 from lib.patch.requests_patch import patch_all
 from lib.patch.ipv6_patch import ipv6_patch
 from prettytable import PrettyTable
-from lib.core.console import Client, BackgroundServer
 from lib.core.aichat import chat
 from pathlib import Path
 from lib.core.updater import AutoUpdater
@@ -285,30 +283,16 @@ def _init_stdout():
         logger.info(f'Ignore Fingerprints Status: {colors.y}True{colors.e}')
     # 不扫描网址
     if len(conf["excludes"]):
-        logger.info("Skip Scan: {}".format(repr(conf["excludes"])))
+        logger.info(f"Skip Scan: {colors.y}{repr(conf['excludes'])}{colors.e}")
     if conf.get("load") and conf.get("load") != []:
-        logger.info("Load Plugins: {}".format(repr(conf.get("load") and conf.get("load") != [])))
+        logger.info(f"Load Plugins: {colors.y}{repr(conf.get('load') and conf.get('load') != [])}{colors.e}")
     if conf.html:
-        logger.info("HTML Report Path: {}".format(KB.output.get_html_filename()))
-    logger.info("JSON Report Path: {}".format(KB.output.get_filename()))
+        logger.info(f"HTML Report Path: {colors.y}{KB.output.get_html_filename()}{colors.e}")
+    logger.info(f"JSON Report Path: {colors.y}{KB.output.get_filename()}{colors.e}")
 
 def _commands(v):
     if conf.command == "scan":
         return
-    if v == "console":
-        if conf.command == "console":
-            try:
-                client = Client(port=conf.console_port)
-                while True:
-                    msg = input(f"[{colors.m}CMD{colors.e}] Send to server >> ")
-                    if msg.lower() == 'exit':
-                        break
-                    response = client.send_message(msg)
-                    if response:
-                        logger.info(f"{colors.br}{response}{colors.e}\n", showtime=False)
-            except:
-                client.close()
-        else: return
     if v == "dbcmd":
         if conf.command == "dbcmd":
             try:
@@ -332,14 +316,6 @@ def _commands(v):
     if v == "version":
         if conf.command == "version":
             sys.exit(0)
-        return
-    if v == "update":
-        if conf.command == "update":
-            updater = AutoUpdater("JiuZero/z0scan", VERSION)
-            updater.update()
-            sys.exit(0)
-        else:
-            check_update()
         return
     sys.exit(0)
 
@@ -398,7 +374,6 @@ def init(root, cmdline):
     _commands("version")
     _cleanup_update_backups()
     _commands("update")
-    _commands("console")
     initdb(root) # 初始化数据库
     _commands("dbcmd")
     _commands("reverse")

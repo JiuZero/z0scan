@@ -23,7 +23,7 @@ class Z0SCAN(PluginBase):
         
         try:
             # 使用requests库发送请求
-            if self.requests.scheme == "https":
+            if self.requests.protocol == "https":
                 verify = False  # 禁用SSL验证（模拟原始代码行为）
             else:
                 verify = True
@@ -32,7 +32,7 @@ class Z0SCAN(PluginBase):
                 method=self.requests.method,
                 url=self.requests.url,
                 headers=modified_headers,
-                data=self.requests.data,
+                data=self.requests.body,
                 verify=verify,
                 allow_redirects=False  # 禁止自动重定向以检测注入
             )
