@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# Web 工作模式（http.server）：内置 HTTP 服务与前端控制台
-# 要求：访问必须携带 ?{随机6位}={随机6位} 查询参数
-# 本版新增：SSE 实时日志流 /api/log/stream
 
 import os
 import sys
@@ -140,88 +137,96 @@ Examples:
 
 
 def disable_plugins(disable_list: list):
-    if not disable_list:
-        return
-    for _dir in ["PerPage", "PerDir", "PerDomain", "PerHost"]:
+    # 汇总所有禁用到的插件名，跨目录累计
+    disabled_names = []
+
+    for _dir in ["PerPage", "PerDir", "PerDomain"]:
         for root, dirs, files in os.walk(os.path.join(path.scanners, _dir)):
             files = filter(lambda x: not x.startswith("__") and x.endswith(".py"), files)
-            dis_list = ""
             for _ in files:
                 filename = os.path.join(root, _)
                 mod = load_file_to_module(filename)
                 try:
                     mod = mod.Z0SCAN()
                     mod.checkImplemennted()
+                    # 仅当目标在禁用列表中时才处理
                     if mod.name not in disable_list:
                         continue
-                    if not isinstance(KB, dict) or "registered" not in KB or mod.name not in KB.get("registered", {}):
-                        # 以插件文件名索引
-                        plugin = os.path.splitext(_)[0]
-                        if plugin in KB.get("registered", {}):
-                            del KB["registered"][plugin]
-                            dis_list += f" {mod.name}"
-                        else:
-                            logger.warning(f"Plugin {mod.name} hadn't been loaded. Skip.")
+
+                    plugin_key = os.path.splitext(_)[0]  # 字典键是文件名（不含扩展）
+                    if plugin_key not in KB["registered"]:
+                        logger.warning(f"Plugin {mod.name} hadn't been loaded. Skip.")
                         continue
-                    plugin = os.path.splitext(_)[0]
-                    dis_list += f" {mod.name}"
-                    if plugin in KB["registered"]:
-                        del KB["registered"][plugin]
+
+                    # 执行禁用
+                    del KB["registered"][plugin_key]
+                    disabled_names.append(mod.name)
+
                 except PluginCheckError as e:
                     logger.error('Not "{}" attribute in the plugin: {}'.format(e, filename))
                 except AttributeError as e:
                     logger.error('Filename: {} not class "{}", Reason: {}'.format(filename, 'Z0SCAN', e))
                     raise
-            if dis_list:
-                logger.info(f'Disable plugins:{dis_list}.')
+
+    # 统一输出汇总日志
+    if disabled_names:
+        logger.info(f'Disable plugins: {" ".join(disabled_names)}.')
+    else:
+        logger.info('Disable plugins: (none).')
 
 
 def enable_new_plugins(enable_list: list):
-    if not enable_list:
-        return
-    for _dir in ["PerPage", "PerDir", "PerDomain", "PerHost"]:
+    # 汇总所有新启用的插件名，跨目录累计
+    enabled_names = []
+
+    for _dir in ["PerPage", "PerDir", "PerDomain"]:
         for root, dirs, files in os.walk(os.path.join(path.scanners, _dir)):
             files = filter(lambda x: not x.startswith("__") and x.endswith(".py"), files)
-            new_add = ""
             for _ in files:
                 filename = os.path.join(root, _)
-                q = os.path.splitext(_)[0]
                 mod = load_file_to_module(filename)
                 try:
                     mod = mod.Z0SCAN()
                     mod.checkImplemennted()
-                    if hasattr(mod, "name") and mod.name not in enable_list:
+
+                    # 仅当目标在启用列表中时才处理
+                    if mod.name not in enable_list:
                         continue
-                    # 已启用则跳过
-                    if isinstance(KB, dict) and "registered" in KB and (q in KB["registered"]):
-                        continue
-                    plugin = q
+
+                    plugin_key = os.path.splitext(_)[0]
                     plugin_type = os.path.split(root)[1]
                     relative_path = ltrim(filename, path.root)
-                    if getattr(mod, "type", None) is None:
-                        setattr(mod, "type", plugin_type)
-                    if getattr(mod, "path", None) is None:
-                        setattr(mod, "path", relative_path)
-                    if "registered" not in KB:
-                        KB["registered"] = {}
-                    KB["registered"][plugin] = mod
-                    if hasattr(mod, "name"):
-                        new_add += f" {mod.name}"
+
+                    # 若已启用则跳过
+                    if plugin_key in KB["registered"]:
+                        logger.warning(f"Plugin {mod.name} had been enabled. Skip.")
+                        continue
+
+                    # 补充必要属性后注册
+                    if getattr(mod, 'type', None) is None:
+                        setattr(mod, 'type', plugin_type)
+                    if getattr(mod, 'path', None) is None:
+                        setattr(mod, 'path', relative_path)
+
+                    KB["registered"][plugin_key] = mod
+                    enabled_names.append(mod.name)
+
                 except PluginCheckError as e:
                     logger.error('Not "{}" attribute in the plugin: {}'.format(e, filename))
                 except AttributeError as e:
                     logger.error('Filename: {} not class "{}", Reason: {}'.format(filename, 'Z0SCAN', e))
                     raise
-            if new_add:
-                logger.info(f'New enabled plugins:{new_add}.')
 
+    # 统一输出汇总日志
+    if enabled_names:
+        logger.info(f'New enabled plugins: {" ".join(enabled_names)}.')
+    else:
+        logger.info('New enabled plugins: (none).')
 
 # 线程化 HTTPServer
 class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
 
-
-# UI 模板：增加“实时日志(SSE)”区域
 DASHBOARD_HTML = """<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -651,7 +656,6 @@ class BackgroundServer:
 
 
 class Client:
-    """已废弃：不再使用 Socket/CLI。保留占位以避免外部引用崩溃。"""
     def __init__(self, *_, **__):
         raise RuntimeError("Client has been deprecated in web mode. Use HTTP endpoints instead.")
 

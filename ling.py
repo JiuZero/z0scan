@@ -230,6 +230,134 @@ class VulnerabilityDetailWidget(QWidget):
             self.verification_steps.addTopLevelItem(detail_item)
     
 
+class SettingsInterface(QWidget):
+    """设置页：Ling 设置与 z0 设置"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setObjectName("settingsInterface")
+        self.parent_window = parent
+        self.init_ui()
+        self.load_settings()
+        self.load_config()
+
+    def init_ui(self):
+        layout = QVBoxLayout(self)
+
+        # Ling 设置
+        ling_title = QLabel("Ling 设置")
+        ling_title.setStyleSheet("font-weight: bold;")
+        layout.addWidget(ling_title)
+
+        # 可执行路径
+        exe_layout = QHBoxLayout()
+        self.exe_input = LineEdit()
+        self.exe_input.setPlaceholderText("选择 z0 可执行文件路径（z0.exe 或 z0.py）")
+        exe_btn = PushButton("选择文件")
+        exe_btn.clicked.connect(self.choose_exe)
+        exe_layout.addWidget(self.exe_input)
+        exe_layout.addWidget(exe_btn)
+        layout.addLayout(exe_layout)
+
+        # 主题选择
+        theme_layout = QHBoxLayout()
+        theme_layout.addWidget(QLabel("主题"))
+        self.theme_combo = ComboBox()
+        self.theme_combo.addItems(["LIGHT", "DARK"])
+        self.theme_combo.currentTextChanged.connect(self.apply_theme)
+        theme_layout.addWidget(self.theme_combo)
+        theme_layout.addStretch()
+        layout.addLayout(theme_layout)
+
+        # z0 设置
+        z0_title = QLabel("z0 设置（编辑 config/config.py）")
+        z0_title.setStyleSheet("font-weight: bold; margin-top: 12px;")
+        layout.addWidget(z0_title)
+
+        self.config_edit = TextEdit()
+        self.config_edit.setPlaceholderText("在此编辑 z0 的 config/config.py 内容...")
+        self.config_edit.setMinimumHeight(240)
+        layout.addWidget(self.config_edit)
+
+        # 保存按钮
+        btn_bar = QHBoxLayout()
+        btn_bar.addStretch()
+        save_btn = PrimaryPushButton("保存设置")
+        save_btn.clicked.connect(self.save_all)
+        btn_bar.addWidget(save_btn)
+        layout.addLayout(btn_bar)
+
+    def choose_exe(self):
+        try:
+            fname, _ = QFileDialog.getOpenFileName(self, "选择 z0 可执行文件", os.getcwd(), "可执行或脚本 (*.exe *.py)")
+            if fname:
+                self.exe_input.setText(fname)
+        except Exception as e:
+            InfoBar.error(title="错误", content=f"选择文件失败: {e}", position=InfoBarPosition.TOP, parent=self.parent_window or self, duration=3000)
+
+    def apply_theme(self, text):
+        try:
+            from qfluentwidgets import Theme, setTheme
+            setTheme(Theme.DARK if text.upper() == "DARK" else Theme.LIGHT)
+        except Exception:
+            pass
+
+    def load_settings(self):
+        """加载 Ling 设置"""
+        try:
+            cfg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "ling_settings.json")
+            if os.path.isfile(cfg_path):
+                with open(cfg_path, "r", encoding="utf-8") as f:
+                    cfg = json.load(f)
+                self.exe_input.setText(cfg.get("exe_path", ""))
+                theme = cfg.get("theme", "LIGHT").upper()
+                idx = 1 if theme == "DARK" else 0
+                self.theme_combo.setCurrentIndex(idx)
+        except Exception as e:
+            try:
+                InfoBar.warning(title="提示", content=f"加载设置失败: {e}", position=InfoBarPosition.TOP, parent=self.parent_window or self, duration=3000)
+            except Exception:
+                pass
+
+    def load_config(self):
+        """加载 z0 的 config/config.py"""
+        try:
+            cfg_py = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "config.py")
+            if os.path.isfile(cfg_py):
+                with open(cfg_py, "r", encoding="utf-8", errors="ignore") as f:
+                    self.config_edit.setPlainText(f.read())
+            else:
+                self.config_edit.setPlainText("# 未找到 config/config.py")
+        except Exception as e:
+            self.config_edit.setPlainText(f"# 读取失败：{e}")
+
+    def save_all(self):
+        """保存 Ling 设置和 z0 配置"""
+        # 保存 Ling 设置
+        try:
+            cfg_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
+            os.makedirs(cfg_dir, exist_ok=True)
+            cfg_path = os.path.join(cfg_dir, "ling_settings.json")
+            data = {
+                "exe_path": self.exe_input.text().strip(),
+                "theme": self.theme_combo.currentText().upper()
+            }
+            with open(cfg_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            InfoBar.error(title="错误", content=f"Ling 设置保存失败: {e}", position=InfoBarPosition.TOP, parent=self.parent_window or self, duration=3000)
+            return
+
+        # 保存 z0 配置
+        try:
+            cfg_py = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "config.py")
+            with open(cfg_py, "w", encoding="utf-8") as f:
+                f.write(self.config_edit.toPlainText())
+        except Exception as e:
+            InfoBar.error(title="错误", content=f"config.py 保存失败: {e}", position=InfoBarPosition.TOP, parent=self.parent_window or self, duration=3000)
+            return
+
+        InfoBar.success(title="成功", content="设置已保存", position=InfoBarPosition.TOP, parent=self.parent_window or self, duration=3000)
+
 class Z0ScanGUI(FluentWindow):
     """z0scan 主界面"""
     def __init__(self):
@@ -271,13 +399,8 @@ class Z0ScanGUI(FluentWindow):
         results_page = self.create_results_tab()
         plugins_page = self.create_plugins_tab()
         about_page = self.create_about_tab()
-        # 设置页
-        try:
-            from interface.settings import SettingsInterface
-            settings_page = SettingsInterface(self)
-        except Exception:
-            settings_page = QWidget()
-            settings_page.setObjectName("settingsInterface")
+        # 设置页（合并到本文件）
+        settings_page = SettingsInterface(self)
 
         # 使用 FluentWindow 的侧栏导航
         from qfluentwidgets import FluentIcon

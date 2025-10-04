@@ -1,9 +1,7 @@
 ![z0scan](https://socialify.git.ci/JiuZero/z0scan/image?description=1&font=Raleway&language=1&logo=https%3A%2F%2Fraw.githubusercontent.com%2FJiuZero%2Fz0scan%2Frefs%2Fheads%2Fmain%2Fdoc%2Flogo.png&owner=1&pattern=Solid&theme=Auto)
 
 <h4 align="center" dir="auto">
-  <a href="https://jiuzero.github.io/tags/z0scan/">官方文档</a> • <a href="https://github.com/JiuZero/z0scan/releases">下载发行版</a> • <a href="https://github.com/JiuZero/z0scan/blob/master/doc/CHANGELOG.MD">更新日志</a> • <a href="https://github.com/JiuZero/z0scan-report">报告源码</a>
-</p>
-
+  <a href="https://jiuzero.github.io/tags/z0scan/">官方文档</a> • <a href="https://github.com/JiuZero/z0scan/releases">下载发行版</a> • <a href="https://github.com/JiuZero/z0scan/blob/master/doc/CHANGELOG.MD">更新日志</a>
 <p>
   <a href="https://github.com/JiuZero/z0scan/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/JiuZero/z0scan?style=for-the-badge"></a>
   <a href="https://github.com/JiuZero/z0scan/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/JiuZero/z0scan/total?style=for-the-badge"></a>
