@@ -59,12 +59,27 @@ jobs:
       - name: Install Nuitka and build tools
         run: |
           python -m pip install --upgrade pip
-          pip install nuitka zstandard imageio pyinstaller
+          pip install nuitka zstandard imageio
           pip install -r requirements.txt
-          pip install -r requirements-ling.txt
-    
 
-      - name: Build with Nuitka
+      - name: Install UPX (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y upx || sudo apt-get install -y upx-ucl
+
+      - name: Install UPX (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install upx -y
+
+      - name: Install UPX (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew install upx
+
+      - name: Build up
         env:
           TARGET_ARCH: ${{ matrix.arch }}
         run: |

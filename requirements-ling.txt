@@ -1,3 +1,0 @@
-PyQt5
-sip
-PyQt-Fluent-Widgets[full]

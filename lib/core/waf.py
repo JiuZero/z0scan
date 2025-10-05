@@ -35,7 +35,7 @@ def detector(self):
     rand_param = '/?' + ''.join(random.choices(string.ascii_lowercase, k=4)) + '='
     payload = "UNION ALL SELECT 1,'<script>alert(\"XSS\")</script>' FROM information_schema WHERE --/**/ EXEC xp_cmdshell('cat ../../../etc/passwd')#"
     try:
-        r = requests.get(self.requests.protocol + "://" + self.requests.hostname + str(self.requests.port) + "/" + rand_param + quote(payload))
+        r = requests.get(self.requests.protocol + "://" + self.requests.hostname + ":" + str(self.requests.port) + "/" + rand_param + quote(payload))
         # 1. 匹配指纹
         # Reference: https://github.com/al0ne/Vxscan
         for i in rules:

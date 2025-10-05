@@ -5,6 +5,7 @@
 
 import os, sys, shutil
 import threading, asyncio
+import json, re
 import time
 from queue import Queue
 from config import config
@@ -23,7 +24,7 @@ from lib.patch.ipv6_patch import ipv6_patch
 from prettytable import PrettyTable
 from lib.core.aichat import chat
 from pathlib import Path
-from lib.core.updater import AutoUpdater
+from lib.core.updater import check_update
 
 def setPaths(root):
     path.root = root
@@ -237,6 +238,71 @@ def _merge_options(cmdline):
         conf[key] = value
         continue
 
+def import_proxies_from_file(file_path: str):
+    """
+    从文件中导入代理并返回字典
+    等价于 AutoProxy.import_proxies 的实现：
+      - JSON: [{"url": "http://1.2.3.4:8080", "protocol": "http"}, {"ip": "1.2.3.4", "port": 8080, "protocol": "socks5"}]
+      - 文本: 每行一种格式：
+          http://1.2.3.4:8080
+          socks5://1.2.3.4:1080
+          http,1.2.3.4:8080
+    规则：
+      - https 归并为 http
+      - 仅接受形如 ip:port 的地址
+    """
+    proxies_by_protocol = {'http': [], 'socks4': [], 'socks5': []}
+    valid_parse_protocols = {'http', 'https', 'socks4', 'socks5'}
+    try:
+        _, ext = os.path.splitext(file_path)
+        if ext.lower() == '.json':
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    for item in data:
+                        url = item.get('url')
+                        protocol = item.get('protocol', 'http').lower()
+                        if url:
+                            m = re.match(r'(\w+)://(.+)', url)
+                            if m:
+                                protocol, proxy = m.groups()
+                            else:
+                                proxy = url
+                        else:
+                            proxy = f"{item.get('ip')}:{item.get('port')}"
+                        if protocol == 'https':
+                            protocol = 'http'
+                        if protocol in proxies_by_protocol:
+                            proxies_by_protocol[protocol].append(proxy)
+        else:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line.startswith('#'):
+                        continue
+                    protocol, proxy_address = 'http', line
+                    m = re.match(r'(\w+)://(.+)', line)
+                    if m:
+                        proto_part, proxy_part = m.groups()
+                        if proto_part.lower() in valid_parse_protocols:
+                            proxy_address = proxy_part
+                            protocol = 'http' if proto_part.lower() == 'https' else proto_part.lower()
+                    elif ',' in line:
+                        parts = [p.strip().lower() for p in line.split(',', 1)]
+                        if len(parts) == 2 and parts[0] in valid_parse_protocols:
+                            proxy_address, protocol = parts[1], 'http' if parts[0] == 'https' else parts[0]
+                    if protocol in proxies_by_protocol and re.match(r'^\d{1,3}(?:\.\d{1,3}){3}:\d+$', proxy_address):
+                        proxies_by_protocol[protocol].append(proxy_address)
+        total_imported = sum(len(v) for v in proxies_by_protocol.values())
+        if total_imported == 0:
+            logger.error(f"No found proxy lines in {file_path}.")
+            sys.exit(0)
+        logger.info(f"Success import {total_imported} proxys.")
+        return proxies_by_protocol
+    except Exception as e:
+        logger.error(f"Error: {e}")
+        sys.exit(0)
+
 def _set_conf():
     # server_addr
     if conf.get("server_addr", False):
@@ -253,8 +319,7 @@ def _set_conf():
                 method.lower(): [ip]
             }
         else:
-            from lib.proxy.autoproxy import AutoProxy
-            conf["proxies"] = AutoProxy().import_proxies(conf["proxy"])
+            conf["proxies"] = import_proxies_from_file(conf["proxy"])
     # user-agent
     if conf.get("random_agent", False):
         conf.agent = random_UA()
@@ -355,13 +420,12 @@ def _cleanup_update_backups():
     except Exception as e:
         logger.error(f"An error occurred while cleaning up the backup files: {e}")
 
-def check_update():
+def check_up():
     try:
-        updater = AutoUpdater("JiuZero/z0scan", VERSION)
-        update_info = updater.check_for_updates()
-        if update_info:
-            logger.info(f"Version update: {VERSION} -> {update_info['version']}", origin="updater")
-            logger.info(f"Desc: {update_info['body']}", origin="updater")
+        latest = check_update("JiuZero/z0scan", VERSION)
+        if not latest is False:
+            logger.info(f"Version update: {colors.r}{VERSION}{colors.e} -> {colors.r}{latest['latest_version']}{colors.e}", origin="updater")
+            logger.info(f"Desc: {latest['html_url']}", origin="updater")
     except Exception as e:
         logger.error("Check for version update error: ", str(e))
         
@@ -370,10 +434,10 @@ def init(root, cmdline):
     setPaths(root) # 设置工作路径
     initKb() # 初始化KB
     dataToStdout(banner) # version & logo
+    check_up()
     _merge_options(cmdline) # 合并命令行与config中的参数
     _commands("version")
     _cleanup_update_backups()
-    _commands("update")
     initdb(root) # 初始化数据库
     _commands("dbcmd")
     _commands("reverse")

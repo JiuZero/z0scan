@@ -498,3 +498,8 @@
 3. 添加对linux-arm64支持
 
 ### 0.3.1.1 重发布
+
+1. 修复历史遗留问题：updater
+2. Ling 正式独立项目：https://github.com/JiuZero/Ling
+3. 修复因hostname与port拼接问题导致的请求失败
+4. 使用upx压缩二进制包

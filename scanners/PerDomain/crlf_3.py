@@ -74,7 +74,7 @@ class Z0SCAN(PluginBase):
     def process(self, starting_string, _payloads, test_header):
         for _payload in _payloads:
             _payload = f"/{starting_string}{_payload}{test_header['header_name']}: {test_header['header_value']}"
-            r = requests.get(self.requests.protocol + "://" + self.requests.hostname + str(self.requests.port) + "/" + _payload)
+            r = requests.get(self.requests.protocol + "://" + self.requests.hostname + ":" + str(self.requests.port) + "/" + _payload)
             is_vuln, location = self._check_response(r, test_header)
             if not is_vuln:
                 continue

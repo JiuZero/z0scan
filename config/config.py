@@ -47,22 +47,6 @@ NOTICE = {
         "key": "",
     }
 }
-AUTOPROXY = {
-    "threads": 20, # 线程数
-    "export": True, # 导出代理
-    "fofa": {
-        "enabled": False,
-        "key": "",
-        "query": "protocol==\"socks5\" && country==\"CN\" && banner=\"Method:No\"",
-        "size": 500
-    },
-    "hunter": {
-        "enabled": False,
-        "key": "",
-        "query": "protocol==\"socks5\"&&protocol.banner=\"No authentication\"&&ip.country=\"CN\"",
-        "size": 50
-    }
-} # 自动代理获取
 
 
 """

@@ -17,6 +17,7 @@ except ImportError:
 import importlib
 import pkgutil
 import zipfile
+from datetime import datetime
 
 
 def find_nuitka():
@@ -25,13 +26,6 @@ def find_nuitka():
     if nuitka_path:
         return [nuitka_path]
     return [sys.executable, '-m', 'nuitka']
-
-def find_pyinstaller():
-    """查找nuitka可执行文件的完整路径"""
-    pyinstaller_path = which('pyinstaller')
-    if pyinstaller_path:
-        return [pyinstaller_path]
-    return [sys.executable, '-m', 'pyinstaller']
 
 def get_platform_specific_args():
     """返回平台特定的Nuitka编译参数"""
@@ -125,6 +119,59 @@ def verify_import(pkg_name, actual_name):
         except ImportError:
             return False
 
+
+def find_built_binary(build_dir: Path) -> Path:
+    """
+    在给定的构建输出目录中查找 Nuitka --onefile 产物的可执行文件。
+    优先返回：
+      - Windows: *.exe
+      - 其他平台: 无扩展或 .bin
+    """
+    if not build_dir.exists():
+        return None
+    candidates = []
+    for p in build_dir.iterdir():
+        if not p.is_file():
+            continue
+        name = p.name.lower()
+        if os.name == "nt":
+            if name.endswith(".exe"):
+                candidates.append(p)
+        else:
+            if not "." in name or name.endswith(".bin"):
+                candidates.append(p)
+    if not candidates:
+        return None
+    # 选最近修改的一个
+    candidates.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+    return candidates[0]
+
+def maybe_upx_compress(build_dir: Path):
+    """
+    条件执行 UPX 压缩：
+      - 通过 ENABLE_UPX=1 开启
+      - 可用 UPX_PATH 指定 upx 二进制路径
+      - 可用 UPX_FLAGS 自定义参数（默认 '--best --lzma'）
+    """
+    upx_bin = os.getenv("UPX_PATH") or which("upx")
+    if not upx_bin:
+        print(":: UPX SKIP: upx not found (set UPX_PATH or install upx)")
+        return
+
+    target = find_built_binary(build_dir)
+    if not target:
+        print(":: UPX SKIP: built binary not found in", build_dir)
+        return
+
+    flags = os.getenv("UPX_FLAGS", "--best --lzma")
+    cmd = [upx_bin, *flags.split(), str(target)]
+    print(":: UPX RUN :", " ".join(cmd))
+    try:
+        subprocess.run(cmd, check=True)
+        print(f":: UPX DONE: {target.name} compressed at {datetime.now().isoformat(timespec='seconds')}")
+    except subprocess.CalledProcessError as e:
+        print(f":: UPX ERROR: exit {e.returncode} (skip)")
+
 def build():
     nuitka_cmd = find_nuitka()
     
@@ -193,30 +240,11 @@ def build():
         print(f'\n:: BUILD FAILED (CODE {e.returncode})')
         sys.exit(1)
 
-
-def build_ling():
-    pyinstaller_cmd = find_pyinstaller()
-    
-    # 基础编译参数
-    base_args = [
-        '-F',
-        '-w', 
-        '--icon=doc/ling.png',
-        '--distpath=z0scan',
-        '--add-data=doc/ling.png:doc',
-    ]
-    pyinstaller_cmd.extend(base_args)
-
-    pyinstaller_cmd.append('ling.py')
-    # 在CI环境中显示完整命令
-    if os.getenv('CI'):
-        print('\n:: PYINSTALLER COMMAND :', ' '.join(pyinstaller_cmd))
-    
+    # 构建完成后，尝试进行 UPX 压缩（可选）
     try:
-        subprocess.run(pyinstaller_cmd, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f'\n:: BUILD FAILED (CODE {e.returncode})')
-        sys.exit(1)
+        maybe_upx_compress(Path('z0scan'))
+    except Exception as _e:
+        print(f":: UPX SKIP (exception): {_e}")
     
 def setup_build_directory():
     """优化资源文件处理，与release.yml配合"""
@@ -262,7 +290,6 @@ def setup_build_directory():
 if __name__ == '__main__':
     try:
         build()
-        build_ling()
         setup_build_directory()
         print("\n:: BUILD SUCCESS ::")
     except KeyboardInterrupt:

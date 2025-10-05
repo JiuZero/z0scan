@@ -207,9 +207,14 @@ python3 ling.py
 
 ## 📝 使用示例  
 
-### **ling - 可视化**
+### **Ling - 可视化**
 
-![示例](doc/example3.png)
+![示例](doc/example3.png) 
+
+- 请前往 Ling 的 [项目主页](https://github.com/JiuZero/Ling) 获取她
+
+> [!WARNING]
+> Ling 不包含 z0scan 核心, 需本地存在可用的 z0 可执行文件或脚本
 
 ### **z0 - 命令行**
 
