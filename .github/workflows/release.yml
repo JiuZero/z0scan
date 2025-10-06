@@ -27,7 +27,7 @@ jobs:
             arch: x86_64
             artifact_suffix: linux-x86_64
           - os: ubuntu-24.04-arm
-            arch: arm64
+            arch: aarch64
             artifact_suffix: linux-arm64
           - os: windows-latest
             arch: amd64
@@ -120,7 +120,7 @@ jobs:
             **支持平台:**
             - 💻 Windows (x86_64): `z0scan-windows-amd64.zip`
             - 🐧 Linux (x86_64): `z0scan-linux-x86_64.zip`
-            - 🐧 Linux (ARM64): `z0scan-linux-arm64.zip`
+            - 🐧 Linux (AARCH64): `z0scan-linux-aarch64.zip`
             - 🍎 macOS (ARM64): `z0scan-darwin-arm64.zip`
           files: |
             artifacts/z0scan-linux-x86_64.zip
