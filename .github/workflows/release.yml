@@ -11,7 +11,9 @@ on:
         description: 'Is this a pre-release?'
         type: boolean
         required: false
-        default: false
+  push:
+    tags:
+      - 'v*'  # 以 v 开头的 tag 自动触发
 
 env:
   PYTHON_VERSION: "3.11"

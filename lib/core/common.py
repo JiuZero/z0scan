@@ -3,7 +3,7 @@
 # w8ay 2019/6/28
 # JiuZero 2025/3/24
 
-import platform, copy, hashlib, json, os, random, re, string, struct, requests, sys, socket, ipaddress
+import platform, copy, hashlib, json, os, random, re, string, struct, requests, sys, socket, ipaddress, binascii, base64
 from urllib.parse import urlparse, urljoin, quote, urlunparse, unquote
 from lib.core.log import logger
 from lib.core.enums import PLACE, POST_HINT
@@ -41,6 +41,22 @@ def run_cmd(cmd, shell=True, timeout=None):
     except Exception as e:
         logger.error(f"Error executing command: {e}")
         return False
+
+
+def is_base64(value: str):
+    """
+    成功返回解码后的值，失败返回False
+    :param value:
+    :return:
+    """
+    regx = r'^[a-zA-Z0-9\+\/=\%]+$'
+    if not re.match(regx, value):
+        return False
+    try:
+        ret = base64.b16decode(value).decode(errors='ignore')
+    except binascii.Error:
+        return False
+    return ret
 
 def check_reverse():
     ver = platform.system()
@@ -118,6 +134,10 @@ def is_ipaddr(host):
     except Exception as ex:
         return False
 
+def random_UA():
+    ua = UserAgent()
+    return ua.random
+
 def random_headers():
     HEADERS = {
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -127,12 +147,11 @@ def random_headers():
         'X-Real-IP': "",
         'Connection': 'keep-alive',
     }
-    ua = UserAgent()
     key = random.random() * 20
     referer = ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(int(key))])
     referer = 'www.' + referer.lower() + '.com'
     ip = socket.inet_ntoa(struct.pack('>I', random.randint(1, 0xffffffff)))
-    HEADERS["User-Agent"] = ua.random
+    HEADERS["User-Agent"] = random_UA()
     HEADERS["Referer"] = referer
     HEADERS["X-Forwarded-For"] = HEADERS["X-Real-IP"] = ip
     return HEADERS
@@ -189,15 +208,8 @@ def get_links(content, domain, limit=True):
 def random_str(length=10, chars=string.ascii_lowercase):
     return ''.join(random.sample(chars, length))
 
-
 def random_num(nums):
     return int(random_str(length=int(nums), chars=string.digits))
-
-
-def random_UA():
-    agents = conf.lists["_agents"]
-    return str(agents[random.randint(0, len(agents) - 1)])
-
 
 def md5(src):
     m2 = hashlib.md5()

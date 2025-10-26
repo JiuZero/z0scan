@@ -5,7 +5,7 @@
 from lib.core.data import conf, KB
 from lib.core.log import logger, colors
 from lib.core.db import insertdb, selectdb
-from config.others.waf_fingers import rules
+from helper.waffingers import fingers
 import requests, random, string, re
 from urllib.parse import quote
 
@@ -38,7 +38,7 @@ def detector(self):
         r = requests.get(self.requests.protocol + "://" + self.requests.hostname + ":" + str(self.requests.port) + "/" + rand_param + quote(payload))
         # 1. 匹配指纹
         # Reference: https://github.com/al0ne/Vxscan
-        for i in rules:
+        for i in fingers:
             name, position, regex = i.split('|')
             if position == "text":
                 if re.search(regex, str(self.requests.raw)):

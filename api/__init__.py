@@ -6,7 +6,6 @@
 import copy
 import requests
 from lib.core.option import init
-from lib.helper.function import isJavaObjectDeserialization, isPHPObjectDeserialization, isPythonObjectDeserialization
 from lib.core.plugins import PluginBase, _PluginBase
 from lib.core.enums import PLACE, HTTPMETHOD, VulType, Type, POST_HINT
 from lib.core.data import conf, KB, path
@@ -21,7 +20,6 @@ from z0 import modulePath
 
 
 __all__ = [
-    'isJavaObjectDeserialization', 'isPHPObjectDeserialization', 'isPythonObjectDeserialization', 
     'PluginBase', '_PluginBase', 'conf', 'KB', 'md5', 'splitUrlPath', 'url_dict2str', 'isjson', 
     'path', 'logger', 'PLACE', 'HTTPMETHOD', 'VulType', 'generateResponse', 'task_push_from_name', 'task_push', 'random_str', 'start', 'Type',
     'random_num', 'POST_HINT', 'Threads', 'chat'

@@ -531,8 +531,6 @@ class ProxyHandle(BaseHTTPRequestHandler):
                 
                 if not self._is_replay() and response:
                     def process_task(request, response):
-                        # 防止流量竞争
-                        time.sleep(2)
                         netloc = "http"
                         if request.https:
                             netloc = "https"

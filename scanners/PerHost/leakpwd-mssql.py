@@ -18,8 +18,8 @@ class Z0SCAN(_PluginBase):
     def audit(self):
         self.ip, self.port = self.host.split(":")
         userpass = []
-        for user in conf.lists["mssql-username"]:
-            for pwd in conf.lists["mssql-password"]:
+        for user in conf.dicts["mssql-username"]:
+            for pwd in conf.dicts["mssql-password"]:
                 userpass.append((user, pwd))
         z0thread = Threads(name="leakpwd-redis")
         z0thread.submit(self.process, userpass)

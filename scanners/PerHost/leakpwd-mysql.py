@@ -24,8 +24,8 @@ class Z0SCAN(_PluginBase):
     def audit(self):
         self.ip, self.port = self.host.split(":")
         userpass = []
-        for user in conf.lists["mysql-username"]:
-            for pwd in conf.lists["mysql-password"]:
+        for user in conf.dicts["mysql-username"]:
+            for pwd in conf.dicts["mysql-password"]:
                 userpass.append((user, pwd))
         z0thread = Threads(name="leakpwd-mysql")
         z0thread.submit(self.process, userpass)

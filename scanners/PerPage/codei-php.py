@@ -6,7 +6,7 @@
 import random
 import re
 from api import VulType, md5, generateResponse, conf, PluginBase, Type, logger, Threads, PLACE, KB
-from lib.helper.helper_sensitive import sensitive_page_error_message_check
+from helper.basesensitive import sensitive_page_error_message_check
 
 
 class Z0SCAN(PluginBase):

@@ -7,7 +7,7 @@ import urllib
 from urllib import parse as urlparse
 from urllib.request import unquote
 
-from thirdpart.simhash import Simhash
+from lib.helper.simhash import Simhash
 
 Chars = [',', '-', '_']
 

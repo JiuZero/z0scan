@@ -19,8 +19,8 @@ class Z0SCAN(_PluginBase):
     def audit(self):
         self.ip, self.port = self.host.split(":")
         userpass = []
-        for user in conf.lists["smb-username"]:
-            for pwd in conf.lists["smb-password"]:
+        for user in conf.dicts["smb-username"]:
+            for pwd in conf.dicts["smb-password"]:
                 userpass.append((user, pwd))
         z0thread = Threads(name="leakpwd-smb")
         z0thread.submit(self.process, userpass)

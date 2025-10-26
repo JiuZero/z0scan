@@ -8,7 +8,7 @@ import requests
 
 from api import generateResponse, VulType, HTTPMETHOD, Type, PluginBase, conf, Threads, KB
 from lib.helper.diifpage import findDynamicContent, getFilteredPageContent, removeDynamicContent
-from lib.helper.paramanalyzer import VulnDetector
+from helper.paramanalyzer import VulnDetector
 
 
 class Z0SCAN(PluginBase):

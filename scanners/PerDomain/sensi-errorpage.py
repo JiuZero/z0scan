@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 import requests
 
 from api import random_str, generateResponse, VulType, KB, Type, PluginBase, conf
-from lib.helper.helper_sensitive import sensitive_page_error_message_check
+from helper.basesensitive import sensitive_page_error_message_check
 
 
 class Z0SCAN(PluginBase):

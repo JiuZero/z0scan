@@ -55,8 +55,7 @@ def check_update(github_repo: str, current_version: str) -> Union[Dict[str, Any]
             })
         return info
     except requests.exceptions.RequestException as e:
-        logger.info(f"检查更新失败: {e}")
         return False
     except Exception as e:
-        logger.info(f"解析版本信息失败: {e}")
+        logger.error(f"Check update fail: {e}")
         return False

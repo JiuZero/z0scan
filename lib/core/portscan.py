@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # JiuZero 2025/5/7
-# 修复：解决端口扫描阻塞问题（已移除整体超时）
 
 import threading
 import re
@@ -104,7 +103,7 @@ class ScanPort:
             tasks = []
             for poc_name, info in KB["portscan"].items():
                 ports, fingers = info
-                # 过滤无效端口（1-65535），避免无效操作
+                # 过滤无效端口（1-65535）
                 valid_ports = [p for p in ports if 1 <= int(p) <= 65535]
                 if valid_ports:
                     tasks.append((poc_name, valid_ports, fingers))
@@ -121,7 +120,7 @@ class ScanPort:
                 thread.start()
                 logger.debug(f"Started thread for plugin: {task[0]}", origin="portscan")
             
-            # 等待所有扫描线程完成（移除整体超时，确保所有端口扫描结束）
+            # 等待所有扫描线程完成（确保所有端口扫描结束）
             for thread in self.threads:
                 thread.join()  # 阻塞等待单个线程完成，无超时
                 

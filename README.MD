@@ -7,7 +7,7 @@
   <a href="https://github.com/JiuZero/z0scan/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/JiuZero/z0scan/total?style=for-the-badge"></a>
   <a href="https://github.com/JiuZero/z0scan/releases"><img src="https://img.shields.io/github/v/release/JiuZero/z0scan.svg?style=for-the-badge"></a>
   <a href="https://github.com/JiuZero/z0scan/actions"><img alt="Build" src="https://img.shields.io/github/actions/workflow/status/JiuZero/z0scan/release.yml?style=for-the-badge&label=CI"></a>
-  <img alt="Python" src="https://img.shields.io/badge/python-3.0%2B-blue?style=for-the-badge">
+  <img alt="Python" src="https://img.shields.io/badge/python-3.9%2B-blue?style=for-the-badge">
   <img alt="Platform" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-8A2BE2?style=for-the-badge">
   <img alt="Last Commit" src="https://img.shields.io/github/last-commit/JiuZero/z0scan?style=for-the-badge">
   <a href="https://github.com/JiuZero/z0scan/issues"><img alt="Issues" src="https://img.shields.io/github/issues/JiuZero/z0scan?style=for-the-badge"></a>
@@ -116,25 +116,25 @@
     <td width="25%" valign="top">
       <h3>公众号</h3>
       <ul>
-        <li><b>90Safe</b> - 安全资讯</li>
+        <li><b>90Safe</b></li>
       </ul>
     </td>
     <td width="25%" valign="top">
       <h3>微信</h3>
       <ul>
-        <li><b>JiuZer1</b> - 不怎么看…</li>
+        <li><b>JiuZer1</b></li>
       </ul>
     </td>
     <td width="25%" valign="top">
       <h3>QQ</h3>
       <ul>
-        <li><b>1703417187</b> - 偶尔在线</li>
+        <li><b>1703417187</b></li>
       </ul>
     </td>
     <td width="25%" valign="top">
       <h3>QQ交流群</h3>
       <ul>
-        <li><b>1058256508</b> - 问题咨询</li>
+        <li><b>1058256508</b></li>
       </ul>
     </td>
   </tr>
@@ -149,7 +149,7 @@
     <td width="50%" valign="top">
       <h3>🔍 安全检测</h3>
       <ul>
-        <li><b>集成指纹检测</b> - 自动识别指纹信息与WAF，插件精准切入</li>
+        <li><b>集成指纹检测</b> - 被动化识别并动态补齐WAF与指纹信息(5900+)，插件精准切入</li>
         <li><b>分布式与本地式一体化</b> - 灵活适应不同扫描需求</li>
         <li><b>插件扫描</b> - 可外部扩展的插件系统</li>
       </ul>
@@ -158,7 +158,7 @@
       <h3>📊 数据处理</h3>
       <ul>
         <li><b>复杂参数解析</b> - 支持Json、XML和伪静态参数解析</li>
-        <li><b>数据存储</b> - 通过SQLite3提供扫描记录存储支持</li>
+        <li><b>数据存储</b> - 通过SQLite3提供数据存储支持</li>
       </ul>
     </td>
   </tr>
@@ -166,14 +166,14 @@
     <td width="50%" valign="top">
       <h3>🌐 部署架构</h3>
       <ul>
-        <li><b>开源</b> - 基于Python开源、Nuitka编译</li>
-        <li><b>完全跨平台</b> - 支持Windows、Linux、macOS等系统</li>
+        <li><b>开源、高性能</b> - 基于Python开源、使用Nuitka编译</li>
+        <li><b>完全跨平台</b> - 支持Windows、Linux、MacOS等系统</li>
       </ul>
     </td>
     <td width="50%" valign="top">
       <h3>💡 智能验证</h3>
       <ul>
-        <li><b>AI驱动的JS敏感信息后验证</b> - 智能识别JavaScript中的敏感数据</li>
+        <li><b>AI驱动的JS敏感信息后验证</b> - 智能校验JavaScript中的敏感数据</li>
       </ul>
     </td>
   </tr>
@@ -187,7 +187,7 @@
 
 ### ✔ 发行版本 
 
-获取发布版本（**使用Nuitka编译，速度显著提高**）：[下载](https://github.com/JiuZero/z0scan/releases)  
+获取发布版本：[下载](https://github.com/JiuZero/z0scan/releases)  
 
 - 想要构建适合您环境的可执行文件？请参阅：[文档](https://jiuzero.github.io/tags/z0scan/)  
 
@@ -197,13 +197,17 @@
 git clone https://github.com/JiuZero/z0scan
 cd z0scan
 pip install -r requirements.txt
-# 命令行界面
 python3 z0.py help
-# 可视化界面
-python3 ling.py
 ```  
 
-- 对于**Termux**等环境，请参阅：[文档](https://jiuzero.github.io/tags/z0scan/)  
+### ✔ Docker安装
+
+```bash  
+git clone https://github.com/JiuZero/z0scan
+docker build -t z0scan .
+docker run z0scan
+# python3 z0.py help
+```
 
 ## 📝 使用示例  
 
@@ -220,6 +224,9 @@ python3 ling.py
 
 ### ✔ 被动扫描  
 
+> [!Note]
+> HTTPS支持 - 启动z0scan被动扫描，然后在浏览器中访问 http://z0scan.ca 下载证书并信任它
+
 **被动扫描**的默认配置（将浏览器流量转发到端口5920）：  
 ```  
 z0 scan -s 127.0.0.1:5920  
@@ -232,15 +239,15 @@ z0 scan -s 127.0.0.1:5920
 z0 scan -s 127.0.0.1:5920 --risk 0,1,2,3 --level 2 --disable cmdi,unauth  
 ```  
 
-被动扫描**控制台界面**
+**控制台界面**
 
 ![示例](doc/example4.png)
 
 ### ✔ 主动扫描  
 
-**主动扫描**的默认配置：  
+**主动扫描**的默认配置：
 ```  
-# 通过Burp/Yakit请求流量启动主动检测（推荐）  
+# 通过Burp/Yakit请求流量的主动化被动扫描（推荐）  
 z0 scan -s 127.0.0.1:5920  
 ```  
 
@@ -248,9 +255,13 @@ z0 scan -s 127.0.0.1:5920
 
 ```  
 # 直接检测  
-z0 scan -u https://example.com/?id=1  
-# 从URL列表进行批量检测  
-z0 scan -f urls.txt  
+z0 scan -u https://example.com/?id=1
+# 基础爬虫（路径深度为3）并检测
+z0 scan -u https://example.com/?id=1 -c 3
+# 从URL列表进行批量检测
+z0 scan -f urls.txt
+# 从URL列表中依次爬虫（路径深度为3）并检测
+z0 scan -f urls.txt -c 3
 ```  
 
 ![示例](doc/example2.png)  
@@ -271,13 +282,13 @@ z0 scan -f urls.txt
 | codei-asp            | ASP Code Execution                   | 3    |  
 | codei-php            | PHP Code Execution                   | 3    |  
 | cmdi                 | Command Execution                    | 3    |  
-| other-objectdese     | Deserialization Parameter Analysis   | 3    |  
+| objectdese     | Deserialization Parameter Analysis   | 3    |  
 | sensi-js             | JS Sensitive Information Leak        | 0    |  
 | sensi-jsonp          | Jsonp Sensitive Information Leak     | 1    |  
 | sensi-php-realpath   | PHP Real Path Discovery              | 0    |  
 | redirect             | Redirect Vulnerability               | 1    |  
 | sensi-webpack        | Webpack Source Code Leak             | 1    |  
-| other-webdav-passive | WebDAV Service Passive Detection     | 1    |  
+| webdav-passive | WebDAV Service Passive Detection     | 1    |  
 | xpathi-error         | Error-based XPATH Injection          | 2    |  
 | trave-path           | Path Traversal                       | 2    |  
 | sensi-backup_1       | Backup File Detection (File-based)   | 1    |  
@@ -297,8 +308,8 @@ z0 scan -f urls.txt
 |xxe|XXE plugin detects XML external entity injection vulnerabilities via malicious payloads.|3|
 |xxe-blind|Blind XXE plugin detects out-of-band data exfiltration.|3|
 |codei-java|Java Code Injection Vulnerability Scanner (EL/SpEL/OGNL)|3|
-|other-redos|Regular Expression Denial of Service (ReDoS) Vulnerability Scanner|-1|
-|other-jndi-error|JNDI Injection Vulnerability Scanner|3|
+|redos|Regular Expression Denial of Service (ReDoS) Vulnerability Scanner|-1|
+|jndi-error|JNDI Injection Vulnerability Scanner|3|
 
 - **PerDir**  
 
@@ -316,21 +327,21 @@ z0 scan -f urls.txt
 |:--------------------:|:------------------------------------:|:----:|  
 | sensi-errorpage      | Error Page Sensitive Information Leak| 0    |  
 | xss-net              | .NET Universal XSS                   | 1    |  
-| other-dns-zonetransfer | DNS Zone Transfer Vulnerability      | 1    |  
+| dns-zonetransfer | DNS Zone Transfer Vulnerability      | 1    |  
 | xss-flash            | Flash Universal XSS                  | 1    |  
-| other-idea-parse     | Idea Directory Parsing               | 1    |  
-| other-xst            | XST Vulnerability Detection          | -1   |  
-| other-webdav-active  | WebDAV Service Discovery             | 1    |  
+| idea-parse     | Idea Directory Parsing               | 1    |  
+| xst            | XST Vulnerability Detection          | -1   |  
+| unauth-webdav-active  | WebDAV Service Discovery             | 1    |  
 | upload-put           | PUT-based Arbitrary File Upload      | 3    |  
 | sensi-backup_3       | Backup File Detection (Domain-based) | 1    |  
 | cors-active          | CORS Vulnerability (Active Detection)| 2    |  
 | crlf_3               | CRLF Line Injection Vulnerability    | 2    |  
-| other-hosti          | Host Header Injection Detection      | 1    |  
-| other-oss-takeover   | OSS Bucket Takeover Vulnerability    | 3    |  
+| hosti          | Host Header Injection Detection      | 1    |  
+| oss-takeover   | OSS Bucket Takeover Vulnerability    | 3    |  
 | sensi-iis-shortname  | IIS Short Filename Vulnerability     | 0    |  
-| other-clickjacking   | Clickjacking Vulnerability           | -1   |  
-| other-baseline       | Service Version Leak                 | -1   |  
-| other-smuggling      | Request Smuggling Vulnerability      | 3    |  
+| clickjacking   | Clickjacking Vulnerability           | -1   |  
+| sensi-baseline       | Service Version Leak                 | -1   |  
+| smuggling      | Request Smuggling Vulnerability      | 3    |  
 | trave-list_3         | Directory Listing                    | 2    | 
 
 - **PerHost**  
@@ -342,8 +353,8 @@ z0 scan -f urls.txt
 | leakpwd-postgresql     | Weak Password on PostgreSQL Server   |
 | leakpwd-redis          | Weak Password on Redis Server        |
 | leakpwd-smb            | Weak Password on SMB Server          |
-| other-ftp-anonymous    | FTP anonymous Login                  |
-| other-solr-rce         | Apache Solr RCE via Velocity         |
+| ftp-anonymous    | FTP anonymous Login                  |
+| solr-rce         | Apache Solr RCE via Velocity         |
 | unauth-docker          | Docker Unauthorized Access           |
 | unauth-jenkins         | Jenkins Unauthorized Access          |
 | unauth-memcached       | Memcached Unauthorized Access        |

@@ -41,7 +41,7 @@ class Command:
   help        - Show this help message
   pause       - Pause current operation
   set         - Set parameter (format: set key=value)
-                Allowed parameters: level, timeout, retry, risk, disable
+                Allowed parameters: level, timeout, retry, risk
   env         - Show current configuration
   status      - Scan status
   enable      - Load new plugins
@@ -67,24 +67,12 @@ Examples:
                 key, value = args[0].split("=", 1)
                 key = key.strip()
                 value = value.strip()
-                if key not in ["level", "timeout", "retry", "risk", "disable"]:
+                if key not in ["level", "timeout", "retry", "risk"]:
                     return f"Error: Not allowed to set parameter '{key}'"
                 if key in ["level", "retry"]:
                     value = int(value)
                 elif key == "timeout":
                     value = float(value)
-                if key == "disable":
-                    # 允许追加禁用列表（逗号分隔）
-                    exist = getattr(conf, "disable", [])
-                    if isinstance(value, str):
-                        items = [_.strip() for _ in value.split(",") if _.strip()]
-                    else:
-                        items = list(value)
-                    if not isinstance(exist, list):
-                        exist = []
-                    setattr(conf, "disable", list({*exist, *items}))
-                else:
-                    setattr(conf, key, value)
                 return f"Parameter set: {key} => {value}"
             except ValueError as e:
                 return f"Error: Invalid parameter value ({str(e)})"
@@ -106,10 +94,10 @@ Examples:
             return f"Disable request for: {', '.join(disable_list) if disable_list else '(none)'}"
 
         if cmd == "env":
-            keys = ["level", "timeout", "retry", "risk", "disable"]
+            keys = ["level", "timeout", "retry", "risk"]
             env_info = "\n".join(f"{k}: {getattr(conf, k, 'N/A')}" for k in keys)
-            return f"Current Configuration:\n{env_info}"
-
+            return f'Current Configuration:\n{env_info}\n\nLoad scanner plugins: {colors.y}{len(KB["registered"])-1}{colors.e}'
+            
         if cmd == "status":
             try:
                 count = KB.output.count() if hasattr(KB, "output") and callable(getattr(KB.output, "count", None)) else 0
@@ -137,9 +125,7 @@ Examples:
 
 
 def disable_plugins(disable_list: list):
-    # 汇总所有禁用到的插件名，跨目录累计
     disabled_names = []
-
     for _dir in ["PerPage", "PerDir", "PerDomain"]:
         for root, dirs, files in os.walk(os.path.join(path.scanners, _dir)):
             files = filter(lambda x: not x.startswith("__") and x.endswith(".py"), files)
@@ -149,25 +135,47 @@ def disable_plugins(disable_list: list):
                 try:
                     mod = mod.Z0SCAN()
                     mod.checkImplemennted()
+                    plugin_key = os.path.splitext(_)[0]
                     # 仅当目标在禁用列表中时才处理
-                    if mod.name not in disable_list:
+                    if plugin_key not in disable_list:
                         continue
-
-                    plugin_key = os.path.splitext(_)[0]  # 字典键是文件名（不含扩展）
                     if plugin_key not in KB["registered"]:
                         logger.warning(f"Plugin {mod.name} hadn't been loaded. Skip.")
                         continue
-
                     # 执行禁用
                     del KB["registered"][plugin_key]
                     disabled_names.append(mod.name)
-
                 except PluginCheckError as e:
                     logger.error('Not "{}" attribute in the plugin: {}'.format(e, filename))
                 except AttributeError as e:
                     logger.error('Filename: {} not class "{}", Reason: {}'.format(filename, 'Z0SCAN', e))
                     raise
-
+    for _dir in ["PerHost"]:
+        for root, dirs, files in os.walk(os.path.join(path.scanners, _dir)):
+            files = filter(lambda x: not x.startswith("__") and x.endswith(".py"), files)
+            for _ in files:
+                filename = os.path.join(root, _)
+                mod = load_file_to_module(filename)
+                try:
+                    mod = mod.Z0SCAN()
+                    mod.checkImplemennted()
+                    plugin_key = os.path.splitext(_)[0]
+                    # 仅当目标在禁用列表中时才处理
+                    if plugin_key not in disable_list:
+                        continue
+                    if plugin_key not in KB["registered"]:
+                        logger.warning(f"Plugin {mod.name} hadn't been loaded. Skip.")
+                        continue
+                    # 执行禁用
+                    del KB["registered"][plugin_key]
+                    del KB["portscan"][plugin_key]
+                    del KB["registered"][plugin_key]
+                    disabled_names.append(mod.name)
+                except PluginCheckError as e:
+                    logger.error('Not "{}" attribute in the plugin: {}'.format(e, filename))
+                except AttributeError as e:
+                    logger.error('Filename: {} not class "{}", Reason: {}'.format(filename, 'Z0SCAN', e))
+                    raise
     # 统一输出汇总日志
     if disabled_names:
         logger.info(f'Disable plugins: {" ".join(disabled_names)}.')
@@ -176,9 +184,7 @@ def disable_plugins(disable_list: list):
 
 
 def enable_new_plugins(enable_list: list):
-    # 汇总所有新启用的插件名，跨目录累计
     enabled_names = []
-
     for _dir in ["PerPage", "PerDir", "PerDomain"]:
         for root, dirs, files in os.walk(os.path.join(path.scanners, _dir)):
             files = filter(lambda x: not x.startswith("__") and x.endswith(".py"), files)
@@ -188,35 +194,70 @@ def enable_new_plugins(enable_list: list):
                 try:
                     mod = mod.Z0SCAN()
                     mod.checkImplemennted()
-
-                    # 仅当目标在启用列表中时才处理
-                    if mod.name not in enable_list:
-                        continue
-
                     plugin_key = os.path.splitext(_)[0]
-                    plugin_type = os.path.split(root)[1]
-                    relative_path = ltrim(filename, path.root)
-
+                    # 仅当目标在启用列表中时才处理
+                    if plugin_key not in enable_list:
+                        continue
+                    # 未启用反连平台
+                    if conf.command != "reverse_client":
+                        try:
+                            if mod.require_reverse is True:
+                                continue
+                        except:
+                            pass
                     # 若已启用则跳过
                     if plugin_key in KB["registered"]:
                         logger.warning(f"Plugin {mod.name} had been enabled. Skip.")
                         continue
-
+                    plugin_type = os.path.split(root)[1]
+                    relative_path = ltrim(filename, path.root)
                     # 补充必要属性后注册
                     if getattr(mod, 'type', None) is None:
                         setattr(mod, 'type', plugin_type)
                     if getattr(mod, 'path', None) is None:
                         setattr(mod, 'path', relative_path)
-
                     KB["registered"][plugin_key] = mod
-                    enabled_names.append(mod.name)
-
+                    enabled_names.append(plugin_key)
                 except PluginCheckError as e:
                     logger.error('Not "{}" attribute in the plugin: {}'.format(e, filename))
                 except AttributeError as e:
                     logger.error('Filename: {} not class "{}", Reason: {}'.format(filename, 'Z0SCAN', e))
                     raise
-
+    for _dir in ["PerHost"]:
+        for root, dirs, files in os.walk(os.path.join(path.scanners, _dir)):
+            files = filter(lambda x: not x.startswith("__") and x.endswith(".py"), files)
+            for _ in files:
+                filename = os.path.join(root, _)
+                mod = load_file_to_module(filename)
+                try:
+                    mod = mod.Z0SCAN()
+                    mod.checkImplemennted()
+                    plugin_key = os.path.splitext(_)[0]
+                    # 仅当目标在启用列表中时才处理
+                    if plugin_key not in enable_list:
+                        continue
+                    plugin_type = os.path.split(root)[1]
+                    relative_path = ltrim(filename, path.root)
+                    # 若已启用则跳过
+                    if plugin_key in KB["registered"]:
+                        logger.warning(f"Plugin {mod.name} had been enabled. Skip.")
+                        continue
+                    if getattr(mod, 'type', None) is None:
+                        setattr(mod, 'type', plugin_type)
+                    if getattr(mod, 'path', None) is None:
+                        setattr(mod, 'path', relative_path)
+                    """
+                    ports = [23]
+                    fingers = ["connection refused by remote host.", "^SSH-"]
+                    """
+                    KB["portscan"][plugin_key] = (mod.ports, mod.fingers)
+                    KB["registered"][plugin_key] = mod
+                    enabled_names.append(plugin_key)
+                except PluginCheckError as e:
+                    logger.error('Not "{}" attribute in the plugin: {}'.format(e, filename))
+                except AttributeError as e:
+                    logger.error('Filename: {} not class "{}", Reason: {}'.format(filename, 'Z0SCAN', e))
+                    raise
     # 统一输出汇总日志
     if enabled_names:
         logger.info(f'New enabled plugins: {" ".join(enabled_names)}.')

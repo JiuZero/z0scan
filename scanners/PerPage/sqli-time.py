@@ -4,7 +4,7 @@
 # JiuZero 2025/7/29
 
 import time
-from lib.helper.paramanalyzer import VulnDetector
+from helper.paramanalyzer import VulnDetector
 from api import generateResponse, random_num, VulType, Type, PluginBase, conf, KB
 
 

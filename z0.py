@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/6/11
+# JiuZero/z0scan
 
 import inspect
 import os
@@ -23,6 +23,7 @@ from lib.core.log import logger, dataToStdout
 from lib.core.option import init
 from lib.core.settings import banner
 from lib.core.console import start_web_console
+from lib.core.crawler import Crawler
 
 def version_check():
     # Check Python version
@@ -44,6 +45,24 @@ def modulePath():
     dir_path = os.path.dirname(abs_path)
     return dir_path
 
+def crawl(url):
+    crawler = Crawler(
+        max_depth=int(conf.crawl),
+        threads=int(conf.crawl_threads),
+        # exclude_pattern=conf.exclude,
+        # include_pattern=conf.include
+    )
+    pages = crawler.crawl(url)
+    urls = []
+    for page in pages:
+        parsed_url = urlparse(page['url'])
+        normalized_url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
+        if normalized_url not in urls:
+            urls.append(normalized_url)
+    logger.info(f"Crawl finish. Found pages: {len(urls)}.")
+    # 爬虫与扫描异步进行？如果流量竞争怎么办…
+    return urls
+
 def main():
     version_check()
 
@@ -55,7 +74,10 @@ def main():
     if conf.url or conf.url_file:
         urls = []
         if conf.url:
-            urls.append(conf.url)
+            if not conf.crawl:
+                urls.append(conf.url)
+            else:
+                urls = crawl(conf.url)
         elif conf.url_file:
             urlfile = conf.url_file
             if not os.path.exists(urlfile):
@@ -64,19 +86,23 @@ def main():
             with open(urlfile) as f:
                 _urls = f.readlines()
             _urls = [i.strip() for i in _urls]
-            urls.extend(_urls)
-        for domain in urls:
+            if not conf.crawl:
+                urls.extend(_urls)
+            else:
+                for url in _urls:
+                    urls.extend(crawl(url))
+        for url in urls:
             try:
-                req = requests.get(domain)
+                req = requests.get(url)
             except Exception as e:
-                logger.error("Request {} faild, {}".format(domain, str(e)))
+                logger.error("Request {} faild, {}".format(url, str(e)))
                 continue
-            fake_req = FakeReq(domain, {}, HTTPMETHOD.GET, "")
+            fake_req = FakeReq(url, {}, HTTPMETHOD.GET, "")
             fake_resp = FakeResp(req.status_code, req.content, req.headers)
             task_push_from_name('loader', fake_req, fake_resp)
         start()
     elif conf.server_addr:
-        server = start_web_console(host="127.0.0.1", port=9090)
+        server = start_web_console(host="127.0.0.1", port=conf.console_port)
         KB["continue"] = True
         # 启动漏洞扫描器
         scanner = threading.Thread(target=start)

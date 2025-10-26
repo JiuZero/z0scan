@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from api import generateResponse, VulType, Type, PluginBase, conf, Threads, PLACE
-from lib.helper.helper_sensitive import sensitive_page_error_message_check
+from helper.basesensitive import sensitive_page_error_message_check
 import re
 import random
 import hashlib

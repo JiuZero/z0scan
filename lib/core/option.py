@@ -8,7 +8,7 @@ import threading, asyncio
 import json, re
 import time
 from queue import Queue
-from config import config
+import config
 from colorama import init as cinit
 from lib.core.common import random_UA, ltrim, check_reverse
 from lib.core.data import path, KB, conf
@@ -30,9 +30,9 @@ def setPaths(root):
     path.root = root
     path.certs = os.path.join(root, 'certs')
     Path(path.certs).mkdir(exist_ok=True)
-    path.config = os.path.join(root, 'config')
-    path.lists = os.path.join("config", "lists")
-    path.others = os.path.join("config", "others")
+    path.dicts = os.path.join("dicts")
+    path.helper = os.path.join("helper")
+    path.data = os.path.join("data")
     path.scanners = os.path.join(root, 'scanners')
     path.fingprints = os.path.join(root, "fingerprints")
     path.output = os.path.join(root, "output")
@@ -74,7 +74,7 @@ def _list():
         version = getattr(plugin_instance, "version", "N/A")
         risk = getattr(plugin_instance, "risk", "N/A")
         table.add_row([
-            name if name != "N/A" else "N/A",
+            name,
             desc,
             version,
             risk,
@@ -83,21 +83,20 @@ def _list():
     dataToStdout(table)
     dataToStdout(f"Total plugins: {colors.y}{len(KB['registered']) - 1}{colors.e}\n")
     """列出所有模糊测试字典"""
-    if not hasattr(conf, "lists") or not conf.lists:
+    if not hasattr(conf, "lists") or not conf.dicts:
         logger.warning("No fuzz dictionaries loaded.")
         return
     table = PrettyTable()
     table.field_names = ["Dictionary Name", "Entry Count"]
     table.align["Dictionary Name"] = "l"
-    for name, entries in conf.lists.items():
+    for name, entries in conf.dicts.items():
         table.add_row([name, len(entries)])
     dataToStdout(f"\n{colors.y}Loaded Fuzz Dictionaries:{colors.e}")
     dataToStdout(table)
-    dataToStdout(f"Total dictionaries: {colors.y}{len(conf.lists)}{colors.e}\n")
+    dataToStdout(f"Total dictionaries: {colors.y}{len(conf.dicts)}{colors.e}\n")
 
 def initPlugins():
     require_reverse_list = []
-    require_risk_list = []
     # 优先加载loader
     loader_path = os.path.join(path.scanners, "loader.py")
     if os.path.exists(loader_path):
@@ -126,19 +125,16 @@ def initPlugins():
                 try:
                     mod = mod.Z0SCAN()
                     mod.checkImplemennted()
+                    plugin_key = os.path.splitext(_)[0]
                     if conf.get("enable", []) != []:
-                        if mod.name not in conf.get("enable", []):
+                        if plugin_key not in conf.get("enable", []):
                             continue
-                    if mod.risk not in conf.risk:
-                        if conf.get("enable", []) == []:
-                            require_risk_list.append(mod.name)
-                            continue
-                    if mod.name in conf.get("disable", []):
+                    if plugin_key in conf.get("disable", []):
                         continue
                     if conf.command != "reverse_client":
                         try:
                             if mod.require_reverse is True:
-                                require_reverse_list.append(mod.name)
+                                require_reverse_list.append(plugin_key)
                                 continue
                         except:
                             pass
@@ -148,7 +144,7 @@ def initPlugins():
                         setattr(mod, 'type', plugin_type)
                     if getattr(mod, 'path', None) is None:
                         setattr(mod, 'path', relative_path)
-                    KB["registered"][mod.name] = mod
+                    KB["registered"][plugin_key] = mod
                 except PluginCheckError as e:
                     logger.error('Not "{}" attribute in the plugin: {}'.format(e, filename))
                 except AttributeError as e:
@@ -163,10 +159,11 @@ def initPlugins():
                 try:
                     mod = mod.Z0SCAN()
                     mod.checkImplemennted()
+                    plugin_key = os.path.splitext(_)[0]
                     if conf.get("enable", []) != []:
-                        if mod.name not in conf.get("enable", []):
+                        if plugin_key not in conf.get("enable", []):
                             continue
-                    if mod.name in conf.get("disable", []):
+                    if plugin_key in conf.get("disable", []):
                         continue
                     plugin_type = os.path.split(root)[1]
                     relative_path = ltrim(filename, path.root)
@@ -178,8 +175,8 @@ def initPlugins():
                     ports = [23]
                     fingers = ["connection refused by remote host.", "^SSH-"]
                     """
-                    KB["portscan"][mod.name] = (mod.ports, mod.fingers)
-                    KB["registered"][mod.name] = mod
+                    KB["portscan"][plugin_key] = (mod.ports, mod.fingers)
+                    KB["registered"][plugin_key] = mod
                 except PluginCheckError as e:
                     logger.error('Not "{}" attribute in the plugin: {}'.format(e, filename))
                 except AttributeError as e:
@@ -187,8 +184,6 @@ def initPlugins():
                     raise
     if not require_reverse_list == []:
         logger.warning(f'Skip scanner plugins that require of reverse: {colors.y}{require_reverse_list}{colors.e}')
-    if not require_risk_list == []:
-        logger.warning(f"Skip to load scanner plugins because of risk: {colors.y}{require_risk_list}{colors.e}")
     if not conf.command == "list":
         logger.info(f'Load scanner plugins: {colors.y}{len(KB["registered"])-1}{colors.e}')
     # 加载指纹识别插件
@@ -211,17 +206,17 @@ def initPlugins():
     if not conf.command == "list":
         logger.info(f'Load fingerprint plugins: {colors.y}{num}{colors.e}')
     # 加载模糊字典并储存为列表
-    conf.lists = dict()
-    for root, dirs, files in os.walk(path.lists):
+    conf.dicts = dict()
+    for root, dirs, files in os.walk(path.dicts):
         files = list(filter(lambda x: x.endswith('.txt'), files))
         for _ in files:
             name = os.path.splitext(_)[0]
-            file = os.path.join(path.lists, _)
+            file = os.path.join(path.dicts, _)
             try:
                 with open(file, 'r', encoding='utf-8') as f:
                     content = [line.strip() for line in f.readlines() if line.strip()]
                     # TODO: replace
-                    conf.lists[name] = content
+                    conf.dicts[name] = content
             except Exception as e:
                 logger.warning(f'Error loading list {file}: {str(e)}')
 
@@ -382,43 +377,11 @@ def _commands(v):
         if conf.command == "version":
             sys.exit(0)
         return
+    if v == "clean_redis":
+        if conf.get("clean_redis"):
+            from lib.core.red import set_conn, cleanred
+            cleanred() # 清理redis队列
     sys.exit(0)
-
-def _cleanup_update_backups():
-    """清理可能残留的更新备份文件"""
-    try:
-        if getattr(sys, 'frozen', False):
-            current_dir = os.path.dirname(sys.executable)
-            exe_name = os.path.basename(sys.executable)
-            backup_file = os.path.join(current_dir, f"{exe_name}.backup")
-            backup_dir = os.path.join(current_dir, "backup")
-            # 清理单个备份文件
-            if os.path.exists(backup_file):
-                try:
-                    os.remove(backup_file)
-                    logger.info("The remaining backup files have been cleared")
-                except Exception as e:
-                    logger.error(f"Failed to clean up the backup file: {e}")
-            # 清理备份目录
-            if os.path.exists(backup_dir):
-                try:
-                    if not os.listdir(backup_dir):
-                        os.rmdir(backup_dir)
-                        logger.info("The empty backup directory has been cleared")
-                    else:
-                        for file in os.listdir(backup_dir):
-                            if file.endswith('.backup'):
-                                try:
-                                    os.remove(os.path.join(backup_dir, file))
-                                except Exception:
-                                    pass
-                        if not os.listdir(backup_dir):
-                            os.rmdir(backup_dir)
-                            logger.info("The backup directory has been cleared")
-                except Exception as e:
-                    logger.error(f"Failed to clean up the backup directory: {e}")
-    except Exception as e:
-        logger.error(f"An error occurred while cleaning up the backup files: {e}")
 
 def check_up():
     try:
@@ -427,7 +390,7 @@ def check_up():
             logger.info(f"Version update: {colors.r}{VERSION}{colors.e} -> {colors.r}{latest['latest_version']}{colors.e}", origin="updater")
             logger.info(f"Desc: {latest['html_url']}", origin="updater")
     except Exception as e:
-        logger.error("Check for version update error: ", str(e))
+        pass
         
 def init(root, cmdline):
     cinit(autoreset=True)
@@ -437,10 +400,10 @@ def init(root, cmdline):
     check_up()
     _merge_options(cmdline) # 合并命令行与config中的参数
     _commands("version")
-    _cleanup_update_backups()
     initdb(root) # 初始化数据库
     _commands("dbcmd")
     _commands("reverse")
+    _commands("clean_redis")
     initPlugins() # 初始化插件
     _commands("list")
     _set_conf() # 按照设置配置
@@ -450,8 +413,5 @@ def init(root, cmdline):
     if conf.get("redis_client") or conf.get("redis_server"):
         from lib.core.red import set_conn, cleanred
         set_conn() # 连接到redis
-    if conf.get("clean_redis"):
-        from lib.core.red import set_conn, cleanred
-        cleanred() # 清理redis队列
     if conf.get("reverse_client"):
         check_reverse()

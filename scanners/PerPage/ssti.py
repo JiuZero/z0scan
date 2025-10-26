@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # JiuZero 2025/6/24
 
-from lib.helper.ssti.importssti import importssti
+from helper.ssti.importssti import importssti
 from api import generateResponse, VulType, Type, PluginBase, conf, KB, Threads
 
 class Z0SCAN(PluginBase):

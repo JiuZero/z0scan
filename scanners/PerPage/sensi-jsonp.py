@@ -13,8 +13,8 @@ import re
 from copy import deepcopy
 
 from api import random_str, VulType, PLACE, Type, PluginBase, conf, POST_HINT, KB
-from lib.helper.helper_sensitive import sensitive_bankcard, sensitive_idcard, sensitive_phone, sensitive_email
-from lib.helper.jscontext import analyse_Literal
+from helper.basesensitive import sensitive_bankcard, sensitive_idcard, sensitive_phone, sensitive_email
+from helper.jscontext import analyse_Literal
 
 
 class Z0SCAN(PluginBase):

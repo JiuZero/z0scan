@@ -19,7 +19,7 @@ class Z0SCAN(_PluginBase):
         try:
             self.ip, self.port = self.host.split(":")
             z0thread = Threads(name="leakpwd-postgresql")
-            z0thread.submit(self.process, conf.lists["postgresql-password"])
+            z0thread.submit(self.process, conf.dicts["postgresql-password"])
             if self.right_pwd is not None:
                 result = self.generate_result()
                 result.main({

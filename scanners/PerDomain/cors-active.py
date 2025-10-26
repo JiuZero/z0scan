@@ -5,8 +5,17 @@
 
 import inspect, tldextract
 from urllib.parse import urlparse
-from lib.helper.helper_cors import is_cors_permissive
+from helper.cors import is_cors_permissive
 from api import generateResponse, VulType, PLACE, Type, PluginBase, KB, conf
+
+origins_list = [
+    "https://whatever.github.io", 
+    "http://jsbin.com", 
+    "https://codepen.io", 
+    "https://jsfiddle.net", 
+    "http://www.webdevout.net", 
+    "https://repl.it", 
+]
 
 class Z0SCAN(PluginBase):
     name = "cors-active"
@@ -103,7 +112,7 @@ class Z0SCAN(PluginBase):
         sld = tldextract.extract(test_url.strip()).registered_domain
         domain = self.netloc_split_port
         is_cors_perm = False
-        for test_origin in conf.lists["origins"]:
+        for test_origin in origins_list:
             is_cors_perm = self.is_cors_permissive(test_origin, test_url)
             if is_cors_perm: break
         self.cors_result(module_name, is_cors_perm, "")

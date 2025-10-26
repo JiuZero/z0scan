@@ -5,7 +5,7 @@
 import argparse
 import os
 import sys
-from config import config
+import config
 from lib.core.log import logger
 
 def int_list(value):
@@ -59,6 +59,7 @@ def cmd_line_parser(argv=None):
     # Target options
     target = scan_parser.add_argument_group('Target', "Options has to be provided to define the target(s)")
     target.add_argument("-u", "--url", dest="url", help="Target URL (e.g. \"http://www.site.com/vuln.php?id=1\")")
+    target.add_argument("-c", "--crawl", dest="crawl", help="Crawl on URL and set depth for crawler", type=int, default=False)
     target.add_argument("-f", "--file", dest="url_file", help="Scan multiple targets given in a textual file")
     target.add_argument("-Rs", "--redis-server", dest="redis_server", help="Connect to redis, run as server (e.g. --redis-server password@host:port:db)")
     # Connecton options
@@ -79,15 +80,17 @@ def cmd_line_parser(argv=None):
     optimization = scan_parser.add_argument_group("Optimization", "Optimization options")
     optimization.add_argument("-l", "--level", dest="level", type=int, choices=list(range(0, 4)), default=config.LEVEL, help="Different level use different payloads: 0-3 (Default {})".format(config.LEVEL))
     optimization.add_argument("-r", "--risk", dest="risk", type=int_list, default=config.RISK, help="Different risk use different kind of scanners: [0, 1, 2, 3] (Default {})".format(config.RISK))
-    optimization.add_argument("-c", "--console", dest="console_port", help=f"Start console server and set port (Default {config.CONSOLE_PORT})", default=config.CONSOLE_PORT)
     optimization.add_argument('-t', "--threads", dest="threads", type=int, default=config.THREADS, help="Threads of plugins tasks (Default {})".format(config.THREADS))
+    optimization.add_argument("-cp", "--console-port", dest="console_port", type=int, help=f"Set port for console (Default {config.CONSOLE_PORT})", default=config.CONSOLE_PORT)
     optimization.add_argument('-pt', "--plugin-threads", dest="threads", type=int, default=config.PLUGIN_THREADS, help="Threads in plugins (Default {})".format(config.PLUGIN_THREADS))
     optimization.add_argument("-iw", '--ignore-waf', dest='ignore_waf', action="store_true", default=False, help="Ignore the WAF during detection")
     optimization.add_argument("-if", '--ignore-fingerprint', dest='ignore_fingerprint', action="store_true", default=False, help="Ignore fingerprint element scanning")
     optimization.add_argument("-sc", '--scan-cookie', dest='scan_cookie', action="store_true", default=False, help="Scan cookie during detection")
     optimization.add_argument('--disable', dest='disable', type=str_list, default=config.DISLOAD, help="Disload some scanners.")
     optimization.add_argument('--enable', dest='enable', type=str_list, default=[], help="Only load scanners")
+    optimization.add_argument("--ipv6", dest="ipv6", action="store_true", help="Use IPV6 address. It will try for IPV6 at first，else IPV4.")
     optimization.add_argument('--redis-clean', dest='redis_clean', action="store_true", default=False, help="Clean Redis")
+    optimization.add_argument('--short-out', dest='short_out', action="store_true", default=False, help="Output on cmd shortly like W13Scan.")
     optimization.add_argument("--debug", dest="debug", type=int, choices=list(range(1, 4)), help="Show programs's exception: 1-3")
     
     args = parser.parse_args()
@@ -103,9 +106,8 @@ def cmd_line_parser(argv=None):
         errMsg += "Use -h for basic and -hh for advanced help\n"
         parser.error(errMsg)
     
-    if dd.get("proxy") and dd.get("auto_proxy"):
-        errMsg = "Not allow to use options \"--proxy\" with \"--auto-proxy\"! "
-        errMsg += "Use -h for help\n"
+    if args.command == 'scan' and not (dd.get("url") or dd.get("url_file")) and dd.get("crawl"):
+        errMsg = "Crawler should be work with \"-u(--url)\" or \"-f(--file)\"."
         parser.error(errMsg)
 
     return args

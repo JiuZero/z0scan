@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # JiuZero 2025/6/21
 
-from lib.helper.helper_retirejs import main_scanner, js_extractor
+from helper.retirejs import main_scanner, js_extractor
 from api import VulType, Type, PLACE, PluginBase, generateResponse, conf, KB
 
 

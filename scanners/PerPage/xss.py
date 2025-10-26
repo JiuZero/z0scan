@@ -11,8 +11,8 @@ import requests
 
 from api import random_str, generateResponse, HTTPMETHOD, PLACE, VulType, Type, conf, PluginBase, KB
 from lib.core.settings import XSS_EVAL_ATTITUDES, TOP_RISK_GET_PARAMS
-from lib.helper.htmlparser import SearchInputInResponse, random_upper, getParamsFromHtml
-from lib.helper.jscontext import SearchInputInScript
+from helper.htmlparser import SearchInputInResponse, random_upper, getParamsFromHtml
+from helper.jscontext import SearchInputInScript
 
 
 class Z0SCAN(PluginBase):

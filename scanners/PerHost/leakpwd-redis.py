@@ -19,7 +19,7 @@ class Z0SCAN(_PluginBase):
     def audit(self):
         self.ip, self.port = self.host.split(":")
         z0thread = Threads(name="leakpwd-redis")
-        z0thread.submit(self.process, conf.lists["redis-password"])
+        z0thread.submit(self.process, conf.dicts["redis-password"])
         if self.right_pwd is not None:
             result = self.generate_result()
             result.main({

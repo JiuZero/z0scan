@@ -30,6 +30,9 @@ from lib.core.block_info import block_count
 from lib.core.data import conf, KB
 from lib.core.log import logger
 
+from urllib3.exceptions import (LocationParseError, MaxRetryError)
+from requests.exceptions import (MissingSchema, InvalidURL, ConnectTimeout, ConnectionError, Timeout)
+import socket
 
 def patch_all():
     disable_warnings()
@@ -129,7 +132,27 @@ def request(self, method, url,
         'allow_redirects': allow_redirects,
     }
     send_kwargs.update(settings)
-    resp = self.send(prep, **send_kwargs)
+    try:
+        resp = self.send(prep, **send_kwargs)
+    except ConnectTimeout as e:
+        logger.warning(f"Connection timeout to {urlparse(url).hostname}.", origin="RequestHandler")
+        resp = None
+    except Timeout as e:
+        logger.warning(f"Request timeout to {urlparse(url).hostname}.", origin="RequestHandler")
+        resp = None
+    except ConnectionError as e:
+        logger.warning(f"Connection error to {urlparse(url).hostname}: {e}", origin="RequestHandler")
+        resp = None
+    except MaxRetryError as e:
+        logger.warning(f"Max retries exceeded for {urlparse(url).hostname}.", origin="RequestHandler")
+        resp = None
+    except socket.timeout as e:
+        logger.warning(f"Socket timeout to {urlparse(url).hostname}.", origin="RequestHandler")
+        resp = None
+    except Exception as e:
+        logger.error(f"Unexpected error during request to {urlparse(url).hostname}: {e}", origin="RequestHandler")
+        resp = None
+    
     
     if record is True:
         KB["request"] += 1
@@ -137,7 +160,7 @@ def request(self, method, url,
             block.push_result_status(0)
         else:
             block.push_result_status(1)
-            if conf.redis:
+            if conf.get("redis_client"):
                 red = gredis()
                 red.hincrby("count", "request_fail", amount=1)
             KB["request_fail"] += 1

@@ -119,9 +119,12 @@ class OutPut(object):
         Payload : ' and 1=2--+
         ....
         """
-        msg = "<{}{}{}> | [{}{}{}] [{}{}{}]\n".format(colors.m, str(output["hostname"]), colors.e, colors.m, output["type"], colors.e, colors.m, output["name"], colors.e)
-        msg += "{}URL{} : {}\n".format(colors.cy, colors.e, output["url"])
-        msg += "{}Vultype{} : {}\n".format(colors.cy, colors.e, output["vultype"])
+        if conf.short_out:
+            msg = "<{}{}{}> | [{}{}{}] [{}{}{}]\n".format(colors.cy, colors.e, output["url"], colors.m, output["type"], colors.e, colors.m, output["name"], colors.e)
+        else:
+            msg = "<{}{}{}> | [{}{}{}] [{}{}{}]\n".format(colors.m, str(output["hostname"]), colors.e, colors.m, output["type"], colors.e, colors.m, output["name"], colors.e)
+            msg += "{}URL{} : {}\n".format(colors.cy, colors.e, output["url"])
+            msg += "{}Vultype{} : {}\n".format(colors.cy, colors.e, output["vultype"])
         if output["show"]:
             for key, value in output["show"].items():
                 msg += "{}{}{} : {}\n".format(colors.cy, key, colors.e, value)

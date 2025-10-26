@@ -8,13 +8,13 @@ from bs4 import BeautifulSoup as BS
 import re
 from api import PluginBase, VulType, Type, PLACE, conf, logger, KB, generateResponse
 from lib.core.settings import brute_fail_words
-from lib.helper.helper_pagebrute import Parser
+from helper.pagebrute import Parser
 
 def get_res_length(res):
     return len(res.text)
 
 class Z0SCAN(PluginBase):
-    name = "leakpwd-page"
+    name = "leakpwd-page-passive"
     desc = 'Weak Password on Login Page'
     version = "2025.5.15"
     risk = 2
@@ -69,14 +69,14 @@ class Z0SCAN(PluginBase):
         if not self.condition:
             return
         self.error_length = self.get_error_length()
-        username_dict = conf.lists["username"]
-        password_dict = conf.lists["password"]
+        username_dict = conf.dicts["username"]
+        password_dict = conf.dicts["password"]
         # 常规账号密码爆破
         res, username, password = self.crack_task(username_dict, password_dict)
         # 万能密码爆破
         if (not username and not password) or conf.level == 3:
             if conf.loginpage_sqli:
-                sqlin_user_dict = sqlin_pass_dict = conf.lists["sqli-password"]
+                sqlin_user_dict = sqlin_pass_dict = conf.dicts["sqli-password"]
                 res, username, password = self.crack_task(sqlin_user_dict, sqlin_pass_dict)
         # 二次验证
         if username and password:

@@ -46,7 +46,7 @@ class Z0SCAN(PluginBase):
         if self.requests.url.count("/") > int(conf.max_dir) + 2:
             return
         if conf.level != 0:
-            file_dic = conf.lists["backup"]
+            file_dic = conf.dicts["backup"]
             url = self.requests.url.rstrip("/")
             directory = os.path.basename(url)
             headers = self.requests.headers.copy()

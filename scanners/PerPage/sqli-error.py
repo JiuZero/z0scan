@@ -2,11 +2,142 @@
 # -*- coding: utf-8 -*-
 # w8ay 2020/5/10
 # JiuZero 2025/7/29
-from config.others.sqli_errors import rules
 from api import generateResponse, random_num, random_str, VulType, Type, PluginBase, conf, logger, Threads, KB
-from lib.helper.helper_sensitive import sensitive_page_error_message_check
-from lib.helper.paramanalyzer import VulnDetector
+from helper.basesensitive import sensitive_page_error_message_check
+from helper.paramanalyzer import VulnDetector
 import re
+
+sqli_errors = {
+    "Microsoft SQL": [
+        r'System\.Data\.OleDb\.OleDbException', 
+        r'\[SQL Server\]', 
+        r'\[SQLServer JDBC Driver\]', 
+        r'\[Microsoft\]\[ODBC SQL Server Driver\]', 
+        r'\[SqlException', 
+        r'System\.Data\.SqlClient\.', 
+        r'mssql_query\(\)', 
+        r'odbc_exec\(\)', 
+        r'Microsoft OLE DB Provider for',
+        r'Incorrect syntax near', 
+        r'Sintaxis incorrecta cerca de', 
+        r'Syntax error in string in query expression', 
+        r'ADODB\.Field \(0x800A0BCD\)<br>', 
+        r"Procedure '[^']+' requires parameter '[^']+'", 
+        r"ADODB\.Recordset'", 
+        r"ADOConnection", 
+        r'\[Macromedia\]\[SQLServer JDBC Driver\]', 
+        r'the used select statements have different number of columns', 
+        r"Exception.*?\WServer.SqlException", 
+    ],
+    "DB2": [
+        r'DB2 SQL error:', 
+        r'internal error \[IBM\]\[CLI Driver\]\[DB2/6000\]', 
+        r'SQLSTATE=\d+', 
+        r'\[CLI Driver\]', 
+    ],
+    "SyBase": [
+        r"Sybase message:", 
+        r'Sybase Driver', 
+        r'\[SYBASE\]'
+    ],
+    "Microsoft Access": [
+        r'Syntax error in query expression', 
+        r'Data type mismatch in criteria expression', 
+        r'Microsoft JET Database Engine', 
+        r"Access Database Engine", 
+        r'\[Microsoft\]\[ODBC Microsoft Access Driver\]', 
+    ],
+    "Oracle": [
+        r'(PLS|ORA)-[0-9][0-9][0-9][0-9]',
+        r"Oracle error",
+        r"Oracle.*?Driver",
+        r"Warning.*?\Woci_",
+        r"Oracle.*?Database",
+    ],
+    "PostgreSQL": [
+        r'PostgreSQL query failed', 
+        r'pg_query\(\) \[:', 
+        r'pg_exec\(\) \[:', 
+        r'valid PostgreSQL result', 
+        r'Npgsql', 
+        r"Warning.*?\Wpg_",
+        r"org.postgresql.util.PSQLException",
+    ],
+    "MySQL": [
+        r'valid MySQL',
+        r'mysql_', 
+        r'on MySQL result index', 
+        r'You have an error in your SQL syntax', 
+        r'MySQL server version for the right syntax to use', 
+        r'\[MySQL\]\[ODBC', 
+        r"Column count doesn't match", 
+        r"the used select statements have different number of columns", 
+        r"Table '[^']+' doesn't exist", 
+        r'DBD::mysql::st execute failed', 
+        r"mysqli.query",
+    ],
+    "Informix": [
+        r'com\.informix\.jdbc', 
+        r'Dynamic Page Generation Error:', 
+        r'An illegal character has been found in the statement', 
+        r'\[Informix\]'
+    ],
+    "InterBase": [
+        r'<b>Warning</b>:  ibase_', 
+        r'Dynamic SQL Error', 
+        r'Unexpected end of command in statement',
+    ],
+    "DML": [
+        r'\[DM_QUERY_E_SYNTAX\]', 
+        r'has occurred in the vicinity of:', 
+        r'A Parser Error \(syntax error\)', 
+    ],
+    "Java(HQL)": [
+        r'java\.sql\.SQLException', 
+        r'java\.sql\.SQLSyntaxErrorException',
+        r'org\.hibernate\.(query\.)?(Syntax|Query)Exception'
+        r'QuerySyntaxException', 
+        r'HQLException', 
+        r'\[unexpected token: .*?\]', 
+        r'could not resolve property: ', 
+    ],
+    "SQLite": [
+        r'SQLite/JDBCDriver',
+        r'System\.Data\.SQLite\.SQLiteException',
+        r'SQLITE_ERROR',
+        r'SQLite\.Exception',
+        r"Warning.*?sqlite_", 
+    ],
+    "UNKNOWN": [
+        r"SQL syntax.*?error",
+        r"Incorrect syntax near",
+        r"Syntax error.*?in query expression",
+        r"Unexpected.*?in statement",
+        r"Division by zero",
+        r"Unable to connect to database",
+        r"DB Error",
+        r"query failed",
+        r"Unable to execute query",
+        r"Invalid SQL",
+        r"Database.*?error",
+        r"SQL command.*?not properly ended",
+        r"Malformed query",
+        r"Object reference not set to an instance",
+        r"DatabaseException",
+        r"DBD::mysql::st",
+        r"JSQLConnect",
+        r"Driver.*?SQL",
+        r"Invalid column name",
+        r"Column.*?not found",
+        r"Table.*?not found",
+        r"Server Error in.*?Application",
+        r"SQL statement was not properly terminated"
+        r"Unclosed quotation mark", 
+        r'列 [\"\']?[\w]+[\"\']? 不存在', 
+        r'附近的语法不正确|附近有语法错误|后的引号不完整|未闭合'
+        r'&lt;b&gt;Warning&lt;/b&gt;\:  ibase_'
+    ]
+}
 
 class Z0SCAN(PluginBase):
     name = "sqli-error"
@@ -66,17 +197,17 @@ class Z0SCAN(PluginBase):
             ]
             if conf.level == 3: 
                 _payloads += [
-                ## 强制报错
-                # MySQL
-                r'\' AND 0xG1#',
-                # PostgreSQL  
-                r"' AND 'a' ~ 'b\[' -- ",
-                # MSSQL
-                r"; RAISERROR('Error generated', 16, 1) -- ", 
-                # Oracle
-                r"' UNION SELECT XMLType('<invalid><xml>') FROM dual -- ",  
-                # SQLite
-                r"' UNION SELECT SUBSTR('o', -1, 1) -- ",
+                    ## 强制报错
+                    # MySQL
+                    r'\' AND 0xG1#',
+                    # PostgreSQL  
+                    r"' AND 'a' ~ 'b\[' -- ",
+                    # MSSQL
+                    r"; RAISERROR('Error generated', 16, 1) -- ", 
+                    # Oracle
+                    r"' UNION SELECT XMLType('<invalid><xml>') FROM dual -- ",  
+                    # SQLite
+                    r"' UNION SELECT SUBSTR('o', -1, 1) -- ",
                 ]
     
             iterdatas = self.generateItemdatas()
@@ -85,7 +216,7 @@ class Z0SCAN(PluginBase):
     
     def Get_sql_errors(self):
         sql_errors = []
-        for database, re_strings in rules.items():
+        for database, re_strings in sqli_errors.items():
             for re_string in re_strings:
                 sql_errors.append((re.compile(re_string, re.IGNORECASE), database))
         return sql_errors
@@ -94,6 +225,11 @@ class Z0SCAN(PluginBase):
         k, v, position = _
         if not VulnDetector(self.requests.url).is_sql_injection(k, v):
             return
+        if "email" in str(k) or "@" in str(v):
+            _payloads += [
+                "admin'--@example.com", 
+                "test'+'@example.com", 
+            ]
         for _payload in _payloads:
             payload = self.insertPayload({
                 "key": k, 
@@ -134,7 +270,6 @@ class Z0SCAN(PluginBase):
             message_lists = sensitive_page_error_message_check(html)
             # 在SQL报错注入过程中检测到未知报错
             if message_lists:
-                # 计算未知错误的概率 (固定为中等置信度)
                 probability = 0.5
                 result = self.generate_result()
                 result.main({
@@ -144,13 +279,13 @@ class Z0SCAN(PluginBase):
                     "show": {
                         "Position": f"{position} >> {k}",
                         "Payload": payload, 
-                        "Msg": f"Receive Error Msg {repr(message_lists)} (Probability: {probability:.2f})"
+                        "Msg": f"Receive Error Msg {repr(message_lists)}"
                         }
                     })
                 result.step("Request1", {
                     "request": r.reqinfo, 
                     "response": generateResponse(r), 
-                    "desc": f"Receive Error Msg {repr(message_lists)} (Probability: {probability:.2f})"
+                    "desc": f"Receive Error Msg {repr(message_lists)}"
                     })
                 self.success(result)
                 break

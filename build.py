@@ -53,8 +53,7 @@ def get_platform_specific_args():
     return args
 
 def get_actual_module_name(pkg_name):
-    """更可靠的模块名检测方案"""
-    # 1. 首先尝试直接导入
+    """模块名检测"""
     try:
         module = importlib.import_module(pkg_name)
         return module.__name__.split('.')[0]  # 返回顶级包名
@@ -76,19 +75,17 @@ def get_actual_module_name(pkg_name):
     }
     if pkg_name in common_variants:
         return common_variants[pkg_name]
-    # 3. 尝试通过元数据检测
     try:
-        # Python 3.8+ 现代方法
         try:
             dist = distribution(pkg_name)
             if dist is not None:
-                # 方法1: 检查包的顶级模块
+                # 检查包的顶级模块
                 if dist.files:
                     for file in dist.files:
                         parts = file.parts
                         if len(parts) > 0 and parts[0].endswith('.py'):
                             return parts[0][:-3]  # 移除.py后缀
-                # 方法2: 检查importlib导入
+                # 检查importlib导入
                 for finder in pkgutil.iter_importers():
                     if finder.find_spec(pkg_name):
                         return pkg_name
@@ -103,7 +100,6 @@ def get_actual_module_name(pkg_name):
                     return top_level.split('\n')[0].strip()
     except Exception:
         pass
-    # 4. 最终回退到原始名称
     return pkg_name
 
 def verify_import(pkg_name, actual_name):
@@ -184,9 +180,10 @@ def build():
         '--onefile',
         '--python-flag=-u', 
         '--include-package=lib',
-        '--nofollow-import-to=config',
+        '--nofollow-import-to=helper',
         '--include-package=api',
-        "--include-data-file=doc/tld-patch/effective_tld_names.dat.txt=tld/res/effective_tld_names.dat.txt",
+        "--include-data-file=data/*=data/*",
+        "--include-data-file=doc/patch/effective_tld_names.dat.txt=tld/res/effective_tld_names.dat.txt",
         '--remove-output', 
         '--nofollow-import-to=*.tests,*.test', 
         '--assume-yes-for-downloads',
@@ -214,7 +211,7 @@ def build():
                     missing_modules.append(f"{pkg_name} -> {actual_name}")
                     continue
                 
-                # 添加包含指令（优化插件支持）
+                # 添加包含指令
                 nuitka_cmd.extend([
                     f"--include-module={actual_name}",
                     f"--include-package={actual_name}",
@@ -224,7 +221,7 @@ def build():
         print("\n:: Warning: Missing modules detected (will continue for CI):")
         for mod in missing_modules:
             print(f"  - {mod}")
-        if not os.getenv('CI'):  # 非CI环境才询问
+        if not os.getenv('CI'):
             if input("Continue compiling? (y/n): ").lower() != 'y':
                 sys.exit(1)
 
@@ -249,7 +246,7 @@ def build():
 def setup_build_directory():
     """优化资源文件处理，与release.yml配合"""
     # 需要复制的资源文件
-    resource_dirs = ['scanners', 'config', 'fingerprints', 'data']
+    resource_dirs = ['scanners', 'dicts', 'fingerprints', 'helper']
     
     build_dir = Path('z0scan')
     try:
@@ -267,8 +264,6 @@ def setup_build_directory():
         print(f"\n:: RESOURCE COPY ERROR: {str(e)}")
         if not os.getenv('CI'):  # CI环境中忽略资源错误
             sys.exit(1)
-
-    # Create zip archive
     system = platform.system().lower()
     arch = platform.machine().lower()
     zip_filename = f"z0scan-{system}-{arch}.zip"
