@@ -29,7 +29,6 @@ from lib.core.enums import HTTPMETHOD
 from lib.core.settings import notAcceptedExt
 from lib.parse.parse_request import FakeReq
 from lib.parse.parse_response import FakeResp
-from lib.core.db import selectdb, insertdb
 from socket import socket
 import socks as socks5
 

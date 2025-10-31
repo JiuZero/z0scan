@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 # w8ay 2019/7/5
 
-import threading
-import urllib
+import threading, re, urllib
 from urllib import parse as urlparse
 from urllib.request import unquote
 
 from lib.helper.simhash import Simhash
+from lib.core.db import insertdb, select_all_db
 
 Chars = [',', '-', '_']
 
@@ -36,7 +36,7 @@ def url_etl(url):
     return url_new
 
 
-def etl(str, onlyNUM=False):
+def etl(str, STR=True, NUM=True, CHAR=True, OTHER=True, merge_num=False):
     '''
     传入一个字符串，将里面的字母转化为A，数字转化为N，特殊符号转换为T，其他符号或者字符转化成C
     :param str:
@@ -44,22 +44,28 @@ def etl(str, onlyNUM=False):
     :return:
     '''
     chars = ""
+    state = False
     for c in str:
         c = c.lower()
-        if not onlyNUM:
-            if ord('a') <= ord(c) <= ord('z') and not onlyNUM:
+        if STR is True:
+            if ord('a') <= ord(c) <= ord('z'):
                 chars += 'A'
-            elif ord('0') <= ord(c) <= ord('9'):
-                chars += 'N'
-            elif c in Chars:
-                chars += 'T'
-            else:
-                chars += 'C'
-        else:
+                state = True
+        if NUM is True:
             if ord('0') <= ord(c) <= ord('9'):
                 chars += 'N'
+                state = True
+        if CHAR is True:
+            if c in Chars:
+                chars += 'T'
+                state = True
+        if OTHER is True:
+            if state == False:
+                chars += 'C'
             else:
                 chars += c
+    if merge_num == True:
+        chars = re.sub(r'N+', 'N', chars)
     return chars
 
 
@@ -103,13 +109,15 @@ class SpiderSet(object):
     """
 
     def __init__(self):
-        self.spider_list = {
-            "PerPage": {},
-            "PerDir": {},
-            "PerDomain": {},
-            "PerHost": {}
-        }
         self.lock = threading.Lock()
+
+    def _load_spider_data(self, plugin, netloc):
+        result = select_all_db('spiderset', 'etl_url', 
+                              where='plugin = ? AND netloc = ?', 
+                              where_values=[plugin, netloc])
+        if result:
+            return [row[0] for row in result]
+        return []
 
     def add(self, url, plugin):
         """
@@ -124,21 +132,32 @@ class SpiderSet(object):
             plugin = str(plugin)
 
         self.lock.acquire()
-        if plugin not in self.spider_list:
-            self.spider_list[plugin] = {}
-        netloc = urlparse.urlparse(url).netloc
-        if netloc not in self.spider_list[plugin]:
-            self.spider_list[plugin][netloc] = []
-        etl = url_etl(url)  # url泛化表达式
-        score = 0
-        for etl_url in self.spider_list[plugin][netloc]:
-            if not url_compare(etl, etl_url):
-                score += 1
-        if score == len(self.spider_list[plugin][netloc]):
-            self.spider_list[plugin][netloc].append(etl)
-        else:
-            ret = False
-        self.lock.release()
+        try:
+            if plugin == "PerHost":
+                netloc = etl = url
+            else:
+                netloc = urlparse.urlparse(url).netloc
+                etl = url_etl(url)  # url泛化表达式
+            
+            # 从数据库加载现有数据
+            existing_urls = self._load_spider_data(plugin, netloc)
+            
+            score = 0
+            for etl_url in existing_urls:
+                if not url_compare(etl, etl_url):
+                    score += 1
+            
+            if score == len(existing_urls):
+                # 插入新记录
+                insertdb('spiderset', {
+                    'plugin': plugin,
+                    'netloc': netloc,
+                    'etl_url': etl
+                })
+            else:
+                ret = False
+        finally:
+            self.lock.release()
         return ret
         
     def inside(self, url, plugin):
@@ -148,21 +167,27 @@ class SpiderSet(object):
             plugin = str(plugin)
 
         self.lock.acquire()
-        if plugin not in self.spider_list:
-            self.spider_list[plugin] = {}
-        netloc = urlparse.urlparse(url).netloc
-        if netloc not in self.spider_list[plugin]:
-            self.spider_list[plugin][netloc] = []
+        try:
+            if plugin == "PerHost":
+                netloc = etl = url
+            else:
+                netloc = urlparse.urlparse(url).netloc
+                etl = url_etl(url)  # url泛化表达式
+            
+            # 从数据库加载现有数据
+            existing_urls = self._load_spider_data(plugin, netloc)
+            
+            if not existing_urls:
+                ret = True
+            else:
+                score = 0
+                for etl_url in existing_urls:
+                    if not url_compare(etl, etl_url):
+                        score += 1
+                if score == len(existing_urls):
+                    ret = True
+                else:
+                    ret = False
+        finally:
             self.lock.release()
-            return False
-        etl = url_etl(url)  # url泛化表达式
-        score = 0
-        for etl_url in self.spider_list[plugin][netloc]:
-            if not url_compare(etl, etl_url):
-                score += 1
-        if score == len(self.spider_list[plugin][netloc]):
-            ret = True
-        else:
-            ret = False
-        self.lock.release()
         return ret

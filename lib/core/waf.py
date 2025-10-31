@@ -11,27 +11,15 @@ from urllib.parse import quote
 
 def detector(self):
     where = "hostname='{}'".format(self.requests.hostname)
-    history1 = selectdb("info", "waf", where=where)
-    where = "hostname='{}'".format(self.requests.hostname)
-    history2 = selectdb("cache", "hostname", where=where)
+    history = selectdb("info", "waf", where=where)
     
-    # 存在WAF且本次启动后有检测过
-    if history1 and history2:
-        self.fingerprints.waf = str(history1[0])
-        return
-    
-    # 不存在WAF且本次启动后有检测过
-    elif not history1 and history2:
+    if history == "NoWaf":
         self.fingerprints.waf = False
         return
+    elif not history is None:
+        self.fingerprints.waf = str(history[0])
+        return
     
-    # 存在WAF但本次启动后没有检测过
-    elif history1 and not history2:
-        if conf.skip_waf_recheck is True:
-            self.fingerprints.waf = str(history1[0])
-            return
-        
-    # 不存在WAF但本次启动后没有检测（未知情况）
     rand_param = '/?' + ''.join(random.choices(string.ascii_lowercase, k=4)) + '='
     payload = "UNION ALL SELECT 1,'<script>alert(\"XSS\")</script>' FROM information_schema WHERE --/**/ EXEC xp_cmdshell('cat ../../../etc/passwd')#"
     try:
@@ -64,6 +52,8 @@ def detector(self):
         # 3. 关键字符
         keys = ['攻击行为', '创宇盾', '拦截提示', '非法', '安全威胁', '防火墙', '黑客', '不合法', "Illegal operation"]
         '''
+        cv = {"hostname": self.requests.hostname,"waf": "NoWaf"}
+        insertdb("info", cv)
         self.fingerprints.waf = False
         return
         

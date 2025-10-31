@@ -72,37 +72,88 @@ def selectdb(table: str, columns:str, where=None, where_values=None):
     except Exception as e:
         logger.error(e, origin="db")
         return False
+
+def select_all_db(table: str, columns:str, where=None, where_values=None):
+    try:
+        query = "SELECT {} FROM {}".format(columns, table)
+        if where:
+            query += " WHERE {}".format(where)
+        logger.debug("The DB Query: {}".format(query), origin="db", level=3)
+        
+        with db_lock:  # 使用锁确保线程安全
+            with db_connection() as conn:
+                cursor = conn.cursor()
+                if where and where_values:
+                    cursor.execute(query, where_values)
+                else:
+                    cursor.execute(query)
+                result = cursor.fetchall()
+        return result
+    except sqlite3.OperationalError as e:
+        logger.warning(e, origin="db")
+        return False
+    except Exception as e:
+        logger.error(e, origin="db")
+        return False
+
+def updatedb(table: str, set_clause: str, where: str, values: list):
+    try:
+        query = "UPDATE {} SET {} WHERE {}".format(table, set_clause, where)
+        logger.debug("The DB Query: {}".format(query), origin="db", level=3)
+        
+        with db_lock:  # 使用锁确保线程安全
+            with db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(query, values)
+                conn.commit()
+        return True
+    except Exception as e:
+        logger.error(e, origin="db")
+        return False
+
+def deletedb(table: str, where: str, where_values: list):
+    try:
+        query = "DELETE FROM {} WHERE {}".format(table, where)
+        logger.debug("The DB Query: {}".format(query), origin="db", level=3)
+        
+        with db_lock:  # 使用锁确保线程安全
+            with db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(query, where_values)
+                conn.commit()
+        return True
+    except Exception as e:
+        logger.error(e, origin="db")
+        return False
     
 def initdb(root):
     global dbpath
     dbpath = os.path.join(root, 'data', 'z0scan.db')
-    
-    with db_lock:  # 使用锁确保线程安全
-        with db_connection() as conn:
-            cursor = conn.cursor()
-            try:
-                cursor.execute('DELETE FROM block_count')
-                cursor.execute('DELETE FROM block_id')
-            except:
-                pass
-            # 域名信息记录
-            # port: |80|443|
-            # fingerprint: |os=["LINUX"]|webserver=["NGINX"]|programing=["PHP"]|
-            cursor.execute('CREATE TABLE IF NOT EXISTS info(hostname TEXT, waf TEXT, port TEXT, fingerprint TEXT)')
-            cursor.execute('CREATE TABLE IF NOT EXISTS block_count(id TEXT, count TEXT)')
-            cursor.execute('CREATE TABLE IF NOT EXISTS block_host(id TEXT)')
-            # 缓存记录（记录每次项目启动后扫描过的URL及关联信息）
-            try:
-                cursor.execute('DELETE FROM cache')
-            except:
-                pass
-            try:
-                cursor.execute('CREATE TABLE IF NOT EXISTS cache(hostname TEXT, requestsRaw TEXT)')
+    try:
+        with db_lock:  # 使用锁确保线程安全
+            with db_connection() as conn:
+                cursor = conn.cursor()
+                # 本次扫描信息记录
+                cursor.execute('CREATE TABLE IF NOT EXISTS info(hostname TEXT, waf TEXT)')
+                cursor.execute('CREATE TABLE IF NOT EXISTS block_count(id TEXT, count TEXT)')
+                cursor.execute('CREATE TABLE IF NOT EXISTS block_host(id TEXT)')
+                try:
+                    cursor.execute('DELETE FROM info')
+                    cursor.execute('DELETE FROM block_count')
+                    cursor.execute('DELETE FROM block_host')
+                except:
+                    pass
+                # SpiderSet 数据表
+                cursor.execute('CREATE TABLE IF NOT EXISTS spiderset(plugin TEXT, netloc TEXT, etl_url TEXT, UNIQUE(plugin, netloc, etl_url))')
+                try:
+                    cursor.execute('DELETE FROM spiderset')
+                except:
+                    pass
                 conn.commit()
                 return True
-            except Exception as e:
-                logger.error(e, origin="db")
-                return False
+    except Exception as e:
+        logger.error(e, origin="db")
+        return False
 
 def execute_sqlite_command(command: str) -> Union[List[Dict[str, Any]], str]:
     try:

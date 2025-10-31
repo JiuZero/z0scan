@@ -46,6 +46,8 @@ def modulePath():
     return dir_path
 
 def crawl(url):
+    logger.warning("Under maintenance, temporarily unavailable.")
+    sys.exit(0)
     crawler = Crawler(
         max_depth=int(conf.crawl),
         threads=int(conf.crawl_threads),

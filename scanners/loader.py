@@ -197,8 +197,6 @@ class Z0SCAN(PluginBase):
             if parent_url.count("/") > int(conf.max_dir) + 2:
                 return
             """
-            if not KB["spiderset"].add(parent_url, 'get_link_directory'):
-                continue
             if KB["spiderset"].add(parent_url, 'PerDir'):
                 req = requests.get(parent_url, headers=headers, allow_redirects=False)
                 fake_req = FakeReq(req.url, headers, HTTPMETHOD.GET, "")

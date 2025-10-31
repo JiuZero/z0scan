@@ -14,7 +14,6 @@ TIMEOUT = 6  # 超时时间
 LEVEL = 2 # 0:纯被动分析模式，不做额外请求，即不加载Payload | 1:最低请求量的扫描，最低的业务影响 | 2:中等请求量的扫描，Payload多为通用 | 3:大量请求扫描，Payload覆盖面更广
 RISK = [0, 1, 2] # -1:几乎无危害的常见漏洞，0:可能导致危害产生，1:低危害，2. 中等危害，3:高危害
 CRAWL_THREADS = 4 # 爬虫线程
-SKIP_WAF_RECHECK = False # 是否跳过曾经检测到WAF但在本次启动后的扫描中未检测的站点的WAF检测
 IPV6 = False # 需网络支持ipv6（使用此参数优先ipv6地址，ipv6无记录再使用ipv4地址）
 PSEUDO_STATIC_KEYWORDS = ['id', 'pid', 'cid', 'user', 'page', 'category', 'column_id', 'tty'] # 伪静态关键点参数（忽略大小写）
 SMARTSCAN = {

@@ -24,3 +24,4 @@ psycopg2-binary
 pysmb
 pymongo
 pymysql
+dateutil
