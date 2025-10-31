@@ -17,7 +17,7 @@ setuptools.setup(
     author='JiuZero',
     author_email='jiuzer0@qq.com',
     description='An auxiliary active and passive scanning tool with Web and Full-Version Service vulnerability detection as the core. | 一款以Web与全版本服务漏洞检测为核心的辅助性主、被动扫描工具.',
-    long_description=desc,
+    long_description=long_description,
     packages=setuptools.find_packages(),
     entry_points={"console_scripts": ["z0=z0scan.z0:main"]},
     include_package_data=True,
