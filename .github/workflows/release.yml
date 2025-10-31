@@ -86,7 +86,7 @@ jobs:
           TARGET_ARCH: ${{ matrix.arch }}
         run: |
           python ${{ env.BUILD_SCRIPT }}
-
+          
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -107,16 +107,34 @@ jobs:
           pattern: z0scan-*.zip
           merge-multiple: true
 
+      - name: Determine release parameters
+        id: get_params
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+            echo "prerelease=${{ github.event.inputs.is_prerelease }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            # 自动判断是否为预发布版本
+            if [[ "${{ github.ref_name }}" =~ -(beta|alpha|rc|pre) ]]; then
+              echo "prerelease=true" >> $GITHUB_OUTPUT
+            else
+              echo "prerelease=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.version }}
+          tag_name: ${{ steps.get_params.outputs.tag }}
           overwrite: true
-          release_name: Release ${{ github.event.inputs.version }}
+          release_name: Release ${{ steps.get_params.outputs.tag }}
           body: |-
             
             **构建信息:**
+            - 版本: ${{ steps.get_params.outputs.tag }}
             - 提交哈希: ${{ github.sha }}
+            - 触发方式: ${{ github.event_name }}
             - 分支: ${{ github.ref_name }}
       
             **支持平台:**
@@ -130,4 +148,4 @@ jobs:
             artifacts/z0scan-windows-amd64.zip
             artifacts/z0scan-darwin-arm64.zip
           draft: false
-          prerelease: ${{ github.event.inputs.is_prerelease }}
+          prerelease: ${{ steps.get_params.outputs.prerelease }}
