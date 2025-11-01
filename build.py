@@ -183,7 +183,6 @@ def build():
         '--include-package=lib',
         '--nofollow-import-to=helper',
         '--include-package=api',
-        "--include-data-file=data/*=data/*",
         "--include-data-file=doc/patch/effective_tld_names.dat.txt=tld/res/effective_tld_names.dat.txt",
         '--remove-output', 
         '--nofollow-import-to=*.tests,*.test', 
