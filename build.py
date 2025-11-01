@@ -70,6 +70,7 @@ def get_actual_module_name(pkg_name):
         'PySocks': 'socks', 
         'requests-toolbelt': 'requests_toolbelt', 
         'psycopg2-binary': 'psycopg2', 
+        'python-dateutil': 'dateutil', 
         'pysmb': 'smb', 
         'PyQt-Fluent-Widgets[full]': 'qfluentwidgets', 
     }

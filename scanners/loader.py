@@ -24,14 +24,14 @@ rbracket = re.compile(r'\((.*)\)')
 def check(_id):
     with sqlite3.connect(os.path.join(path.data, 'cmsfinger.db')) as conn:
         cursor = conn.cursor()
-        result = cursor.execute('SELECT name, keys FROM `tide` WHERE id=\'{}\''.format(_id))
+        result = cursor.execute('SELECT name, keys FROM `finger` WHERE id=\'{}\''.format(_id))
         for row in result:
             return row[0], row[1]
 
 def count():
     with sqlite3.connect(os.path.join(path.data, 'cmsfinger.db')) as conn:
         cursor = conn.cursor()
-        result = cursor.execute('SELECT COUNT(id) FROM `tide`')
+        result = cursor.execute('SELECT COUNT(id) FROM `finger`')
         for row in result:
             return row[0]
 
@@ -59,7 +59,6 @@ class Z0SCAN(PluginBase):
 
     def handle(self, _id, header, body, title):
         """取出数据库的key进行匹配"""
-        self.finger = []
         name, key = check(_id)
         # 满足一个条件即可的情况
         if '||' in key and '&&' not in key and '(' not in key:
@@ -159,6 +158,7 @@ class Z0SCAN(PluginBase):
         domain = deepcopy(self.requests.protocol + "://" + self.requests.hostname + ":" + str(self.requests.port)) # 保留端口去重
         if KB["spiderset"].add(domain, 'PerDomain'):
             try:
+                self.finger = []
                 header, body, title = self.get_info()
                 for _id in range(1, int(count()),1):
                     try:

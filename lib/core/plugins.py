@@ -142,12 +142,18 @@ class PluginBase(object):
         if conf.scan_cookie and self.requests.cookies:
             for k, v in self.requests.cookies.items():
                 iterdatas.append([k, v, PLACE.COOKIE])
-        if any(re.search(r'/{}[-_/]([^-_/?#&=]+)'.format(re.escape(k)), self.requests.url, re.I) for k in conf.pseudo_static_keywords):
+        if any(re.search(r'/{}(?:[-_/]|\.)([^-_/?#&=\.]+)'.format(re.escape(k)), self.requests.url, re.I) for k in conf.pseudo_static_keywords):
+            # 分隔符 + 键 + 分隔符 + 值 + (分隔符或结束)
             for k in conf.pseudo_static_keywords:
-                pattern = re.compile(r'/{}[-_/]([^-_/?#&=]+)'.format(re.escape(k)), re.I)
+                pattern = re.compile(
+                    r'/{}(?:[-_/]|\.)([^?#&]*)'.format(re.escape(k)), 
+                    re.I
+                )
                 match = pattern.search(self.requests.url)
                 if match:
                     v = match.group(1)
+                    if '.' in v:
+                        v = v.split('.')[0]
                     iterdatas.append([k, v, PLACE.URL])
         return iterdatas
 
@@ -324,7 +330,16 @@ class PluginBase(object):
         elif position == PLACE.URL:
             # 向伪静态注入点插入的未编码的Payload可能导致网站报错
             payload = parse.quote(payload)
-            url = re.sub(r'/{}[-_/]([^-_/?#&=]+)'.format(re.escape(key), re.escape(value)),r'/{}[-_/]([^-_/?#&=]+)'.format(key, parse.quote(value + payload)), self.requests.url)
+            pattern = r'(/{}(?:[-_/]|\.))([^?#&]*)'.format(re.escape(key))
+            def replacement(match):
+                separator = match.group(1)
+                original_value = match.group(2)
+                if '.' in original_value:
+                    base_value, extension = original_value.split('.', 1)
+                    return '{}{}{}.{}'.format(separator, base_value, payload, extension)
+                else:
+                    return '{}{}{}'.format(separator, original_value, payload)
+            url = re.sub(pattern, replacement, self.requests.url, flags=re.I)
             return url
 
     def req(self, position, payload, allow_redirects=True, quote=True):
