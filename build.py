@@ -182,6 +182,7 @@ def build():
         '--python-flag=-u', 
         '--include-package=lib',
         '--nofollow-import-to=helper',
+        '--nofollow-import-to=config',
         '--include-package=api',
         "--include-data-file=doc/patch/effective_tld_names.dat.txt=tld/res/effective_tld_names.dat.txt",
         '--remove-output', 
@@ -246,7 +247,7 @@ def build():
 def setup_build_directory():
     """优化资源文件处理，与release.yml配合"""
     # 需要复制的资源文件
-    resource_dirs = ['scanners', 'dicts', 'fingerprints', 'helper']
+    resource_dirs = ['config.py', 'scanners', 'dicts', 'fingerprints', 'helper', 'data']
     
     build_dir = Path('z0scan')
     try:
