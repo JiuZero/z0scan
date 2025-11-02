@@ -77,14 +77,15 @@ def request(self, method, url,
     # proxies
     if conf.get("proxies", {}) != {} and not proxies:
         proxies = conf["proxies"]
-        p = random.choice(proxies.keys())
+        p = random.choice(list(proxies.keys()))
         _tmp_str = f"{p}://" + random.choice(proxies[p])
         _tmp_proxy = {
             "http": _tmp_str,
             "https": _tmp_str
         }
         proxies = _tmp_proxy
-    else: proxies = {}
+    else: 
+        proxies = {}
       
     # cookies
     merged_cookies = merge_cookies(merge_cookies(RequestsCookieJar(), self.cookies), cookies)
@@ -156,7 +157,7 @@ def request(self, method, url,
     
     if record is True:
         KB["request"] += 1
-        if resp != None:
+        if resp is not None:
             block.push_result_status(0)
         else:
             block.push_result_status(1)
@@ -164,15 +165,17 @@ def request(self, method, url,
                 red = gredis()
                 red.hincrby("count", "request_fail", amount=1)
             KB["request_fail"] += 1
-            
-    if resp.encoding == 'ISO-8859-1':
-        encodings = get_encodings_from_content(resp.text)
-        if encodings:
-            encoding = encodings[0]
-        else:
-            encoding = resp.apparent_encoding
-        resp.encoding = encoding
-    setattr(resp, 'reqinfo', raw)
+
+    if resp is not None:
+        if resp.encoding == 'ISO-8859-1':
+            encodings = get_encodings_from_content(resp.text)
+            if encodings:
+                encoding = encodings[0]
+            else:
+                encoding = resp.apparent_encoding
+            resp.encoding = encoding
+        setattr(resp, 'reqinfo', raw)
+    
     return resp
 
 def prepare_url(self, url, params):
