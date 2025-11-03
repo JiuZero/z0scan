@@ -15,6 +15,30 @@ class ScanPort:
         self.ipaddr = ipaddr
         self.threads = []  # 存储线程引用，用于等待所有线程完成
 
+    def _safe_decode_pattern(self, pattern):
+        """安全解码模式字符串，处理各种编码问题"""
+        if isinstance(pattern, str):
+            return pattern
+            
+        elif isinstance(pattern, bytes):
+            # 尝试多种编码方式
+            encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1', 'gbk', 'ascii']
+            for encoding in encodings:
+                try:
+                    return pattern.decode(encoding)
+                except UnicodeDecodeError:
+                    continue
+            
+            # 所有编码都失败，使用忽略错误的方式
+            try:
+                return pattern.decode('utf-8', errors='ignore')
+            except:
+                return str(pattern)[2:-1]  # 将bytes转换为字符串表示
+        
+        else:
+            # 其他类型直接转换为字符串
+            return str(pattern)
+
     def socket_scan(self, task):
         PROBE = {'GET / HTTP/1.0\r\n\r\n'}  # 端口探测请求
         response = ''
@@ -50,15 +74,19 @@ class ScanPort:
                                     # 匹配服务指纹，加载对应插件
                                     if fingers:
                                         for pattern in fingers:
-                                            # 统一指纹格式（处理bytes/str混合场景）
-                                            pattern_str = pattern.decode('utf-8') if isinstance(pattern, bytes) else str(pattern)
-                                            pattern_parts = pattern_str.split('|')
-                                            
-                                            for p in pattern_parts:
-                                                if re.search(p, response, re.IGNORECASE):
-                                                    logger.info(f"Load plugin '{plugin_name}' on {ip}:{port}", origin="portscan")
-                                                    task_push_for_portscan(plugin_name, host=f"{ip}:{port}", sockrecv=response)
-                                                    break  # 匹配到一个指纹即可，避免重复加载
+                                            try:
+                                                # 修复：使用安全解码方法
+                                                pattern_str = self._safe_decode_pattern(pattern)
+                                                pattern_parts = pattern_str.split('|')
+                                                
+                                                for p in pattern_parts:
+                                                    if re.search(p, response, re.IGNORECASE):
+                                                        logger.info(f"Load plugin '{plugin_name}' on {ip}:{port}", origin="portscan")
+                                                        task_push_for_portscan(plugin_name, host=f"{ip}:{port}", sockrecv=response)
+                                                        break  # 匹配到一个指纹即可，避免重复加载
+                                            except Exception as pattern_error:
+                                                logger.debug(f"Pattern processing error: {str(pattern_error)}", origin="portscan")
+                                                continue
                                     # 无指纹时直接加载插件
                                     else:
                                         logger.info(f"Load plugin '{plugin_name}' on {ip}:{port} (no fingerprint)", origin="portscan")
@@ -66,6 +94,9 @@ class ScanPort:
                                         
                         except socket.timeout:
                             logger.debug(f"{ip}:{port} response timeout (no service data)", origin="portscan")
+                            continue
+                        except Exception as recv_error:
+                            logger.debug(f"{ip}:{port} receive error: {str(recv_error)}", origin="portscan")
                             continue
                         finally:
                             # 强制关闭socket，释放资源（避免句柄泄漏）
@@ -90,6 +121,7 @@ class ScanPort:
                         
         except Exception as thread_e:
             logger.error(f"Scan thread error: {str(thread_e)}", origin="portscan")
+            raise
             
     def run(self):
         try:

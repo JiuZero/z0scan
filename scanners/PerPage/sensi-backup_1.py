@@ -5,6 +5,7 @@
 
 import os
 import requests
+from urllib.parse import urlparse
 
 from api import generateResponse, VulType, PluginBase, conf, KB, Type
 
@@ -40,26 +41,51 @@ class Z0SCAN(PluginBase):
                 return True
         return False
 
+    def _is_valid_payload(self, url):
+        """检查payload是否有效，避免修改域名部分"""
+        try:
+            parsed = urlparse(url)
+            hostname = parsed.hostname
+            if hostname and any(hostname.endswith(ext) for ext in ['.bak', '.rar', '.zip']):
+                return False
+            return True
+        except:
+            return False
+
     def audit(self):
         if conf.level == 0 or not self.risk in conf.risk:
             return
         headers = self.requests.headers
         url = self.requests.url
 
-        a, b = os.path.splitext(url)
-        if not b:
+        parsed_url = urlparse(url)
+        if not parsed_url.path:  # 如果没有路径，直接返回
             return
+
+        # 分离路径和扩展名
+        path = parsed_url.path
+        dirname, filename = os.path.split(path)
+        name, ext = os.path.splitext(filename)
+
         payloads = []
-        payloads.append(a + ".bak")
-        payloads.append(a + ".rar")
-        payloads.append(a + ".zip")
+        if name:  # 确保文件名不为空
+            payloads.append(f"{parsed_url.scheme}://{parsed_url.netloc}{dirname}/{name}.bak")
+            payloads.append(f"{parsed_url.scheme}://{parsed_url.netloc}{dirname}/{name}.rar")
+            payloads.append(f"{parsed_url.scheme}://{parsed_url.netloc}{dirname}/{name}.zip")
+        
+        # 基于完整URL的payload
         payloads.append(url + ".bak")
         payloads.append(url + ".rar")
         payloads.append(url + ".zip")
 
+        valid_payloads = [p for p in payloads if self._is_valid_payload(p)]
+        
+        if not valid_payloads:
+            return
+
         # http://xxxxx.com/index.php => index.php.bak index.bak index.rar
-        for payload in payloads:
-            r = requests.get(payload, headers=headers, allow_redirects=False)
+        for payload in valid_payloads:
+            r = requests.get(payload, headers=headers, allow_redirects=False, timeout=10)
             if r.status_code == 200:
                 try:
                     content = r.raw.read(10)

@@ -27,8 +27,11 @@ class Z0SCAN(PluginBase):
         result = self.generate_result()
         result.main({
             "type": Type.ANALYZE, 
-            "url": link, 
+            "url": self.requests.url, 
             "vultype": VulType.SENSITIVE, 
+            "show": {
+                "Link": link, 
+                }
             })
         result.step("Request1", {
             "request": self.requests.raw, 

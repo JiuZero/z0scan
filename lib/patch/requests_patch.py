@@ -34,6 +34,10 @@ from urllib3.exceptions import (LocationParseError, MaxRetryError)
 from requests.exceptions import (MissingSchema, InvalidURL, ConnectTimeout, ConnectionError, Timeout)
 import socket
 
+class SilentExit(Exception):
+    """静默退出异常"""
+    pass
+
 def patch_all():
     disable_warnings()
     ssl._create_default_https_context = ssl._create_unverified_context
@@ -137,27 +141,27 @@ def request(self, method, url,
         resp = self.send(prep, **send_kwargs)
     except ConnectTimeout as e:
         logger.warning(f"Connection timeout to {urlparse(url).hostname}.", origin="RequestHandler")
-        resp = None
+        raise SilentExit()
     except Timeout as e:
         logger.warning(f"Request timeout to {urlparse(url).hostname}.", origin="RequestHandler")
-        resp = None
+        raise SilentExit()
     except ConnectionError as e:
         logger.warning(f"Connection error to {urlparse(url).hostname}: {e}", origin="RequestHandler")
-        resp = None
+        raise SilentExit()
     except MaxRetryError as e:
         logger.warning(f"Max retries exceeded for {urlparse(url).hostname}.", origin="RequestHandler")
-        resp = None
+        raise SilentExit()
     except socket.timeout as e:
         logger.warning(f"Socket timeout to {urlparse(url).hostname}.", origin="RequestHandler")
-        resp = None
+        raise SilentExit()
     except Exception as e:
         logger.error(f"Unexpected error during request to {urlparse(url).hostname}: {e}", origin="RequestHandler")
-        resp = None
+        raise SilentExit()
     
     
     if record is True:
         KB["request"] += 1
-        if resp is not None:
+        if resp != None:
             block.push_result_status(0)
         else:
             block.push_result_status(1)
@@ -165,17 +169,15 @@ def request(self, method, url,
                 red = gredis()
                 red.hincrby("count", "request_fail", amount=1)
             KB["request_fail"] += 1
-
-    if resp is not None:
-        if resp.encoding == 'ISO-8859-1':
-            encodings = get_encodings_from_content(resp.text)
-            if encodings:
-                encoding = encodings[0]
-            else:
-                encoding = resp.apparent_encoding
-            resp.encoding = encoding
-        setattr(resp, 'reqinfo', raw)
-    
+            
+    if resp.encoding == 'ISO-8859-1':
+        encodings = get_encodings_from_content(resp.text)
+        if encodings:
+            encoding = encodings[0]
+        else:
+            encoding = resp.apparent_encoding
+        resp.encoding = encoding
+    setattr(resp, 'reqinfo', raw)
     return resp
 
 def prepare_url(self, url, params):
