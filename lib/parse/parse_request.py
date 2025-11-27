@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # w8ay 2020/4/3
-import os
-import re
+import os, re, socket
 from urllib.parse import urlparse, unquote
 
-from lib.core.common import paramToDict
+from lib.core.common import paramToDict, ipaddr
 from lib.core.enums import PLACE, POST_HINT, HTTPMETHOD
 from lib.core.settings import DEFAULT_GET_POST_DELIMITER, JSON_RECOGNITION_REGEX, XML_RECOGNITION_REGEX, \
     JSON_LIKE_RECOGNITION_REGEX, ARRAY_LIKE_RECOGNITION_REGEX, MULTIPART_RECOGNITION_REGEX
@@ -31,6 +30,7 @@ class FakeReq(object):
         self._port = 80
         self._url = url
         self._scheme = "http"
+        self._ip = ""
 
         self._build()
 
@@ -71,6 +71,7 @@ class FakeReq(object):
             except:
                 hostname = p.netloc
                 port = 80
+        self._ip = ipaddr(hostname)
         self._hostname = hostname
         self._port = port
 
@@ -173,6 +174,11 @@ class FakeReq(object):
     def body(self) -> str:
         return self._body
     
+    # IP地址
+    @property
+    def ip(self) -> str:
+        return self._ip
+        
     @property
     def netloc(self) -> str:
         p = self._urlparse

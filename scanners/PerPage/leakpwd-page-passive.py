@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/5/15
+# JiuZero/z0scan
 
 from urllib.parse import urlparse
 import requests, time
@@ -20,7 +20,7 @@ class Z0SCAN(PluginBase):
     risk = 2
     
     def condition(self):
-        if conf.level == 0 or not 2 in conf.risk:
+        if conf.level == 0:
             return False
         result = re.findall(".*<form (.*)</form>.*", self.response.text, re.S)
         if result:

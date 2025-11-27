@@ -9,6 +9,7 @@ class Z0SCAN(_PluginBase):
     name = "unauth-zookeeper"
     version = "2025.9.12"
     desc = "Zookeeper Unauthorized access"
+    risk = 2
     ports = [2181]
     fingers = [b'Zookeeper|Zookeeper|^Zookeeper version: ']
     

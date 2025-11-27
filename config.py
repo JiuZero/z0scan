@@ -26,7 +26,9 @@ MAX_DIR = 2 # PerDir插件的扫描深度(目录深度)
 CONSOLE_PORT = 9331 # console交互通信端口
 HIDDEN_VUL_REMINDER = True # 漏洞隐患提醒
 BLOCK_COUNT = 20 # 请求多次失败后诊断为网站对本机IP封禁，加入请求黑名单
+SHORT_OUT = False # 简洁的终端报告输出（像W13Scan那样~）
 STATUS_FLASH_TIME = 60 # 扫描状态输出间隔(>=60)
+DEDUPLICATE_LEVEL = 1 # 去重级别（0-2）
 NOTICE = {
     # 企业微信推送
     "wechat": {
@@ -55,8 +57,6 @@ NOTICE = {
 
 PLUGIN_THREADS = 2 # 插件内线程（针对多参数情况）
 DISLOAD = ["unauth", "redos"]  # 不加载的插件
-# sqli-time
-SQLi_TIME = 4 # SQLi插件延时时间
 # xss
 XSS_LIMIT_CONTENT_TYPE = True  # 限制xss的content-type，为True时限制content-type为html，为False不限制
 # leakpwd-page

@@ -4,7 +4,8 @@
 # JiuZero 2025/3/4
 
 from lib.core.common import get_middle_text, generateResponse
-from api import conf, VulType, Type, PluginBase, Threads, KB
+from api import conf, VulType, Type, PluginBase, Threads, KB, PLACE
+import re
 
 
 class Z0SCAN(PluginBase):
@@ -14,9 +15,9 @@ class Z0SCAN(PluginBase):
     risk = 0
         
     def audit(self):
-        if conf.level == 0 or not self.risk in conf.risk:
+        if conf.level == 0:
             return
-        if not "PHP" in self.fingerprints.programing:
+        if not "PHP" in self.fingerprints.finger:
             iterdatas = self.generateItemdatas()
             z0thread = Threads(name="sensi-php-realpath")
             z0thread.submit(self.process, iterdatas)
@@ -24,14 +25,38 @@ class Z0SCAN(PluginBase):
     def process(self, _):
         k, v, position = _
         _k = k + "[]"
-        payload = self.insertPayload({
-            "key": k, 
-            "value": v, 
-            "position": position,
+        payload = None
+        if position == PLACE.URL:
+            pattern = r'(/{}(?:[-_/]|\.))([^?#&]*)'.format(re.escape(k))
+            def replacement(match):
+                separator = match.group(1)
+                separator = separator.replace(str(k), str(_k))
+                original_value = match.group(2)
+                return '{}{}{}'.format(separator, original_value, v)
+            url = re.sub(pattern, replacement, self.requests.url, flags=re.I)
+            payload = self.insertPayload({
+                "key": k, 
+                "value": v, 
+                "position": position,
             })
-        payload[_k] = payload.pop(k)
+            
+        else:
+            payload = self.insertPayload({
+                "key": k, 
+                "value": v, 
+                "position": position,
+            })
+        if isinstance(payload, dict):
+            if _k in payload:
+                # 避免重复键名
+                return
+            if k in payload:
+                payload[_k] = payload.pop(k)
+        else:
+            return
+            
         r = self.req(position, payload)
-        if "Warning" in r.text and "array given in " in r.text:
+        if r and "Warning" in r.text and "array given in " in r.text:
             path = get_middle_text(r.text, 'array given in ', ' on line')
             result = self.generate_result()
             result.main({
@@ -50,4 +75,3 @@ class Z0SCAN(PluginBase):
                 "desc": "{}".format(path)
                 })
             self.success(result)
-            return

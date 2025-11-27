@@ -28,3 +28,7 @@ data/z0scan.db
 certs/baseproxy_*
 output/*_*_*
 .codebuddy
+todo/
+temp/
+storage/
+crawler_output/

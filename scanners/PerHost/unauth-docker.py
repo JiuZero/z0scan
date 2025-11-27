@@ -9,6 +9,7 @@ class Z0SCAN(_PluginBase):
     name = "unauth-docker"
     version = "2025.9.12"
     desc = "Docker Unauthorized Access"
+    risk = 2
     ports = [2375]
     fingers = []
     

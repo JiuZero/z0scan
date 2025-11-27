@@ -16,7 +16,7 @@ class Z0SCAN(PluginBase):
         self.ssti_payloads = importssti()
         
     def audit(self):
-        if not self.risk in conf.risk or conf.level == 0:
+        if conf.level == 0:
             return
         if self.requests.suffix.lower() not in ["", "php", "do", "action"]:
             return
@@ -29,7 +29,7 @@ class Z0SCAN(PluginBase):
         for test_payload in payloads:
             payload, show, plugin = test_payload
             # php，但是plugin不是php框架，不测试
-            if not "PHP" in self.fingerprints.programing:
+            if not "PHP" in self.fingerprints.finger:
                 if plugin.lower() not in ["php", "smarty", "twig"]:
                     return
             _payload = self.insertPayload({

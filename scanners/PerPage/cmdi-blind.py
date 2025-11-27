@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/8/19
+# JiuZero/z0scan
 
 import re
 from urllib.parse import quote
@@ -18,7 +18,7 @@ class Z0SCAN(PluginBase):
     def audit(self):
         url = self.requests.url
         self.rA = reverseApi()
-        if conf.level == 0 or not self.risk in conf.risk:
+        if conf.level == 0:
             return
         if not self.fingerprints.waf and self.requests.suffix in acceptedExt:
             _payloads = {

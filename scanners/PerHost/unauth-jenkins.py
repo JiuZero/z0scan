@@ -10,6 +10,7 @@ class Z0SCAN(_PluginBase):
     name = "unauth-jenkins"
     version = "2025.9.12"
     desc = "Jenkins Unauthorized Access"
+    risk = 2
     ports = [8080]
     fingers = []
     

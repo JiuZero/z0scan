@@ -36,7 +36,7 @@ class Z0SCAN(PluginBase):
     def audit(self):
         if self.requests.url.count("/") > int(conf.max_dir) + 2:
             return
-        if not "OSS" in self.fingerprints.webserver and conf.level != 0:
+        if not "OSS" in self.fingerprints.finger and conf.level != 0:
             test_methods = ["PUT"] if conf.level <= 2 else ["PUT", "POST"]
             for method in test_methods:
                 if r := self._test_upload(method):

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/5/26
+# JiuZero/z0scan
 
 from api import generateResponse, conf, VulType, PLACE, PluginBase, Type, KB
 
@@ -11,8 +11,6 @@ class Z0SCAN(PluginBase):
     risk = 1
     
     def audit(self):
-        if not self.risk in conf.risk:
-            return
         headers = self.requests.headers.copy()
         if "access-control-allow-origin" in headers and headers["access-control-allow-origin"] == "*":
             if "access-control-allow-credentials" in headers and headers["access-control-allow-credentials"].lower() == 'true':

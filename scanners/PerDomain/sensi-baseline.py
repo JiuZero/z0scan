@@ -1,6 +1,6 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/6/23
+# JiuZero/z0scan
 
 from api import PluginBase, VulType, Type, PLACE, conf, logger, KB, generateResponse
 import re
@@ -12,9 +12,8 @@ class Z0SCAN(PluginBase):
     risk = -1
 
     def audit(self):
-        if self.risk in conf.risk:
-            self.server_version_leak()
-            self.x_powered_by_version_leak()
+        self.server_version_leak()
+        self.x_powered_by_version_leak()
         
     def server_version_leak(self):
         version = re.search(r"((\d{1,6}\.){1,}\d{1,6})", self.response.headers.get("server", ""))

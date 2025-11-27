@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/6/26
+# JiuZero/z0scan
 
 import requests
 from api import VulType, PluginBase, Type, conf, generateResponse, KB
@@ -13,7 +13,7 @@ class Z0SCAN(PluginBase):
     risk = 2
 
     def audit(self):
-        if self.risk in conf.risk and conf.level == 3:
+        if conf.level == 3:
             r = requests.request("GET", self.requests.url.rstrip("/") + "/.listing", allow_redirects=True, verify=False)
             # 判断写得有些草率…后面再改
             if r.status_code == 200:

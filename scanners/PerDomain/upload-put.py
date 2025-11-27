@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/5/7
+# JiuZero/z0scan
 
 from api import VulType, Type, PLACE, PluginBase, generateResponse, random_str, random_num, conf, KB
 import requests
@@ -28,8 +28,10 @@ class Z0SCAN(PluginBase):
             pass
         return None
     
+    # 多个服务的PUT上传漏洞nday检测思路是一致的
+    # 故就把这类漏洞的pocs略掉
     def audit(self):
-        if conf.level == 0 or not self.risk in conf.risk:
+        if conf.level == 0:
             return
         if r := self._put_upload():
             r1, r2 = r

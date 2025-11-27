@@ -405,8 +405,8 @@
 
 **2025.9.6**
 1. 新增插件
-* PerPage/other-redos 正则dos漏洞检测
-* PerPage/other-jndi-error 基于报错的jndi注入漏洞检测
+* PerPage/dos-redos 正则dos漏洞检测
+* PerPage/jndi-error 基于报错的jndi注入漏洞检测
 * PerPage/codei-java Java代码注入漏洞
 
 **2025.6.7**
@@ -435,7 +435,7 @@
 * PerHost/unauth-redis
 * PerHost/unauth-junkins
 * PerHost/unauth-rsync
-* PerHost/unauth-memcached
+* PerHost/unauth-memcache
 * PerHost/unauth-mongodb
 * PerHost/unauth-zookeeper
 * PerHost/unauth-solr
@@ -550,11 +550,91 @@
 ### 0.3.4.0 发布
 
 **2025.11.2**
-1. 修复requests_patch中的一处问题
+1. 修复requests_patch中的一处逻辑问题
 2. 修复插件
 * sensi-backup_1 对目标为域名时的处理问题
 * sensi-retirejs 结果返回
 3. 修复portscan编码
 
-
 ### 0.3.4.1 重发布
+
+**2025.11.3**
+1. 新增插件
+* nginx-proxy 正向代理漏洞
+2. 优化插件
+* trave-list_3 填充新的正则规则
+3. 修复插件
+* json-error 不同类型的值的替换问题
+* php-realpath 针对伪静态情况的处理
+
+**2025.11.4**
+1. waf.py -> finger.py
+2. 分离loader中对cms指纹的处理 -> finger.py
+3. 整理并优化finger实现与处理逻辑，提高代码可读性
+
+**2025.11.5**
+1. 重新整理数据库结构 cmsfinger.db -> fingers.db
+2. WAF指纹录入至fingers.db/waf
+
+**2025.11.6**
+1. debug级别为3时会抛出部分未预期问题
+2. 支持白名单
+
+**2025.11.10**
+1. 移除dbcmd功能
+2. 对每次扫描采用独立数据库处理，以支持多窗口下的多任务扫描
+
+**2025.11.11**
+1. “精简输出”由命令行参数设置移入config
+2. 新增插件
+* PerHost/rce-javarmi
+
+**2025.11.12**
+1. fingers语法支持path=""
+2. 修复部分Bug并整理README描述
+3. 整理合并多个项目的WAF指纹
+
+**2025.11.21**
+1. 优化插件
+* cmdi 合并W13与Myscan的判断逻辑
+* redirect 参考Myscan优化整体判断逻辑
+2. fingers支持正则表达
+
+**2025.11.22**
+1. 新增插件
+* leakpwd-activemq ActiveMQ服务弱口令检测
+2. 优化部分PerHost插件中对字典载入的处理
+3. WAF信息将决定POCs是否载入
+
+**2025.11.23**
+1. 回滚POCs既定计划的部分实现
+* 计划采取ObserverWard+Nuclei/Afrog替代
+2. 支持设定去重级别（甚至可以不去重？）
+3. 简化输出模板 - 直观、简洁
+4. fingerprints/* -> fingers.db/finger
+5. Scapy爬虫支持（已稳定）
+6. 优化部分功能的实现
+7. PerHost支持通过risk初始化筛选
+
+**2025.11.24**
+1. 新增插件
+* leakpwd-ssh
+* unauth-ldaps
+* unauth-elastic
+
+**2025.11.26**
+1. 修复header头非法字符问题
+2. 完善插件
+* sqli-time 支持sqlite时间盲注、新增针对orderby的适应性Payload
+* sqli-bool 新增针对orderby与desc位置的适应性Payload
+3. 收录afrog WAF指纹
+4. 指纹规则支持正则匹配
+5. 简化输出~
+6. 重新分类注入点情况（PLACE），支持二级参数发现
+
+**2025.11.27**
+1. 联动Observerward + Nuclei
+2. Scapy改用crawlee爬虫并支持无头模式
+3. 修复些小问题
+
+### 0.9.4.2 发布

@@ -9,6 +9,7 @@ class Z0SCAN(_PluginBase):
     name = "unauth-rsync"
     version = "2025.9.12"
     desc = "Rsync Unauthorized Access"
+    risk = 2
     ports = [873]
     fingers = [b'^@RSYNCD:', b'@RSYNCD:']
     

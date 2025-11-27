@@ -9,20 +9,21 @@ class Z0SCAN(_PluginBase):
     name = "leakpwd-mssql"
     version = "2025.9.12"
     desc = "Weak Password on MSSQL Server"
+    risk = 2
     ports = [1433]
     fingers = [b'MSSQLSERVER']
     
     def __init__(self):
         self.right_pwd = None
+        self.userpass = []
+        for user in conf.dicts["mssql-username"]:
+            for pwd in conf.dicts["mssql-password"]:
+                self.userpass.append((user, pwd))
     
     def audit(self):
         self.ip, self.port = self.host.split(":")
-        userpass = []
-        for user in conf.dicts["mssql-username"]:
-            for pwd in conf.dicts["mssql-password"]:
-                userpass.append((user, pwd))
-        z0thread = Threads(name="leakpwd-redis")
-        z0thread.submit(self.process, userpass)
+        z0thread = Threads(name="leakpwd-mssql")
+        z0thread.submit(self.process, self.userpass)
         if self.right_pwd is not None:
             result = self.generate_result()
             result.main({

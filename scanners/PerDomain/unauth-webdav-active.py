@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/5/11
+# JiuZero/z0scan
 
 import requests, re
 from api import generateResponse, VulType, PLACE, HTTPMETHOD, PluginBase, conf, KB, Type
@@ -14,7 +14,7 @@ class Z0SCAN(PluginBase):
         
     def audit(self):
         # 尝试主动未授权
-        if not conf.level == 0 and self.risk in conf.risk:
+        if not conf.level == 0:
             r = requests.request("PROPFIND", self.requests.protocol + "://" + self.requests.hostname + ":" + str(self.requests.port) + "/", headers={"Host": "localhost", "Content-Length": "0"})
             if re.search("<a:href>http://localhost/</a:href>", r.text, re.I):
                 result = self.generate_result()

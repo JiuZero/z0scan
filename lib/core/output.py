@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # w8ay 2019/6/29
-# JiuZero 2025/3/17
+# JiuZero/z0scan
 
 import collections
 import json, os, time
@@ -28,13 +28,17 @@ class OutPut(object):
             os.mkdir(folder_path)
         if conf.get("json"):
             self.filename = conf.json
+        # Result
         else:
             filename = str(int(time.time())) + ".json"
             self.filename = os.path.join(folder_path, filename)
-        txt_filename = str(int(time.time())) + ".txt"
-        self.txt_filename = os.path.join(folder_path, txt_filename)
         html_filename = str(int(time.time())) + ".html"
         self.html_filename = os.path.join(folder_path, html_filename)
+        # Record
+        txt_filename = str(int(time.time())) + ".txt"
+        self.txt_filename = os.path.join(folder_path, txt_filename)
+        db_filename = str(int(time.time())) + ".db"
+        self.db_filename = os.path.join(folder_path, db_filename)
 
     def get_filename(self):
         return self.filename
@@ -44,6 +48,9 @@ class OutPut(object):
 
     def get_txt_filename(self):
         return self.txt_filename
+
+    def get_db_filename(self):
+        return self.db_filename
         
     def _set(self, value):
         '''
@@ -111,18 +118,19 @@ class OutPut(object):
         self.lock_file.release()
         self.collect.append(output)
         """
-        [TIME][INFO] <www.baidu.com> | [SCAN_NAME][SCAN_TYPE]
+        TIME INF SCAN_TYPE www.baidu.com | SCAN_NAME
         URL : http://www.baidu.com/a/test?id=1
-        Vultype : SQL
+        Vultype : SQLi
         Position : Params
         Param :  id
         Payload : ' and 1=2--+
         ....
+        TIME INF SQLi | http://www.baidu.com/a/test?id=1
         """
         if conf.short_out:
-            msg = "<{}{}{}> | [{}{}{}] [{}{}{}]\n".format(colors.cy, colors.e, output["url"], colors.m, output["type"], colors.e, colors.m, output["name"], colors.e)
+            msg = "{}{}{} | {}{}{}\n".format(colors.m, output["vultype"], colors.e, colors.cy, output["url"], colors.e)
         else:
-            msg = "<{}{}{}> | [{}{}{}] [{}{}{}]\n".format(colors.m, str(output["hostname"]), colors.e, colors.m, output["type"], colors.e, colors.m, output["name"], colors.e)
+            msg = "{}{}{} {}{}{} | {}{}{}\n".format(colors.m, output["type"], colors.e, colors.m, str(output["hostname"]), colors.e, colors.m, output["name"], colors.e)
             msg += "{}URL{} : {}\n".format(colors.cy, colors.e, output["url"])
             msg += "{}Vultype{} : {}\n".format(colors.cy, colors.e, output["vultype"])
         if output["show"]:

@@ -9,6 +9,7 @@ class Z0SCAN(_PluginBase):
     name = "unauth-resis"
     version = "2025.9.12"
     desc = "Redis Unauthorized Access"
+    risk = 2
     ports = [6379]
     fingers = [b'^-ERR unknown command', b'^-ERR wrong number of arguments', b'^-DENIED Redis is running']
     

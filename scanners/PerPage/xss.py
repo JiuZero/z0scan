@@ -25,7 +25,7 @@ class Z0SCAN(PluginBase):
         self.result = self.generate_result()
 
     def audit(self):
-        if conf.level == 0 or not self.risk in conf.risk or self.fingerprints.waf:
+        if conf.level == 0 or self.fingerprints.waf:
             return
         parse_params = set(getParamsFromHtml(self.response.text))
         resp = self.response.text

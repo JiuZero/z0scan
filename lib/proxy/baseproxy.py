@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# qiye/baseproxy
+# w8ay/w13scan
+# JiuZero/z0scan
 
 import _socket
 import http
@@ -32,17 +35,6 @@ from lib.parse.parse_response import FakeResp
 from socket import socket
 import socks as socks5
 
-__author__ = 'qiye'
-__date__ = '2018/6/15 11:45'
-__copyright__ = 'Copyright 2018, BaseProxy Project'
-__credits__ = ['qiye safe']
-
-__license__ = 'GPL'
-__version__ = '0.1'
-
-__email__ = 'qiye_email@qq.com'
-__status__ = 'Development'
-
 __all__ = [
     'CAAuth',
     'ProxyHandle',
@@ -55,6 +47,39 @@ __all__ = [
 ]
 
 
+def process_task(request, response):
+    netloc = "http"
+    if request.https:
+        netloc = "https"
+    if (netloc == "https" and int(request.port) == 443) or (netloc == "http" and int(request.port) == 80):
+        url = "{0}://{1}{2}".format(netloc, request.hostname, request.path)
+    else:
+        url = "{0}://{1}:{2}{3}".format(netloc, request.hostname, request.port, request.path)
+    method = request.command.lower()
+    if method == "get":
+        method = HTTPMETHOD.GET
+    elif method == "post":
+        method = HTTPMETHOD.POST
+    elif method == "put":
+        method = HTTPMETHOD.PUT
+    try:
+        body_data = request.get_body_data().decode('utf-8')
+    except:
+        body_data = ""
+    req = FakeReq(url, request._headers, method, body_data)
+    resp = FakeResp(int(response.status), response.get_body_data(), response._headers)
+    if conf.includes != []:
+        for rule in conf.includes:
+            if rule in req.hostname:
+                task_push_from_name('loader', req, resp)
+                return
+        return
+    for rule in conf.excludes:
+        if rule in req.hostname:
+            logger.info("Skip Domain: {}".format(url))
+            return
+    task_push_from_name('loader', req, resp)
+                        
 class HttpTransfer(object):
     version_dict = {9: 'HTTP/0.9', 10: 'HTTP/1.0', 11: 'HTTP/1.1'}
 
@@ -529,34 +554,7 @@ class ProxyHandle(BaseHTTPRequestHandler):
                     self.send_error(404, 'response is None {}'.format(errMsg))
                 
                 if not self._is_replay() and response:
-                    def process_task(request, response):
-                        netloc = "http"
-                        if request.https:
-                            netloc = "https"
-                        if (netloc == "https" and int(request.port) == 443) or (netloc == "http" and int(request.port) == 80):
-                            url = "{0}://{1}{2}".format(netloc, request.hostname, request.path)
-                        else:
-                            url = "{0}://{1}:{2}{3}".format(netloc, request.hostname, request.port, request.path)
-                        method = request.command.lower()
-                        if method == "get":
-                            method = HTTPMETHOD.GET
-                        elif method == "post":
-                            method = HTTPMETHOD.POST
-                        elif method == "put":
-                            method = HTTPMETHOD.PUT
-                        try:
-                            body_data = request.get_body_data().decode('utf-8')
-                        except:
-                            body_data = ""
-                        req = FakeReq(url, request._headers, method, body_data)
-                        resp = FakeResp(int(response.status), response.get_body_data(), response._headers)
-                        # 跳过用户设置的不扫描目标
-                        for rule in conf.excludes:
-                            if rule in req.hostname:
-                                logger.info("Skip Domain: {}".format(url))
-                                return
-                        task_push_from_name('loader', req, resp)
-                    # 使用线程池异步执行
+                    # 使用线程池异步
                     task_thread = threading.Thread(target=process_task, args=(request, response))
                     task_thread.daemon = True
                     task_thread.start()

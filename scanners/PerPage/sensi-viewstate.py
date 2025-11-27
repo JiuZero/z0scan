@@ -28,7 +28,7 @@ class Z0SCAN(PluginBase):
         return list(set(found))
     
     def audit(self):
-        if not self.risk in conf.risk or not "ASP" in self.fingerprints.programing:
+        if not "ASP" in self.fingerprints.finger:
             return
         viewstate_list = self.find_viewstate()
         

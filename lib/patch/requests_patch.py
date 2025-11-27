@@ -5,7 +5,7 @@
 # JiuZero 2025/7/28
 
 import copy
-import ssl, random
+import ssl, random, threading
 from urllib.parse import urlparse, quote
 
 from requests.cookies import RequestsCookieJar
@@ -31,18 +31,25 @@ from lib.core.data import conf, KB
 from lib.core.log import logger
 
 from urllib3.exceptions import (LocationParseError, MaxRetryError)
-from requests.exceptions import (MissingSchema, InvalidURL, ConnectTimeout, ConnectionError, Timeout)
+from requests.exceptions import (MissingSchema, InvalidURL, ConnectTimeout, ConnectionError, Timeout, InvalidHeader)
 import socket
-
-class SilentExit(Exception):
-    """静默退出异常"""
-    pass
 
 def patch_all():
     disable_warnings()
     ssl._create_default_https_context = ssl._create_unverified_context
     PreparedRequest.prepare_url = prepare_url
     Session.request = request
+
+def clean_header_name(header_dict):
+    cleaned_headers = {}
+    for key, value in header_dict.items():
+        if isinstance(key, str):
+            clean_key = key.strip().replace('\n', '').replace('\t', '').replace('\r', '')
+            if clean_key:
+                cleaned_headers[clean_key] = value
+        else:
+            cleaned_headers[key] = value
+    return cleaned_headers
 
 def request(self, method, url, 
     params=None, 
@@ -68,7 +75,7 @@ def request(self, method, url,
             h, p = gethostportfromurl(url)
             block = block_count(h, p)
             if block.is_block():
-                return None
+                raise
     else:
         logger.warning("Requests record args need bool")
     if isinstance(quote, bool):
@@ -76,7 +83,7 @@ def request(self, method, url,
             url = KEY_UNQUOTE + url
     else:
         logger.error("Requests quote args need bool")
-        return None
+        raise
 
     # proxies
     if conf.get("proxies", {}) != {} and not proxies:
@@ -94,17 +101,20 @@ def request(self, method, url,
     # cookies
     merged_cookies = merge_cookies(merge_cookies(RequestsCookieJar(), self.cookies), cookies)
     
-    # header
+    # header：核心修复点 → 先清理非法头名称，再合并
     default_header = {
         "User-Agent": conf.agent, 
         "Connection": "close"
     }
+    # 合并默认头
     merged_hesders = merge_setting(headers, default_header)
+    # 清理传入的headers非法名称
+    merged_hesders = clean_header_name(merged_hesders)
     
     req = Request(
         method=str(method).upper(),
         url=url,
-        headers=merged_hesders,
+        headers=merged_hesders,  # 使用清理后的头
         files=files,
         data=data or {}, 
         json=json,
@@ -139,24 +149,8 @@ def request(self, method, url,
     send_kwargs.update(settings)
     try:
         resp = self.send(prep, **send_kwargs)
-    except ConnectTimeout as e:
-        logger.warning(f"Connection timeout to {urlparse(url).hostname}.", origin="RequestHandler")
-        raise SilentExit()
-    except Timeout as e:
-        logger.warning(f"Request timeout to {urlparse(url).hostname}.", origin="RequestHandler")
-        raise SilentExit()
-    except ConnectionError as e:
-        logger.warning(f"Connection error to {urlparse(url).hostname}: {e}", origin="RequestHandler")
-        raise SilentExit()
-    except MaxRetryError as e:
-        logger.warning(f"Max retries exceeded for {urlparse(url).hostname}.", origin="RequestHandler")
-        raise SilentExit()
-    except socket.timeout as e:
-        logger.warning(f"Socket timeout to {urlparse(url).hostname}.", origin="RequestHandler")
-        raise SilentExit()
     except Exception as e:
-        logger.error(f"Unexpected error during request to {urlparse(url).hostname}: {e}", origin="RequestHandler")
-        raise SilentExit()
+        raise
     
     
     if record is True:

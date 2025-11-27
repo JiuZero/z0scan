@@ -76,7 +76,7 @@ class Z0SCAN(PluginBase):
         try:
             if info.get("skipwaf", False) and self.fingerprints.waf:
                 return
-            if info.get("phpinfo", False) and not "PHP" in self.fingerprints.webserver:
+            if info.get("phpinfo", False) and not "PHP" in self.fingerprints.finger:
                 return
             if self.requests.url.count("/") <= info.get("max_dir", 8) + 2:
                 url = self.requests.rstrip("/").url + info.get("path")

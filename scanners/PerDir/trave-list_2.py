@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/5/11
+# JiuZero 2025/11/5
 
 import re
 from api import VulType, KB, PluginBase, Type, conf, generateResponse
@@ -9,7 +9,7 @@ from api import VulType, KB, PluginBase, Type, conf, generateResponse
 class Z0SCAN(PluginBase):
     name = "trave-list"
     desc = "Directory browsing vulnerability (Directory-based)"
-    version = "2025.5.11"
+    version = "2025.11.5"
     risk = 2
 
     def audit(self):
@@ -19,11 +19,18 @@ class Z0SCAN(PluginBase):
             return
         resp_str = self.response.text
         flag_list = [
-            "directory listing for",
-            "<title>directory",
-            "<head><title>index of",
-            '<table summary="directory listing"',
-            'last modified</a>',
+            r"directory listing for",
+            r"<title>directory",
+            # r'<title>index of ', 
+            r'<a href="?c=n;o=d">name</a>', 
+            r'<table summary="directory listing"',
+            r'last modified</a>', 
+            r'parent directory</a>', 
+            r'<title>folder listing.', 
+            r'&lt;dir&gt; <a href="/', 
+            r'''<pre><a href="/">\[''', 
+            r'">[to parent directory]</a><br><br>',
+            
         ]
         for i in flag_list:
             if i in resp_str.lower():

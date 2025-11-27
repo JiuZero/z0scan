@@ -16,7 +16,7 @@ class Z0SCAN(PluginBase):
     require_reverse = True
         
     def audit(self):
-        if conf.level == 0 or not self.risk in conf.risk:
+        if conf.level == 0:
             return
         if not self.fingerprints.waf and self.requests.suffix in acceptedExt:
             if self.requests.post_hint == POST_HINT.XML:

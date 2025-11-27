@@ -1,7 +1,7 @@
 ![z0scan](https://socialify.git.ci/JiuZero/z0scan/image?description=1&font=Raleway&language=1&logo=https%3A%2F%2Fraw.githubusercontent.com%2FJiuZero%2Fz0scan%2Frefs%2Fheads%2Fmain%2Fdoc%2Flogo.png&owner=1&pattern=Solid&theme=Auto)
 
 <h4 align="center" dir="auto">
-  <a href="https://jiuzero.github.io/tags/z0scan/">官方文档</a> • <a href="https://github.com/JiuZero/z0scan/releases">下载发行版</a> • <a href="https://github.com/JiuZero/z0scan/blob/master/doc/CHANGELOG.MD">更新日志</a>
+  <a href="https://github.com/JiuZero/z0scan/blob/master/README.EN.MD">English</a> • <a href="https://jiuzero.github.io/tags/z0scan/">指南</a> • <a href="https://github.com/JiuZero/z0scan/releases">下载</a> • <a href="https://github.com/JiuZero/z0scan/blob/master/doc/CHANGELOG.MD">更新日志</a>
 <p>
   <a href="https://github.com/JiuZero/z0scan/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/JiuZero/z0scan?style=for-the-badge"></a>
   <a href="https://github.com/JiuZero/z0scan/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/JiuZero/z0scan/total?style=for-the-badge"></a>
@@ -106,42 +106,6 @@
 
 ---
 
-## 🔗 联系
-
-- 高三在校，项目不定期维护更新QAQ
-- 欢迎大师傅们向我申请协作位吖~
-
-<table>
-  <tr>
-    <td width="25%" valign="top">
-      <h3>公众号</h3>
-      <ul>
-        <li><b>90Safe</b></li>
-      </ul>
-    </td>
-    <td width="25%" valign="top">
-      <h3>微信</h3>
-      <ul>
-        <li><b>JiuZer1</b></li>
-      </ul>
-    </td>
-    <td width="25%" valign="top">
-      <h3>QQ</h3>
-      <ul>
-        <li><b>1703417187</b></li>
-      </ul>
-    </td>
-    <td width="25%" valign="top">
-      <h3>QQ交流群</h3>
-      <ul>
-        <li><b>1058256508</b></li>
-      </ul>
-    </td>
-  </tr>
-</table>
-
----
-
 ## ✨ 核心特性
 
 <table>
@@ -149,25 +113,29 @@
     <td width="50%" valign="top">
       <h3>🔍 安全检测</h3>
       <ul>
-        <li><b>集成指纹检测</b> - WAF嗅探并被动化识别指纹信息(5900+)，插件精准切入</li>
-        <li><b>分布式与本地式一体化</b> - 灵活适应不同扫描需求</li>
-        <li><b>插件扫描</b> - 可外部扩展的插件系统</li>
+        <li><b>指纹与扫描插件共舞</b> - WAF嗅探、指纹信息识别指导插件扫描</li>
+        <li><b>分布式与本地式一体化</b> - 灵活适应不同的扫描与情景需求</li>
+        <li><b>第三方扫描集成</b> - ObserverWard指纹检测、Nuclei POCs精准切入</li>
+        <li><b>高自定义插件系统</b> - 可外部扩展并动态导入的插件系统</li>
       </ul>
     </td>
     <td width="50%" valign="top">
-      <h3>📊 数据处理</h3>
+      <h3>🌐 部署架构</h3>
       <ul>
-        <li><b>复杂参数解析</b> - 支持Json、XML和伪静态参数解析</li>
-        <li><b>数据存储</b> - 通过SQLite3提供数据存储支持</li>
+        <li><b>开源与部署</b> - 基于Python3开源、支持Docker部署、发行版开箱即用</li>
+        <li><b>高性能</b> - 采用Nuitka编译、Rust跨语言</li>
+        <li><b>可集成性</b> - API开放、允许用户自由集成扫描</li>
+        <li><b>完全跨平台</b> - 支持Windows、Linux、MacOS等系统</li>
       </ul>
     </td>
   </tr>
   <tr>
     <td width="50%" valign="top">
-      <h3>🌐 部署架构</h3>
+      <h3>📊 数据处理</h3>
       <ul>
-        <li><b>开源、高性能</b> - 基于Python开源、使用Nuitka编译</li>
-        <li><b>完全跨平台</b> - 支持Windows、Linux、MacOS等系统</li>
+        <li><b>复杂参数解析</b> - 支持Json、XML和伪静态参数解析</li>
+        <li><b>二级参数解析</b> - 支持解析GET、POST参数的值作为新参数并自动解码</li>
+        <li><b>数据存储</b> - 通过SQLite3提供数据存储支持</li>
       </ul>
     </td>
     <td width="50%" valign="top">
@@ -189,9 +157,9 @@
 
 获取发布版本：[下载](https://github.com/JiuZero/z0scan/releases)  
 
-- 想要构建适合您环境的可执行文件？请参阅：[文档](https://jiuzero.github.io/tags/z0scan/)  
+- 想要构建适合您环境的可执行文件？请参阅：[指南](https://jiuzero.github.io/tags/z0scan/)  
 
-### ✔ GitHub克隆安装
+### ✔ 克隆安装
 
 > [!Note]
 > 国内码云：https://gitee.com/JiuZero/z0scan
@@ -203,7 +171,7 @@ pip install -r requirements.txt
 python3 z0.py help
 ```  
 
-### ✔ Docker安装
+### ✔ 容器安装
 
 ```bash  
 git clone https://github.com/JiuZero/z0scan
@@ -224,6 +192,9 @@ docker run z0scan
 > Ling 不包含 z0scan 核心, 需本地存在可用的 z0 可执行文件或脚本
 
 ### **z0 - 命令行**
+
+> [!Note]
+> ObserverWard指纹、Nuclei POCs联动 - 配置ObserverWard与nuclei到环境变量中并配置插件&指纹即可，参阅：[指南](https://jiuzero.github.io/tags/z0scan/)  
 
 ### ✔ 被动扫描  
 
@@ -291,7 +262,7 @@ z0 scan -f urls.txt -c 3
 | sensi-php-realpath | PHP真实路径泄露 | 0 |
 | redirect | 重定向漏洞检测 | 1 |
 | sensi-webpack | Webpack源码泄露 | 1 |
-| webdav-passive | WebDAV服务被动检测 | 1 |
+| other-webdav-passive | WebDAV服务被动检测 | 1 |
 | xpathi-error | 报错型XPath注入检测 | 2 |
 | trave-path | 路径遍历漏洞检测 | 2 |
 | sensi-backup_1 | 备份文件检测（基于文件） | 1 |
@@ -303,7 +274,7 @@ z0 scan -f urls.txt -c 3
 | leakpwd-page-passive | 登录页面弱密码检测 | 2 |
 | sensi-editfile | 编辑器备份文件泄露 | 1 |
 | sensi-sourcecode | 源代码泄露检测 | 1 |
-| captcha-bypass | 验证码绕过检测 | 0 |
+| other-captcha-bypass | 验证码绕过检测 | 0 |
 | sensi-retirejs | 过时JS组件检测 | -1 |
 | ssti | 服务端模板注入漏洞检测 | 3 |
 | ssti-angularjs | AngularJS客户端模板注入检测 | 2 |
@@ -340,8 +311,7 @@ z0 scan -f urls.txt -c 3
 | cors-active | CORS漏洞主动检测 | 2 |
 | crlf_3 | CRLF行注入漏洞检测 | 2 |
 | hosti | 主机头注入检测 | 1 |
-| oss-takeover | OSS存储桶劫持漏洞检测 | 3 |
-| sensi-iis-shortname | IIS短文件名漏洞检测 | 0 |
+| takeover-oss | OSS存储桶接管漏洞检测 | 3 |
 | clickjacking | 点击劫持漏洞检测 | -1 |
 | sensi-baseline | 服务版本信息泄露 | -1 |
 | smuggling | 请求走私漏洞检测 | 3 |
@@ -356,6 +326,7 @@ z0 scan -f urls.txt -c 3
 | leakpwd-postgresql | PostgreSQL服务器弱密码检测 |
 | leakpwd-redis | Redis服务器弱密码检测 |
 | leakpwd-smb | SMB服务器弱密码检测 |
+| leakpwd-activemq | ActiveMQ服务器弱密码检测 |
 | ftp-anonymous | FTP匿名登录检测 |
 | solr-rce | Apache Solr Velocity模板RCE检测 |
 | unauth-docker | Docker未授权访问检测 |
@@ -366,19 +337,65 @@ z0 scan -f urls.txt -c 3
 | unauth-rsync | Rsync未授权访问检测 |
 | unauth-solr | Apache Solr未授权访问检测 |
 | unauth-zookeeper | Zookeeper未授权访问检测 |
+| rce-javarmi | JavaRMI RCE漏洞检测 |
+| leakpwd-ssh | SSH服务器弱密码检测 |
+| unauth-ldaps | LDAP未授权访问检测 |
+| unauth-elastic | Elasticsearch未授权访问检测 |
 
 ---
 
-## 🔀 被动扫描工作流
+## 🔀 工作流程
 
 ![流程图](doc/lct.png)
 
 ---
 
+## 🔗 联系
+
+- 高三在校，项目不定期维护更新QAQ
+- 欢迎大师傅们向我申请协作位吖~
+
+<table>
+  <tr>
+    <td width="25%" valign="top">
+      <h3>公众号</h3>
+      <ul>
+        <li><b>90Safe</b></li>
+      </ul>
+    </td>
+    <td width="25%" valign="top">
+      <h3>微信</h3>
+      <ul>
+        <li><b>JiuZer1</b></li>
+      </ul>
+    </td>
+    <td width="25%" valign="top">
+      <h3>QQ</h3>
+      <ul>
+        <li><b>1703417187</b></li>
+      </ul>
+    </td>
+    <td width="25%" valign="top">
+      <h3>QQ交流群</h3>
+      <ul>
+        <li><b>1058256508</b></li>
+      </ul>
+    </td>
+  </tr>
+</table>
+
+---
+
+## 🍀 贡献
+
+<a href="https://github.com/JiuZero/z0scan/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=JiuZero/z0scan" />
+</a>
+
+![Alt](https://repobeats.axiom.co/api/embed/9c54ad12caa9f9b34f4da6bca8090f388f3538d0.svg "Repobeats analytics image")
+
+---
+
 ## 💖 星标趋势
 
-<p align="center">
-  <a href="https://star-history.com/#JiuZero/z0scan&Date">
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=JiuZero/z0scan&type=Date" width="85%">
-  </a>
-</p>
+[![Star History Chart](https://api.star-history.com/svg?repos=JiuZero/z0scan&type=Date)](https://star-history.com/#JiuZero/z0scan&Date)

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/2/23
+# JiuZero/z0scan
 
-import sqlite3, os, sys, re
+import sqlite3, re
+from lib.core.data import conf
 import threading
 from lib.core.log import logger
 from typing import Union, List, Dict, Any
@@ -38,7 +39,7 @@ def insertdb(table: str, columns_values: dict):
         placeholders = placeholders.rstrip(",")
         
         query = 'INSERT INTO {} ({}) VALUES({})'.format(table, columns, placeholders)
-        logger.debug("The DB Query: {}".format(query), origin="db", level=3)
+        # logger.debug("The DB Query: {}".format(query), origin="db", level=3)
         
         with db_lock:  # 使用锁确保线程安全
             with db_connection() as conn:
@@ -55,7 +56,7 @@ def selectdb(table: str, columns:str, where=None, where_values=None):
         query = "SELECT {} FROM {}".format(columns, table)
         if where:
             query += " WHERE {}".format(where)
-        logger.debug("The DB Query: {}".format(query), origin="db", level=3)
+        # logger.debug("The DB Query: {}".format(query), origin="db", level=3)
         
         with db_lock:  # 使用锁确保线程安全
             with db_connection() as conn:
@@ -78,7 +79,7 @@ def select_all_db(table: str, columns:str, where=None, where_values=None):
         query = "SELECT {} FROM {}".format(columns, table)
         if where:
             query += " WHERE {}".format(where)
-        logger.debug("The DB Query: {}".format(query), origin="db", level=3)
+        # logger.debug("The DB Query: {}".format(query), origin="db", level=3)
         
         with db_lock:  # 使用锁确保线程安全
             with db_connection() as conn:
@@ -99,7 +100,7 @@ def select_all_db(table: str, columns:str, where=None, where_values=None):
 def updatedb(table: str, set_clause: str, where: str, values: list):
     try:
         query = "UPDATE {} SET {} WHERE {}".format(table, set_clause, where)
-        logger.debug("The DB Query: {}".format(query), origin="db", level=3)
+        # logger.debug("The DB Query: {}".format(query), origin="db", level=3)
         
         with db_lock:  # 使用锁确保线程安全
             with db_connection() as conn:
@@ -114,7 +115,7 @@ def updatedb(table: str, set_clause: str, where: str, values: list):
 def deletedb(table: str, where: str, where_values: list):
     try:
         query = "DELETE FROM {} WHERE {}".format(table, where)
-        logger.debug("The DB Query: {}".format(query), origin="db", level=3)
+        # logger.debug("The DB Query: {}".format(query), origin="db", level=3)
         
         with db_lock:  # 使用锁确保线程安全
             with db_connection() as conn:
@@ -126,9 +127,10 @@ def deletedb(table: str, where: str, where_values: list):
         logger.error(e, origin="db")
         return False
     
-def initdb(root):
+def initdb():
     global dbpath
-    dbpath = os.path.join(root, 'data', 'z0scan.db')
+    from lib.core.data import KB
+    dbpath = KB.output.get_db_filename()
     try:
         with db_lock:  # 使用锁确保线程安全
             with db_connection() as conn:
@@ -153,6 +155,8 @@ def initdb(root):
                 return True
     except Exception as e:
         logger.error(e, origin="db")
+        if conf.debug == 3:
+            raise
         return False
 
 def execute_sqlite_command(command: str) -> Union[List[Dict[str, Any]], str]:

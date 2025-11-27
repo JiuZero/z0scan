@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# JiuZero/z0scan
 
 from api import generateResponse, VulType, Type, PluginBase, conf, Threads, PLACE
 from helper.basesensitive import sensitive_page_error_message_check
@@ -14,9 +15,9 @@ class Z0SCAN(PluginBase):
     risk = 3
 
     def audit(self):
-        if conf.level == 0 or not self.risk in conf.risk or self.fingerprints.waf:
+        if conf.level == 0 or self.fingerprints.waf:
             return
-        if not "java" in self.fingerprints.programing:
+        if not "JAVA" in self.fingerprints.finger:
             return
 
         randint = random.randint(10120, 10240)

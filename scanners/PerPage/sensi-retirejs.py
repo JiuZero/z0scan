@@ -13,15 +13,14 @@ class Z0SCAN(PluginBase):
     risk = -1
 
     def audit(self):
-        if self.risk in conf.risk:
-            js_links = js_extractor(self.response.raw)
-            ret = main_scanner(self.requests.url, self.response.raw)
-            if ret:
-                self._result(self.requests.url, ret)
-            for link in js_links:
-                ret2 = main_scanner(link, '')
-                if ret2:
-                    self._result(link, ret2)
+        js_links = js_extractor(self.response.raw)
+        ret = main_scanner(self.requests.url, self.response.raw)
+        if ret:
+            self._result(self.requests.url, ret)
+        for link in js_links:
+            ret2 = main_scanner(link, '')
+            if ret2:
+                self._result(link, ret2)
                     
     def _result(self, link, ret):
         result = self.generate_result()

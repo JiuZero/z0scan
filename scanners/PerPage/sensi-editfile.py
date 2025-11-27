@@ -16,7 +16,7 @@ class Z0SCAN(PluginBase):
     def audit(self):
         if self.requests.suffix.lower() not in {".php", ".jsp", ".asp", ".aspx", ".html", ".htm", ".py", ".rb"}:
             return
-        if not self.risk in conf.risk or conf.level == 0:
+        if conf.level == 0:
             return
         parsed = urlparse(self.requests.url)
         dirname, basename = os.path.dirname(parsed.path), os.path.basename(parsed.path)

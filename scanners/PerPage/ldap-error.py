@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/10/16
+# JiuZero/z0scan
 
 import re
 import random
@@ -46,7 +46,7 @@ class Z0SCAN(PluginBase):
         return False, None
 
     def audit(self):
-        if conf.level == 0 or not self.risk in conf.risk or self.fingerprints.waf:
+        if conf.level == 0 or self.fingerprints.waf:
             return
         iterdatas = self.generateItemdatas()
         z0thread = Threads(name=self.name)

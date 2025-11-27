@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/9/12
+# JiuZero/z0scan
 
 import socket
 from smb.SMBConnection import SMBConnection
@@ -10,20 +10,21 @@ class Z0SCAN(_PluginBase):
     name = "leakpwd-smb"
     version = "2025.9.12"
     desc = "Weak Password on SMB Server"
+    risk = 2
     ports = [445]
     fingers = [b'SMB|SMB|^\0\0\0.\xffSMBr\0\0\0\0.*', b'SMB|SMB|^\x83\x00\x00\x01\x8f']
     
     def __init__(self):
         self.right_pwd = None
+        self.userpass = []
+        for user in conf.dicts["smb-username"]:
+            for pwd in conf.dicts["smb-password"]:
+                self.userpass.append((user, pwd))
     
     def audit(self):
         self.ip, self.port = self.host.split(":")
-        userpass = []
-        for user in conf.dicts["smb-username"]:
-            for pwd in conf.dicts["smb-password"]:
-                userpass.append((user, pwd))
         z0thread = Threads(name="leakpwd-smb")
-        z0thread.submit(self.process, userpass)
+        z0thread.submit(self.process, self.userpass)
         if self.right_pwd is not None:
             result = self.generate_result()
             result.main({

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # w8ay 2019/7/6
-# JiuZero 2025/3/4
+# JiuZero/z0scan
 
 from copy import deepcopy
 from api import PluginBase, VulType, Type, PLACE, conf, KB
@@ -42,7 +42,7 @@ class Z0SCAN(PluginBase):
             self.success(result)
 
     def audit(self):
-        if not self.risk in conf.risk or conf.level == 0:
+        if conf.level == 0:
             return
         params = deepcopy(self.requests.params)
         data = deepcopy(self.requests.data)

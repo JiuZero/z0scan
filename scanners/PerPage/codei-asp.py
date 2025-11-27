@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # w8ay 2019/7/4
-# JiuZero 2025/5/15
+# JiuZero/z0scan
 
 import random
 
@@ -15,9 +15,9 @@ class Z0SCAN(PluginBase):
     risk = 3
         
     def audit(self):
-        if conf.level == 0 or not self.risk in conf.risk or self.fingerprints.waf:
+        if conf.level == 0 or self.fingerprints.waf:
             return
-        if not "ASP" in self.fingerprints.programing:
+        if not "ASP" in self.fingerprints.finger:
             randint1 = random.randint(10000, 90000)
             randint2 = random.randint(10000, 90000)
             randint3 = randint1 * randint2

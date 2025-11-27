@@ -9,6 +9,7 @@ class Z0SCAN(_PluginBase):
     name = "unauth-mongodb"
     version = "2025.9.12"
     desc = "Mongodb Unauthorized Access"
+    risk = 2
     ports = [27017]
     fingers = [b'Mongodb|Mongodb|MongoDB']
     

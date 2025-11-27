@@ -9,6 +9,7 @@ class Z0SCAN(_PluginBase):
     name = "leakpwd-postgresql"
     version = "2025.9.12"
     desc = "Weak Password on PostgreSQL Server"
+    risk = 2
     ports = [5432]
     fingers = [b'Invalid packet length', b'^EFATAL']
     

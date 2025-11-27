@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # w8ay 2019/9/27
-# JiuZero 2025/6/22
+# JiuZero/z0scan
 
 import requests
 from requests import Request, Session
@@ -14,7 +14,7 @@ class Z0SCAN(PluginBase):
     risk = 3
 
     def audit(self):
-        if not self.risk in conf.risk or conf.level == 0:
+        if conf.level == 0:
             return
         # bug太多了 后面再修吧
         # https://github.com/w-digital-scanner/w13scan/issues/459

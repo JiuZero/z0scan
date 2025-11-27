@@ -23,12 +23,13 @@ from lib.core.log import logger, dataToStdout
 from lib.core.option import init
 from lib.core.settings import banner
 from lib.core.console import start_web_console
-from lib.core.crawler import Crawler
+
+import warnings
 
 def version_check():
     # Check Python version
     if sys.version.split()[0][0] == "2":
-        logger.error("Incompatible Python version detected ('{}'). To successfully run Z0SCAN you'll have to use version >= 3.6 (visit 'https://www.python.org/downloads/')".format(sys.version.split()[0]))
+        logger.error("Incompatible Python version detected ('{}'). To successfully run Z0SCAN you'll have to use version >= 3.9 (visit 'https://www.python.org/downloads/')".format(sys.version.split()[0]))
         sys.exit(0)
 
 def modulePath():
@@ -45,26 +46,6 @@ def modulePath():
     dir_path = os.path.dirname(abs_path)
     return dir_path
 
-def crawl(url):
-    logger.warning("Under maintenance, temporarily unavailable.")
-    sys.exit(0)
-    crawler = Crawler(
-        max_depth=int(conf.crawl),
-        threads=int(conf.crawl_threads),
-        # exclude_pattern=conf.exclude,
-        # include_pattern=conf.include
-    )
-    pages = crawler.crawl(url)
-    urls = []
-    for page in pages:
-        parsed_url = urlparse(page['url'])
-        normalized_url = f"{parsed_url.scheme}://{parsed_url.netloc}{parsed_url.path}"
-        if normalized_url not in urls:
-            urls.append(normalized_url)
-    logger.info(f"Crawl finish. Found pages: {len(urls)}.")
-    # 爬虫与扫描异步进行？如果流量竞争怎么办…
-    return urls
-
 def main():
     version_check()
 
@@ -76,10 +57,7 @@ def main():
     if conf.url or conf.url_file:
         urls = []
         if conf.url:
-            if not conf.crawl:
-                urls.append(conf.url)
-            else:
-                urls = crawl(conf.url)
+            urls.append(conf.url)
         elif conf.url_file:
             urlfile = conf.url_file
             if not os.path.exists(urlfile):
@@ -88,11 +66,9 @@ def main():
             with open(urlfile) as f:
                 _urls = f.readlines()
             _urls = [i.strip() for i in _urls]
-            if not conf.crawl:
-                urls.extend(_urls)
-            else:
-                for url in _urls:
-                    urls.extend(crawl(url))
+            urls.extend(_urls)
+        if urls == []:
+            sys.exit()
         for url in urls:
             try:
                 req = requests.get(url)
@@ -133,4 +109,5 @@ def main():
             logger.warning("User QUIT.")
 
 if __name__ == '__main__':
+    warnings.filterwarnings("ignore")
     main()

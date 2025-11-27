@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # w8ay 2019/7/6
-# JiuZero 2025/3/4
+# JiuZero/z0scan
 
 import re
 import json
@@ -103,7 +103,7 @@ class Z0SCAN(PluginBase):
     risk = 0
         
     def audit(self):
-        if not self.requests.suffix == ".js" or not self.risk in conf.risk:
+        if not self.requests.suffix == ".js":
             return
             
         js_content = self.response.text

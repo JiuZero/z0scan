@@ -38,7 +38,7 @@ class Z0SCAN(PluginBase):
     ]
 
     def audit(self):
-        if self.fingerprints.waf or not self.risk in conf.risk or conf.level == 0:
+        if self.fingerprints.waf or conf.level == 0:
             return
         if not self._is_angularjs_app(): return
         angular_version = self._detect_angular_version() or "1.6.0"

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/5/7
+# JiuZero/z0scan
 
 import threading
 import re
@@ -16,25 +16,15 @@ class ScanPort:
         self.threads = []  # 存储线程引用，用于等待所有线程完成
 
     def _safe_decode_pattern(self, pattern):
-        """安全解码模式字符串，处理各种编码问题"""
+        # 安全解码
         if isinstance(pattern, str):
             return pattern
-            
         elif isinstance(pattern, bytes):
-            # 尝试多种编码方式
-            encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1', 'gbk', 'ascii']
-            for encoding in encodings:
-                try:
-                    return pattern.decode(encoding)
-                except UnicodeDecodeError:
-                    continue
-            
-            # 所有编码都失败，使用忽略错误的方式
+            # 忽略错误
             try:
                 return pattern.decode('utf-8', errors='ignore')
             except:
                 return str(pattern)[2:-1]  # 将bytes转换为字符串表示
-        
         else:
             # 其他类型直接转换为字符串
             return str(pattern)
@@ -53,39 +43,29 @@ class ScanPort:
                 sock.settimeout(3.0)
                 
                 try:
-                    # 尝试建立TCP连接（非阻塞式，受settlement控制）
                     result = sock.connect_ex((ip, int(port)))
-                    
-                    # 连接成功（3次握手完成）
                     if result == 0:
                         try:
-                            # 发送探测包获取服务响应
                             for probe in PROBE:
                                 sock.sendall(probe.encode('utf-8'))
-                                # 接收服务响应（超时由socket.settimeout控制）
                                 response = sock.recv(256).decode('utf-8', 'ignore')
                                 
                                 if response:
                                     # 过滤502网关错误场景
                                     if re.search(r'<title>502 Bad Gateway', response, re.IGNORECASE):
                                         return
-                                        
                                     logger.debug(f"{ip}:{port} OPEN", origin="portscan")
                                     # 匹配服务指纹，加载对应插件
-                                    if fingers:
+                                    if fingers != None and fingers != []:
                                         for pattern in fingers:
                                             try:
-                                                # 修复：使用安全解码方法
-                                                pattern_str = self._safe_decode_pattern(pattern)
-                                                pattern_parts = pattern_str.split('|')
-                                                
-                                                for p in pattern_parts:
-                                                    if re.search(p, response, re.IGNORECASE):
-                                                        logger.info(f"Load plugin '{plugin_name}' on {ip}:{port}", origin="portscan")
-                                                        task_push_for_portscan(plugin_name, host=f"{ip}:{port}", sockrecv=response)
-                                                        break  # 匹配到一个指纹即可，避免重复加载
+                                                pattern = self._safe_decode_pattern(pattern)
+                                                if re.search(pattern, response, re.IGNORECASE):
+                                                    logger.info(f"Load plugin '{plugin_name}' on {ip}:{port}", origin="portscan")
+                                                    task_push_for_portscan(plugin_name, host=f"{ip}:{port}", sockrecv=response)
+                                                    break  # 匹配到一个指纹即可，避免重复加载
                                             except Exception as pattern_error:
-                                                logger.debug(f"Pattern processing error: {str(pattern_error)}", origin="portscan")
+                                                logger.warning(f"Pattern processing error: {str(pattern_error)}", origin="portscan")
                                                 continue
                                     # 无指纹时直接加载插件
                                     else:
@@ -125,13 +105,7 @@ class ScanPort:
             
     def run(self):
         try:
-            # 解析主机名（如果输入的是域名而非IP）
-            if not re.fullmatch(r'\d+\.\d+\.\d+\.\d+', self.ipaddr):
-                logger.debug(f"Resolving hostname: {self.ipaddr}", origin="portscan")
-                self.ipaddr = socket.gethostbyname(self.ipaddr)
-                logger.debug(f"Resolved to IP: {self.ipaddr}", origin="portscan")
-            
-            # 加载端口扫描任务（从KB中获取插件-端口-指纹映射）
+            # 加载端口扫描任务
             tasks = []
             for poc_name, info in KB["portscan"].items():
                 ports, fingers = info

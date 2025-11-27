@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Reference: https://github.com/chenjj/CORScanner
-# JiuZero 2025/5/25
+# JiuZero/z0scan
 
 import inspect, tldextract
 from urllib.parse import urlparse
@@ -132,7 +132,7 @@ class Z0SCAN(PluginBase):
         self.cors_result(module_name, is_cors_perm, "")
     
     def audit(self):
-        if not self.risk in conf.risk or conf.level == 0:
+        if conf.level == 0:
             return
         self.netloc_split_port = urlparse(self.requests.url).netloc.split(':')[0]
         functions = [

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # w8ay 2020/5/10
-# JiuZero 2025/3/2
+# JiuZero/z0scan
 
 from urllib.parse import urlparse
 import requests
@@ -16,7 +16,7 @@ class Z0SCAN(PluginBase):
     risk = 1
     
     def audit(self):
-        if self.risk in conf.risk and conf.level != 0 and not self.fingerprints.waf: # WAF可能会拦截对包含.idea的访问
+        if conf.level != 0 and not self.fingerprints.waf: # WAF可能会拦截对包含.idea的访问
             headers = self.requests.headers.copy()
             p = urlparse(self.requests.url)
             domain = "{}://{}/".format(p.scheme, p.netloc)

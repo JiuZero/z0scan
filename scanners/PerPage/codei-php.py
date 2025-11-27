@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# w8ay 2019/7/4
-# JiuZero 2025/6/16
+# JiuZero/z0scan
 
 import random
 import re
@@ -16,9 +15,9 @@ class Z0SCAN(PluginBase):
     risk = 3
             
     def audit(self):
-        if conf.level == 0 or not self.risk in conf.risk or self.fingerprints.waf:
+        if conf.level == 0 or self.fingerprints.waf:
             return
-        if not "PHP" in self.fingerprints.programing:
+        if not "PHP" in self.fingerprints.finger:
             randint = random.randint(10120, 10240)
             verify_result = md5(str(randint).encode())
             _payloads = [

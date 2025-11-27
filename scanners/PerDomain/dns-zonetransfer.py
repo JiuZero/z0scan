@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/5/11
+# JiuZero/z0scan
 
 import dns.resolver
 import dns.zone
 import dns.exception
 import re
-from lib.core.common import is_ipaddr
+from lib.core.common import ipaddr
 from api import generateResponse, VulType, PluginBase, conf, KB, Type
 
 
@@ -17,7 +17,7 @@ class Z0SCAN(PluginBase):
     risk = 1
     
     def audit(self):
-        if not conf.level == 0 and not is_ipaddr(self.requests.hostname) and self.risk in conf.risk:
+        if not conf.level == 0 and not ipaddr(self.requests.hostname):
             domains = self.split_domain_and_check(self.requests.hostname)
             if domains:
                 for domain in domains:

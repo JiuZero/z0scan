@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/7/17
+# JiuZero/z0scan
 
 import os
 import re
@@ -73,6 +73,7 @@ def get_actual_module_name(pkg_name):
         'python-dateutil': 'dateutil', 
         'pysmb': 'smb', 
         'PyQt-Fluent-Widgets[full]': 'qfluentwidgets', 
+        'crawlee[playwright,beautifulsoup]': 'crawlee', 
     }
     if pkg_name in common_variants:
         return common_variants[pkg_name]
@@ -184,10 +185,11 @@ def build():
         '--nofollow-import-to=helper',
         '--nofollow-import-to=config',
         '--include-package=api',
-        "--include-data-file=doc/patch/effective_tld_names.dat.txt=tld/res/effective_tld_names.dat.txt",
+        "--include-data-file=patch/effective_tld_names.dat.txt=tld/res/effective_tld_names.dat.txt",
         '--remove-output', 
         '--nofollow-import-to=*.tests,*.test', 
         '--assume-yes-for-downloads',
+        '--playwright-include-browser=chromium_headless_shell-1187,firefox-1490'
     ]
     nuitka_cmd.extend(base_args)
     
@@ -247,7 +249,7 @@ def build():
 def setup_build_directory():
     """优化资源文件处理，与release.yml配合"""
     # 需要复制的资源文件
-    resource_dirs = ['config.py', 'scanners', 'dicts', 'fingerprints', 'helper', 'data']
+    resource_dirs = ['config.py', 'scanners', 'dicts', 'helper', 'data', 'pocs']
     
     build_dir = Path('z0scan')
     try:

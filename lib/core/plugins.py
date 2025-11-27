@@ -6,7 +6,7 @@
 import copy
 import platform
 import socket
-import sys, re, json
+import sys, re, json, urllib, base64, threading
 from typing import Tuple
 import traceback
 import copy
@@ -44,6 +44,74 @@ def _flatten_json_items(data, prefix=''):
     else:
         yield (prefix, data)
 
+def is_json_string(text):
+    text = text.strip()
+    if not text:
+        return False
+    if (text.startswith('{') and text.endswith('}')) or (text.startswith('[') and text.endswith(']')):
+        try:
+            json.loads(text)
+            return True
+        except (json.JSONDecodeError, ValueError):
+            pass
+    return False
+
+def is_base64_encoded(text):
+    try:
+        base64_pattern = re.compile(r'^[A-Za-z0-9+/]*={0,2}$')
+        if not base64_pattern.match(text):
+            return False
+        decoded = base64.b64decode(text)
+        decoded_str = decoded.decode('utf-8', errors='ignore')
+        return decoded_str.isprintable()
+    except Exception:
+        return False
+
+def decode_possible_json_value(value):
+    original_value = value
+    
+    try:
+        url_decoded = urllib.parse.unquote(original_value)
+        if url_decoded != original_value and is_json_string(url_decoded):
+            return json.loads(url_decoded), "url_encoded_json"
+    except:
+        pass
+    
+    try:
+        if is_base64_encoded(original_value):
+            base64_decoded = base64.b64decode(original_value).decode('utf-8')
+            if is_json_string(base64_decoded):
+                return json.loads(base64_decoded), "base64_encoded_json"
+    except:
+        pass
+    
+    if is_json_string(original_value):
+        return json.loads(original_value), "raw_json"
+    
+    return original_value, "plain_text"
+
+def _flatten_json_items(data, parent_key=''):
+    items = []
+    
+    if isinstance(data, dict):
+        for k, v in data.items():
+            new_key = f"{parent_key}.{k}" if parent_key else k
+            if isinstance(v, (dict, list)):
+                items.extend(_flatten_json_items(v, new_key))
+            else:
+                items.append((new_key, v))
+    elif isinstance(data, list):
+        for i, item in enumerate(data):
+            new_key = f"{parent_key}[{i}]" if parent_key else f"[{i}]"
+            if isinstance(item, (dict, list)):
+                items.extend(_flatten_json_items(item, new_key))
+            else:
+                items.append((new_key, item))
+    else:
+        items.append((parent_key, data))
+    
+    return items
+
 class PluginBase(object):
     def __init__(self):
         self.type = None
@@ -53,11 +121,270 @@ class PluginBase(object):
 
         self.requests: FakeReq = None
         self.response: FakeResp = None
-        self.fingerprints = SimpleNamespace(waf=False, os=[], programing=[], webserver=[])
+        self.fingerprints = SimpleNamespace(waf=False, finger=[])
 
     def generate_result(self) -> ResultObject:
         return ResultObject(self)
 
+    def inject_param_json_payload(self, original_param_value, target_key, payload):
+        """
+        处理参数中的JSON值注入
+        :param original_param_value: 原始参数值 (JSON字符串)
+        :param target_key: 目标键路径 (如 "uid", "user.name", "array[0]")
+        :param payload: 要注入的内容
+        :return: 修改后的参数值
+        """
+        try:
+            decoded_data, encoding_type = decode_possible_json_value(original_param_value)
+            
+            # 如果不是JSON，直接追加payload
+            if encoding_type == "plain_text":
+                return original_param_value + payload
+            
+            def _inject_json(node, key_parts, payload):
+                if not key_parts:
+                    # 如果没有更多路径，在当前节点注入
+                    return str(node) + payload
+                
+                current_key = key_parts[0]
+                
+                # 处理数组索引 [0]
+                if current_key.startswith("[") and current_key.endswith("]"):
+                    index = int(current_key[1:-1])
+                    if isinstance(node, list) and index < len(node):
+                        if len(key_parts) == 1:
+                            node[index] = str(node[index]) + payload
+                        else:
+                            _inject_json(node[index], key_parts[1:], payload)
+                # 处理对象属性
+                elif isinstance(node, dict) and current_key in node:
+                    if len(key_parts) == 1:
+                        node[current_key] = str(node[current_key]) + payload
+                    else:
+                        _inject_json(node[current_key], key_parts[1:], payload)
+                # 如果没有找到对应的键，保持原样
+                return node
+            
+            # 如果 target_key 为空，说明是对整个 JSON 值注入
+            if not target_key:
+                if isinstance(decoded_data, (dict, list)):
+                    return json.dumps(decoded_data) + payload
+                else:
+                    return str(decoded_data) + payload
+            
+            # 否则按路径注入
+            key_parts = target_key.split('.')
+            _inject_json(decoded_data, key_parts, payload)
+            
+            if encoding_type == "url_encoded_json":
+                return json.dumps(decoded_data)
+            # 重新编码
+            elif encoding_type == "base64_encoded_json":
+                return base64.b64encode(json.dumps(decoded_data).encode()).decode()
+            else:
+                return json.dumps(decoded_data)
+                
+        except Exception as e:
+            logger.warning(f"参数JSON注入失败: {e}")
+            return original_param_value + payload
+
+    def inject_json_payload(self, original_json, target_key, payload):
+        """
+        JSON主体payload注入核心方法
+        :param original_json: 原始JSON字符串
+        :param target_key: 目标键路径 (格式如 "user.name", "array[0]", "json_value")
+        :param payload: 要注入的内容
+        :return: 修改后的JSON对象
+        """
+        try:
+            data = json.loads(original_json)
+            
+            def _inject(node, key_parts, payload):
+                if not key_parts:
+                    return node
+                
+                current_key = key_parts[0]
+                
+                # 处理数组索引 array[0]
+                if current_key.startswith("array[") and current_key.endswith("]"):
+                    index = int(current_key[6:-1])
+                    if isinstance(node, list) and index < len(node):
+                        if len(key_parts) == 1:
+                            node[index] = str(node[index]) + payload
+                        else:
+                            _inject(node[index], key_parts[1:], payload)
+                # 处理普通数组索引 [0]
+                elif current_key.startswith("[") and current_key.endswith("]"):
+                    index = int(current_key[1:-1])
+                    if isinstance(node, list) and index < len(node):
+                        if len(key_parts) == 1:
+                            node[index] = str(node[index]) + payload
+                        else:
+                            _inject(node[index], key_parts[1:], payload)
+                # 处理对象属性
+                elif isinstance(node, dict):
+                    if current_key in node:
+                        if len(key_parts) == 1:
+                            node[current_key] = str(node[current_key]) + payload
+                        else:
+                            _inject(node[current_key], key_parts[1:], payload)
+                # 处理json_value特殊情况
+                elif current_key == "json_value" and len(key_parts) == 1:
+                    return str(node) + payload
+                
+                return node
+            
+            # 处理整个JSON值的情况
+            if target_key == "json_value":
+                return str(data) + payload
+            
+            # 解析路径并注入
+            key_parts = target_key.split('.')
+            _inject(data, key_parts, payload)
+            return data
+            
+        except json.JSONDecodeError as e:
+            logger.warning(f"JSON解析失败: {e}")
+            return None
+
+    def inject_xml_payload(self, xml_data, target_path, payload):
+        """
+        XML数据payload注入处理器
+        :param xml_data: 原始XML字符串
+        :param target_path: 目标路径格式:
+        - "elem1/elem2" (元素路径)
+        - "elem@attr" (属性路径)
+        - "ns:elem" (带命名空间)
+        :param payload: 要注入的字符串
+        :return: 修改后的Element对象
+        """
+        try:
+            root = ET.fromstring(xml_data)
+            
+            # 收集命名空间
+            ns_map = {}
+            for event, elem in ET.iterparse(StringIO(xml_data), events=('start-ns',)):
+                prefix, uri = elem
+                ns_map[prefix] = uri
+            
+            # 路径解析和注入
+            if '@' in target_path:
+                # 属性注入: elem@attr
+                elem_path, attr = target_path.split('@')
+                target_elems = root.findall(elem_path, namespaces=ns_map)
+                for elem in target_elems:
+                    if attr in elem.attrib:
+                        elem.attrib[attr] += payload
+            else:
+                # 元素文本注入
+                target_elems = root.findall(target_path, namespaces=ns_map)
+                for elem in target_elems:
+                    if elem.text is not None:
+                        elem.text = elem.text.strip() + payload
+                    else:
+                        elem.text = payload
+            
+            return root
+            
+        except ET.ParseError as e:
+            logger.warning(f"XML解析失败: {e}")
+            return None
+
+    def inject_multipart_payload(self, original_data, content_type, target_field, payload):
+        """
+        Multipart/form-data 数据 payload 注入处理器
+        :param original_data: 原始 multipart 数据 (bytes 或 str)
+        :param content_type: Content-Type 头 (包含 boundary)
+        :param target_field: 目标字段名
+        :param payload: 要注入的字符串
+        :return: 修改后的 multipart 数据 (bytes)
+        """
+        if not original_data:
+            return None
+            
+        try:
+            # 确保数据为字节类型
+            if isinstance(original_data, str):
+                original_data = original_data.encode('utf-8')
+            
+            # 提取 boundary
+            boundary = None
+            if 'boundary=' in content_type:
+                boundary_match = re.search(r'boundary=([^;]+)', content_type)
+                if boundary_match:
+                    boundary = boundary_match.group(1).strip()
+            
+            if not boundary:
+                logger.warning("无法从Content-Type中提取boundary")
+                return None
+            
+            # 分割各部分
+            boundary_line = f"--{boundary}".encode()
+            parts = original_data.split(boundary_line)
+            modified_parts = []
+            
+            for part in parts:
+                if not part.strip():
+                    continue
+                    
+                # 解析头部和主体
+                header_body = part.split(b'\r\n\r\n', 1)
+                if len(header_body) != 2:
+                    modified_parts.append(part)
+                    continue
+                    
+                headers, body = header_body
+                headers_str = headers.decode('utf-8', errors='ignore')
+                
+                # 检查是否是目标字段
+                if f'name="{target_field}"' in headers_str:
+                    # 去除末尾可能的分隔符
+                    if body.endswith(b'\r\n'):
+                        body = body[:-2]
+                    
+                    # 尝试解码并注入
+                    try:
+                        decoded_body = body.decode('utf-8') + payload
+                        body = decoded_body.encode('utf-8')
+                    except UnicodeDecodeError:
+                        # 二进制数据直接追加
+                        body = body + payload.encode('utf-8')
+                    
+                    # 重建 part
+                    part = headers + b'\r\n\r\n' + body
+                
+                modified_parts.append(part)
+            
+            # 重建整个 multipart 数据
+            new_data = boundary_line + boundary_line.join(modified_parts)
+            
+            # 确保以 boundary-- 结尾
+            if not new_data.rstrip().endswith(b'--'):
+                new_data += b'--\r\n'
+                
+            return new_data
+            
+        except Exception as e:
+            logger.warning(f"Multipart注入失败: {e}")
+            return None
+
+    def inject_array_like_payload(self, original_data, target_key, payload):
+        """
+        类数组数据payload注入处理器
+        :param original_data: 原始数据 (字典形式)
+        :param target_key: 目标键
+        :param payload: 要注入的内容
+        :return: 修改后的数据
+        """
+        try:
+            data = copy.deepcopy(original_data)
+            if target_key in data:
+                data[target_key] = str(data[target_key]) + payload
+            return data
+        except Exception as e:
+            logger.warning(f"类数组数据注入失败: {e}")
+            return original_data
+    
     def success(self, msg: ResultObject):
         if isinstance(msg, ResultObject):
             msg = msg.output()
@@ -74,38 +401,59 @@ class PluginBase(object):
 
     def audit(self):
         raise NotImplementedError
-    
+
     def generateItemdatas(self):
-        """
-        iterdatas = [
-            ["id", "1", "URL"],
-            ["user", "admin", "PARAMS"]
-        ]
-        """
         iterdatas = []
+        # 处理URL参数 (GET参数)
         if self.requests.params:
             for k, v in self.requests.params.items():
-                iterdatas.append([k, v, PLACE.PARAM])
+                decoded_data, encoding_type = decode_possible_json_value(str(v))
+                
+                if encoding_type != "plain_text":
+                    # 参数值是JSON格式
+                    if isinstance(decoded_data, (dict, list)):
+                        for key_path, value in _flatten_json_items(decoded_data):
+                            full_key_path = f"{k}.{key_path}" if key_path else k
+                            iterdatas.append([full_key_path, str(value), PLACE.PARAM_VALUE_JSON])
+                    else:
+                        iterdatas.append([k, str(decoded_data), PLACE.PARAM_VALUE_JSON])
+                else:
+                    # 普通参数值
+                    iterdatas.append([k, str(v), PLACE.PARAM])
+
+        # 处理请求体
         if self.requests.body:
-            if self.requests.post_hint == POST_HINT.NORMAL or self.requests.post_hint == POST_HINT.ARRAY_LIKE:
+            if self.requests.post_hint == POST_HINT.NORMAL:
                 for k, v in self.requests.data.items():
-                    iterdatas.append([k, v, PLACE.NORMAL_DATA])
+                    decoded_data, encoding_type = decode_possible_json_value(str(v))
+                    if encoding_type != "plain_text":
+                        # 表单字段值是JSON格式
+                        if isinstance(decoded_data, (dict, list)):
+                            for key_path, value in _flatten_json_items(decoded_data):
+                                full_key_path = f"{k}.{key_path}" if key_path else k
+                                iterdatas.append([full_key_path, str(value), PLACE.FORM_VALUE_JSON])
+                        else:
+                            iterdatas.append([k, str(decoded_data), PLACE.FORM_VALUE_JSON])
+                    else:
+                        # 普通表单字段
+                        iterdatas.append([k, str(v), PLACE.NORMAL_DATA])
+            elif self.requests.post_hint == POST_HINT.ARRAY_LIKE:
+                for k, v in self.requests.data.items():
+                    iterdatas.append([k, str(v), PLACE.ARRAY_LIKE_DATA])
             elif self.requests.post_hint == POST_HINT.JSON:
                 try:
                     json_data = json.loads(self.requests.body)
                     if isinstance(json_data, dict):
-                        # 处理字典类型
                         for key_path, value in _flatten_json_items(json_data):
                             iterdatas.append([key_path, str(value), PLACE.JSON_DATA])
                     elif isinstance(json_data, list):
-                        # 处理数组类型
                         for i, item in enumerate(json_data):
                             if isinstance(item, (dict, list)):
-                                for key_path, value in _flatten_json_items(item, f"array[{i}]"):
+                                for key_path, value in _flatten_json_items(item, f"[{i}]"):
                                     iterdatas.append([key_path, str(value), PLACE.JSON_DATA])
                             else:
-                                iterdatas.append([f"array[{i}]", str(item), PLACE.JSON_DATA])
-                    else:  # 单值情况
+                                iterdatas.append([f"[{i}]", str(item), PLACE.JSON_DATA])
+                    else:
                         iterdatas.append(["json_value", str(json_data), PLACE.JSON_DATA])
                 except json.JSONDecodeError:
                     pass
@@ -115,276 +463,251 @@ class PluginBase(object):
                     for elem in root.iter():
                         if elem.text and elem.text.strip():
                             iterdatas.append([elem.tag, elem.text.strip(), PLACE.XML_DATA])
-                        # 带命名空间
                         for attr, value in elem.attrib.items():
                             iterdatas.append([f"{elem.tag}@{attr}", value, PLACE.XML_DATA])
                 except ET.ParseError:
                     pass
-            elif self.requests.post_hint == POST_HINT.JSON_LIKE:
-                # 有点复杂了，后面再处理
-                pass
-            '''
-            elif self.requests.post_hint == POST_HINT.MULTIPART:
-                # 从原始数据解析multipart边界
-                content_type = self.requests.headers.get('Content-Type', '')
-                boundary = None
-                if 'boundary=' in content_type:
-                    boundary = content_type.split('boundary=')[1].split(';')[0].strip()
-                if boundary:
-                    parts = self.requests.body.split(f'--{boundary}')
-                    for part in parts:
-                        if 'name="' in part:
-                            name = part.split('name="')[1].split('"')[0]
-                            # 这里简单处理下，有时间再研究着改一下
-                            value_part = part.split('\r\n\r\n', 1)[1].rsplit('\r\n', 1)[0]
-                            iterdatas.append([name, value_part, PLACE.MULTIPART_DATA])
-            '''
+            elif self.requests.post_hint == POST_HINT.SOAP:
+                try:
+                    root = ET.fromstring(self.requests.body)
+                    for elem in root.iter():
+                        if elem.text and elem.text.strip():
+                            iterdatas.append([elem.tag, elem.text.strip(), PLACE.SOAP_DATA])
+                except ET.ParseError:
+                    pass
+        
+        # Cookie处理
         if conf.scan_cookie and self.requests.cookies:
             for k, v in self.requests.cookies.items():
-                iterdatas.append([k, v, PLACE.COOKIE])
+                decoded_data, encoding_type = decode_possible_json_value(str(v))
+                
+                if encoding_type != "plain_text":
+                    if isinstance(decoded_data, (dict, list)):
+                        for key_path, value in _flatten_json_items(decoded_data):
+                            full_key_path = f"{k}.{key_path}" if key_path else k
+                            iterdatas.append([full_key_path, str(value), PLACE.COOKIE_JSON_VALUE])
+                    else:
+                        iterdatas.append([k, str(decoded_data), PLACE.COOKIE_JSON_VALUE])
+                else:
+                    iterdatas.append([k, str(v), PLACE.COOKIE])
+        
+        # 伪静态参数处理
         if any(re.search(r'/{}(?:[-_/]|\.)([^-_/?#&=\.]+)'.format(re.escape(k)), self.requests.url, re.I) for k in conf.pseudo_static_keywords):
-            # 分隔符 + 键 + 分隔符 + 值 + (分隔符或结束)
             for k in conf.pseudo_static_keywords:
-                pattern = re.compile(
-                    r'/{}(?:[-_/]|\.)([^?#&]*)'.format(re.escape(k)), 
-                    re.I
-                )
+                pattern = re.compile(r'/{}(?:[-_/]|\.)([^?#&]*)'.format(re.escape(k)), re.I)
                 match = pattern.search(self.requests.url)
                 if match:
                     v = match.group(1)
                     if '.' in v:
                         v = v.split('.')[0]
                     iterdatas.append([k, v, PLACE.URL])
+        
         return iterdatas
 
-    def inject_json_payload(self, original_json, target_key, payload):
-        """
-        JSON数据payload注入核心方法
-        :param original_json: 原始JSON字符串
-        :param target_key: 目标键路径 (格式如 "user.name", "array[0]", "json_value")
-        :param payload: 要注入的内容
-        :return: 修改后的JSON对象
-        """
-        try:
-            data = json.loads(original_json)
-            def _inject(node, key_parts, payload):
-                current_key = key_parts[0]
-                if current_key.startswith("array["):
-                    index = int(current_key[6:-1])
-                    if isinstance(node, list) and index < len(node):
-                        if len(key_parts) == 1:
-                            node[index] = str(node[index]) + payload
-                        else:
-                            _inject(node[index], key_parts[1:], payload)
-                elif isinstance(node, dict):
-                    if current_key in node:
-                        if len(key_parts) == 1:
-                            node[current_key] = str(node[current_key]) + payload
-                        else:
-                            _inject(node[current_key], key_parts[1:], payload)
-                elif current_key == "json_value" and len(key_parts) == 1:
-                    return str(node) + payload
-                return node
-            if target_key == "json_value":
-                return str(data) + payload
-            else:
-                key_parts = target_key.split('.')
-                _inject(data, key_parts, payload)
-                return data
-        except json.JSONDecodeError:
-            return None
-    
-    def inject_xml_payload(self, xml_data, target_path, payload):
-        """
-        XML数据payload注入处理器
-        :param xml_data: 原始XML字符串
-        :param target_path: 目标路径格式:
-        - "elem1/elem2" (元素路径)
-        - "elem@attr" (属性路径)
-        - "ns:elem" (带命名空间)
-        :param payload: 要注入的字符串
-        :return: 修改后的Element对象
-        """
-        try:
-            root = ET.fromstring(xml_data)
-            # 命名空间处理
-            ns_map = {k if k else 'default': v 
-                    for _, k, v in ET.iterparse(StringIO(xml_data), events=('start-ns',))}
-            # 路径解析
-            if '@' in target_path:
-                elem_path, attr = target_path.split('@')
-                target_elems = root.findall(elem_path, namespaces=ns_map)
-                for elem in target_elems:
-                    if attr in elem.attrib:
-                        elem.attrib[attr] += payload
-            else:
-                target_elems = root.findall(target_path, namespaces=ns_map)
-                for elem in target_elems:
-                    if elem.text is not None:
-                        elem.text = elem.text.strip() + payload
-            return root
-        except ET.ParseError:
-            return None
-    
-    def inject_multipart_payload(self, original_data, content_type, target_field, payload):
-        """
-        Multipart/form-data 数据 payload 注入处理器
-        :param original_data: 原始 multipart 数据 (bytes 或 str)
-        :param content_type: Content-Type 头 (包含 boundary)
-        :param target_field: 目标字段名
-        :param payload: 要注入的字符串
-        :return: 修改后的 multipart 数据 (bytes)
-        """
-        if not original_data:
-            return None
-        # 确保数据为字节类型
-        if isinstance(original_data, str):
-            original_data = original_data.encode('utf-8')
-        # 提取 boundary
-        boundary = None
-        if 'boundary=' in content_type:
-            boundary = content_type.split('boundary=')[1].split(';')[0].strip()
-        if not boundary:
-            logger.warning("无法从Content-Type中提取boundary")
-            return None
-        # 分割各部分
-        boundary_line = f"--{boundary}".encode()
-        parts = original_data.split(boundary_line)
-        modified_parts = []
-        for part in parts:
-            if not part.strip():
-                continue
-            # 解析字段名
-            header_body = part.split(b'\r\n\r\n', 1)
-            if len(header_body) != 2:
-                modified_parts.append(part)
-                continue
-            headers, body = header_body
-            headers = headers.decode('utf-8', errors='ignore')
-            field_name = None
-            if f'name="{target_field}"' in headers:
-                # 找到目标字段
-                body = body.rsplit(b'\r\n', 1)[0]  # 去除末尾可能的分隔符
-                try:
-                    # 尝试解码原始内容 (可能是文本或二进制)
-                    decoded_body = body.decode('utf-8') + payload
-                    body = decoded_body.encode('utf-8')
-                except UnicodeDecodeError:
-                    # 二进制数据直接追加
-                    body = body + payload.encode('utf-8')
-                # 重建 part
-                part = headers.encode('utf-8') + b'\r\n\r\n' + body
-            modified_parts.append(part)
-        # 重建整个 multipart 数据
-        new_data = boundary_line + boundary_line.join(modified_parts)
-        # 确保以 boundary-- 结尾
-        if not new_data.rstrip().endswith(b'--'):
-            new_data += b'--\r\n'
-        return new_data
-    
     def insertPayload(self, datas: dict):
         key = str(datas.get("key", ""))
         value = str(datas.get("value", ""))
         payload = str(datas.get("payload", ""))
         position = str(datas.get("position", ""))
-        if position == PLACE.NORMAL_DATA:
+        
+        # JSON值参数处理 (PARAM_VALUE_JSON, FORM_VALUE_JSON, COOKIE_JSON_VALUE)
+        if position in [PLACE.PARAM_VALUE_JSON, PLACE.FORM_VALUE_JSON, PLACE.COOKIE_JSON_VALUE]:
+            if position == PLACE.PARAM_VALUE_JSON:
+                params = copy.deepcopy(self.requests.params)
+                if '.' in key:
+                    param_name, json_path = key.split('.', 1)
+                    original_value = params.get(param_name, "")
+                    params[param_name] = self.inject_param_json_payload(original_value, json_path, payload)
+                else:
+                    params[key] = self.inject_param_json_payload(value, "", payload)
+                return params
+            
+            elif position == PLACE.FORM_VALUE_JSON:
+                data = copy.deepcopy(self.requests.data)
+                if '.' in key:
+                    param_name, json_path = key.split('.', 1)
+                    original_value = data.get(param_name, "")
+                    data[param_name] = self.inject_param_json_payload(original_value, json_path, payload)
+                else:
+                    data[key] = self.inject_param_json_payload(value, "", payload)
+                return data
+            
+            elif position == PLACE.COOKIE_JSON_VALUE:
+                cookies = copy.deepcopy(self.requests.cookies)
+                if '.' in key:
+                    param_name, json_path = key.split('.', 1)
+                    original_value = cookies.get(param_name, "")
+                    cookies[param_name] = self.inject_param_json_payload(original_value, json_path, payload)
+                else:
+                    cookies[key] = self.inject_param_json_payload(value, "", payload)
+                return cookies
+        
+        # 常规参数处理
+        elif position == PLACE.NORMAL_DATA:
             data = copy.deepcopy(self.requests.data)
             data[key] = value + payload
             return data
+        
         elif position == PLACE.PARAM:
             params = copy.deepcopy(self.requests.params)
             params[key] = value + payload
             return params
+        
+        elif position == PLACE.ARRAY_LIKE_DATA:
+            data = copy.deepcopy(self.requests.data)
+            data[key] = value + payload
+            return data
+        
+        # JSON主体处理
         elif position == PLACE.JSON_DATA:
-            modified_json = self.inject_json_payload(
-                original_json=self.requests.body,
-                target_key=key,
-                payload=payload
-            )
+            modified_json = self.inject_json_payload(self.requests.body, key, payload)
             if not modified_json:
                 return None
-            return modified_json if isinstance(modified_json, (dict, list)) else json.loads(modified_json) # json=modified
+            return modified_json if isinstance(modified_json, (dict, list)) else json.loads(modified_json)
+        
+        # XML处理
         elif position == PLACE.XML_DATA:
-            modified_xml = self.inject_xml_payload(
-                xml_data=self.requests.body,
-                target_path=key,  # 如 "root/elem" 或 "elem@attr"
-                payload=payload
-            )
+            modified_xml = self.inject_xml_payload(self.requests.body, key, payload)
             if not modified_xml:
                 return None
-            return ET.tostring(modified_xml, encoding='unicode') # data=ET.tostring(modified_xml, encoding='unicode')
+            return ET.tostring(modified_xml, encoding='unicode')
+        
+        elif position == PLACE.SOAP_DATA:
+            modified_xml = self.inject_xml_payload(self.requests.body, key, payload)
+            if not modified_xml:
+                return None
+            return ET.tostring(modified_xml, encoding='unicode')
+        
+        # Multipart处理
         elif position == PLACE.MULTIPART_DATA:
             modified_multipart = self.inject_multipart_payload(
-                original_data=self.requests.body,
-                content_type=self.requests.headers.get('Content-Type', ''),
-                target_field=key,  # multipart 字段名
-                payload=payload
+                self.requests.body,
+                self.requests.headers.get('Content-Type', ''),
+                key,
+                payload
             )
             if not modified_multipart:
                 return None
-            return modified_multipart # data=modified_multipart
+            return modified_multipart
+        
+        # Cookie处理
         elif position == PLACE.COOKIE:
             cookies = copy.deepcopy(self.requests.cookies)
             cookies[key] = value + payload
             return cookies
+        
+        # URL处理
         elif position == PLACE.URL:
-            # 向伪静态注入点插入的未编码的Payload可能导致网站报错
-            payload = parse.quote(payload)
+            payload_encoded = urllib.parse.quote(payload)
             pattern = r'(/{}(?:[-_/]|\.))([^?#&]*)'.format(re.escape(key))
+            
             def replacement(match):
                 separator = match.group(1)
                 original_value = match.group(2)
                 if '.' in original_value:
                     base_value, extension = original_value.split('.', 1)
-                    return '{}{}{}.{}'.format(separator, base_value, payload, extension)
+                    return '{}{}{}.{}'.format(separator, base_value, payload_encoded, extension)
                 else:
-                    return '{}{}{}'.format(separator, original_value, payload)
-            url = re.sub(pattern, replacement, self.requests.url, flags=re.I)
+                    return '{}{}{}'.format(separator, original_value, payload_encoded)
+            
+            # 解析原始URL，只修改路径部分，保留原始查询参数
+            parsed_url = urlsplit(self.requests.url)
+            modified_path = re.sub(pattern, replacement, parsed_url.path, flags=re.I)
+            
+            # 重建URL，保留原始查询参数
+            url = urlunsplit((
+                parsed_url.scheme,
+                parsed_url.netloc,
+                modified_path,
+                parsed_url.query,  # 保留原始查询参数
+                parsed_url.fragment
+            ))
             return url
 
+        return None
+
     def req(self, position, payload, allow_redirects=True, quote=True):
-        '''
-        sess = requests.Session()
-        sess.mount('http://', HTTPAdapter(max_retries=conf.retry)) 
-        sess.mount('https://', HTTPAdapter(max_retries=conf.retry))     
-        sess.keep_alive = False'
-        '''
-        r = False
-        parsed = urlsplit(copy.deepcopy(self.requests.url))
-        url = urlunsplit((parsed.scheme, parsed.netloc, parsed.path, "", ""))
+        try:
+            parsed = urlsplit(copy.deepcopy(self.requests.url))
+            url = urlunsplit((parsed.scheme, parsed.netloc, parsed.path, "", ""))
 
-        if not PLACE.URL:
-            payload = {
-                k: str(v).encode("utf-8")
-                for k, v in payload.items()
-            }
-        
-        params = copy.deepcopy(self.requests.params)
-        data = copy.deepcopy(self.requests.data)
+            params = copy.deepcopy(self.requests.params)
+            data = copy.deepcopy(self.requests.data)
 
-        if position == PLACE.PARAM:
-            r = requests.get(url, params=payload, data=self.requests.data, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
-        
-        if position == PLACE.NORMAL_DATA:
-            r = requests.post(url, params=params, data=payload, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
-        elif position == PLACE.JSON_DATA:
-            r = requests.post(url, params=params, json=payload, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
-        elif position == PLACE.XML_DATA:
-            r = requests.post(url, params=params, data=payload, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
-        elif position == PLACE.MULTIPART_DATA:
-            r = requests.post(url, params=params, data=payload, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
-        elif position == PLACE.COOKIE:
-            if self.requests.method == HTTPMETHOD.GET:
-                r = requests.get(url, params=params, data=self.requests.data, headers=payload, allow_redirects=allow_redirects, quote=quote)
-            elif self.requests.method == HTTPMETHOD.POST:
-                r = requests.post(url, params=params, data=data, headers=payload, allow_redirects=allow_redirects, quote=quote)
-        elif position == PLACE.URL:
-            if self.requests.method == HTTPMETHOD.GET:
-                r = requests.get(payload, params=params, data=self.requests.data, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
-            elif self.requests.method == HTTPMETHOD.POST:
-                r = requests.post(payload, params=params, data=self.requests.data, headers=self.requests.headers, allow_redirects=allow_redirects, quote=quote)
-        # sess.close()
-        return r
+            # JSON值参数处理
+            if position in [PLACE.PARAM_VALUE_JSON, PLACE.FORM_VALUE_JSON, PLACE.COOKIE_JSON_VALUE]:
+                if position == PLACE.PARAM_VALUE_JSON:
+                    return requests.get(url, params=payload, data=self.requests.data, 
+                                    headers=self.requests.headers, allow_redirects=allow_redirects)
+                elif position == PLACE.FORM_VALUE_JSON:
+                    return requests.post(url, params=params, data=payload, 
+                                    headers=self.requests.headers, allow_redirects=allow_redirects)
+                elif position == PLACE.COOKIE_JSON_VALUE:
+                    headers = copy.deepcopy(self.requests.headers)
+                    if 'Cookie' in headers:
+                        del headers['Cookie']
+                    headers.update(payload)
+                    if self.requests.method == HTTPMETHOD.GET:
+                        return requests.get(url, params=params, headers=headers, 
+                                        allow_redirects=allow_redirects)
+                    elif self.requests.method == HTTPMETHOD.POST:
+                        return requests.post(url, params=params, data=data, 
+                                        headers=headers, allow_redirects=allow_redirects)
+            
+            # 常规参数处理
+            elif position == PLACE.PARAM:
+                return requests.get(url, params=payload, data=self.requests.data, 
+                                headers=self.requests.headers, allow_redirects=allow_redirects)
+            
+            elif position in [PLACE.NORMAL_DATA, PLACE.ARRAY_LIKE_DATA]:
+                return requests.post(url, params=params, data=payload, 
+                                headers=self.requests.headers, allow_redirects=allow_redirects)
+            
+            # JSON主体处理
+            elif position == PLACE.JSON_DATA:
+                return requests.post(url, params=params, json=payload, 
+                                headers=self.requests.headers, allow_redirects=allow_redirects)
+            
+            # XML处理
+            elif position in [PLACE.XML_DATA, PLACE.SOAP_DATA]:
+                return requests.post(url, params=params, data=payload, 
+                                headers=self.requests.headers, allow_redirects=allow_redirects)
+            
+            # Multipart处理
+            elif position == PLACE.MULTIPART_DATA:
+                return requests.post(url, params=params, data=payload, 
+                                headers=self.requests.headers, allow_redirects=allow_redirects)
+            
+            # Cookie处理
+            elif position == PLACE.COOKIE:
+                headers = copy.deepcopy(self.requests.headers)
+                if 'Cookie' in headers:
+                    del headers['Cookie']
+                headers.update(payload)
+                if self.requests.method == HTTPMETHOD.GET:
+                    return requests.get(url, params=params, headers=headers, 
+                                    allow_redirects=allow_redirects)
+                elif self.requests.method == HTTPMETHOD.POST:
+                    return requests.post(url, params=params, data=data, 
+                                    headers=headers, allow_redirects=allow_redirects)
+            
+            # URL处理
+            elif position == PLACE.URL:
+                # 使用payload URL的路径和查询参数
+                if self.requests.method == HTTPMETHOD.GET:
+                    return requests.get(payload, 
+                                    headers=self.requests.headers, 
+                                    allow_redirects=allow_redirects)
+                elif self.requests.method == HTTPMETHOD.POST:
+                    return requests.post(payload, 
+                                    data=self.requests.data, 
+                                    headers=self.requests.headers, 
+                                    allow_redirects=allow_redirects)
+            logger.warning(f"未知的position类型: {position}")
+            return None
+        except Exception as e:
+            logger.error(f"请求发送失败: {e}")
+            return None
     
     def execute(self, _: Tuple[FakeReq, FakeResp, SimpleNamespace]):
         self.requests, self.response, self.fingerprints = _

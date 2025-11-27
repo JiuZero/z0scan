@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/6/7
+# JiuZero/z0scan
 
 from api import generateResponse, VulType, Type, PluginBase, conf, logger, KB
 import re
@@ -14,7 +14,7 @@ class Z0SCAN(PluginBase):
     risk = 1
     
     def audit(self):
-        if conf.level == 0 or not self.risk in conf.risk:
+        if conf.level == 0:
             return
 
         # 修改Host头

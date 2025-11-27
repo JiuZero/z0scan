@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# w8ay 2019/7/23
-# JiuZero 2025/3/2
+# w8ay/w13scan
+# JiuZero/z0scan
 
 import copy
 import requests

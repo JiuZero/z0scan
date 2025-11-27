@@ -36,21 +36,24 @@ class VulnDetector():
         value_safe = any(re.fullmatch(p, value, re.IGNORECASE) for p in safe_values)
         if not (key_safe or value_safe):
             if self.remind:
-                logger.info(f"Suspected interactive Database: {self.url} => {key}")
+                logger.info(f"InteractiveDatabaseParam: {self.url} => {key}")
             return True
         return False
     
     def is_redirect(self, key, value):
         """重定向检测"""
         redirect_keys = [
-            r'^redirect[a-z0-9]*$',
-            r'^(url|jump|to|link|domain)[a-z0-9]*$',
+            r'^(url|jump|to|link|domain|addr|source|go|redir)[a-z0-9]*$',
             r'^callbackurl$'
         ]
+        args = ('open', 'location', 'target', 'imageurl', 'wap', '3g', 'g', 'go', 'share', 'u', 'to', 'src', 'display')
         if (any(re.fullmatch(p, key, re.IGNORECASE) for p in redirect_keys)) or re.match(r'^(http|https|ftp|javascript):', value, re.IGNORECASE):
             if self.remind:
-                logger.info(f"Suspected Redirect param: {self.url} => {key}")
+                logger.info(f"RedirectParam: {self.url} => {key}")
             return True
+        for arg in args:
+            if arg.lower() == key.lower():
+                return True
         if conf.level == 3:
             return True
         return False
@@ -64,7 +67,7 @@ class VulnDetector():
         ]
         if any(re.fullmatch(p, key, re.IGNORECASE) for p in patterns):
             if self.remind:
-                logger.info(f"Suspected File operations: {self.url} => {key}")
+                logger.info(f"FileOperationsParam: {self.url} => {key}")
             return True
         if conf.level == 3:
             return True
@@ -90,7 +93,7 @@ class VulnDetector():
         ]
         if (any(re.fullmatch(p, key, re.IGNORECASE) for p in ssrf_keys)) or re.search(r'(127\.|192\.168|10\.|172\.(1[6-9]|2\d|3[01]))', value) or key.lower() in args:
             if self.remind:
-                logger.info(f"Suspected SSRF param: {self.url} => {key}")
+                logger.info(f"SSRFParam: {self.url} => {key}")
             return True
         if conf.level == 3:
             return True

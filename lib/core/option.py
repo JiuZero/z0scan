@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # w8ay 2019/6/29
-# JiuZero 2025/6/17
+# JiuZero/z0scan
 
-import os, sys, shutil
-import threading, asyncio
+import os, sys
+import threading
 import json, re
 import time
 from queue import Queue
@@ -25,6 +25,8 @@ from prettytable import PrettyTable
 from lib.core.aichat import chat
 from pathlib import Path
 from lib.core.updater import check_update
+from lib.core.fingers import Fcount, Wcount
+from lib.core.thirdpart import API
 
 def setPaths(root):
     path.root = root
@@ -34,8 +36,10 @@ def setPaths(root):
     path.helper = os.path.join("helper")
     path.data = os.path.join("data")
     path.scanners = os.path.join(root, 'scanners')
-    path.fingprints = os.path.join(root, "fingerprints")
+    path.temp = os.path.join(root, "temp")
+    Path(path.temp).mkdir(exist_ok=True)
     path.output = os.path.join(root, "output")
+    path.fingerprints = os.path.join(root, "fingerprints")
     Path(path.output).mkdir(exist_ok=True)
     
 def initKb():
@@ -54,16 +58,17 @@ def initKb():
     KB["request"] = 0 # 请求数量
     KB["request_fail"] = 0 # 请求失败数量
     KB["output"] = OutPut() # 报告信息
-    KB.reverse_running_server = list() # 运行的反连服务
-    KB.waf_detecting = list() # 限制单线程检测WAF
-
+    KB["reverse_running_server"] = list() # 运行的反连服务
+    KB["waf_detecting"] = list() # 限制单线程检测WAF
+    KB["pause_taskrun"] = False # 暂停任务（流量会正常转发到队列中）
+    
 def _list():
-    """列出所有已注册的插件信息"""
+    """列出所有已注册的Scanners信息"""
     if "registered" not in KB or not KB["registered"]:
-        logger.warning("No plugins loaded.")
+        logger.warning("No scanners loaded.")
         return
     table = PrettyTable()
-    table.field_names = ["Name", "Description", "Version", "Risk Level"]
+    table.field_names = ["Name", "Description", "Risk Level"]
     table.align["Name"] = "l"
     table.align["Description"] = "l"
     for plugin_name, plugin_instance in KB["registered"].items():
@@ -71,32 +76,33 @@ def _list():
             continue
         name = getattr(plugin_instance, "name", "N/A")
         desc = getattr(plugin_instance, "desc", "N/A")
-        version = getattr(plugin_instance, "version", "N/A")
         risk = getattr(plugin_instance, "risk", "N/A")
         table.add_row([
             name,
             desc,
-            version,
             risk,
         ])
-    dataToStdout(f"\n{colors.y}Loaded Plugins:{colors.e}")
+    dataToStdout(f"\n{colors.y}Loaded Scanners: {colors.e}")
     dataToStdout(table)
-    dataToStdout(f"Total plugins: {colors.y}{len(KB['registered']) - 1}{colors.e}\n")
-    """列出所有模糊测试字典"""
-    if not hasattr(conf, "lists") or not conf.dicts:
-        logger.warning("No fuzz dictionaries loaded.")
-        return
-    table = PrettyTable()
-    table.field_names = ["Dictionary Name", "Entry Count"]
-    table.align["Dictionary Name"] = "l"
-    for name, entries in conf.dicts.items():
-        table.add_row([name, len(entries)])
-    dataToStdout(f"\n{colors.y}Loaded Fuzz Dictionaries:{colors.e}")
-    dataToStdout(table)
-    dataToStdout(f"Total dictionaries: {colors.y}{len(conf.dicts)}{colors.e}\n")
 
 def initPlugins():
+    from lib.core.data import path
     require_reverse_list = []
+    require_risk_list = []
+    # 加载模糊字典
+    conf.dicts = dict()
+    for root, dirs, files in os.walk(path.dicts):
+        files = list(filter(lambda x: x.endswith('.txt'), files))
+        for _ in files:
+            name = os.path.splitext(_)[0]
+            file = os.path.join(path.dicts, _)
+            try:
+                with open(file, 'r', encoding='utf-8') as f:
+                    content = [line.strip() for line in f.readlines() if line.strip()]
+                    # TODO: replace
+                    conf.dicts[name] = content
+            except Exception as e:
+                logger.warning(f'Error loading list {file}: {str(e)}')
     # 优先加载loader
     loader_path = os.path.join(path.scanners, "loader.py")
     if os.path.exists(loader_path):
@@ -108,7 +114,6 @@ def initPlugins():
             setattr(loader_instance, 'path', loader_path)
             setattr(loader_instance, 'name', 'loader')
             KB["registered"]["loader"] = loader_instance
-            logger.info("Loader plugin loaded successfully")
         except Exception as e:
             logger.error(f"Failed to load loader: {e}")
             raise
@@ -130,6 +135,9 @@ def initPlugins():
                         if plugin_key not in conf.get("enable", []):
                             continue
                     if plugin_key in conf.get("disable", []):
+                        continue
+                    if not mod.risk in conf.risk:
+                        require_risk_list.append(plugin_key)
                         continue
                     if conf.command != "reverse_client":
                         try:
@@ -165,6 +173,9 @@ def initPlugins():
                             continue
                     if plugin_key in conf.get("disable", []):
                         continue
+                    if not mod.risk in conf.risk:
+                       require_risk_list.append(plugin_key)
+                       continue
                     plugin_type = os.path.split(root)[1]
                     relative_path = ltrim(filename, path.root)
                     if getattr(mod, 'type', None) is None:
@@ -182,43 +193,14 @@ def initPlugins():
                 except AttributeError as e:
                     logger.error('Filename: {} not class "{}", Reason: {}'.format(filename, 'Z0SCAN', e))
                     raise
+                
     if not require_reverse_list == []:
-        logger.warning(f'Skip scanner plugins that require of reverse: {colors.y}{require_reverse_list}{colors.e}')
-    if not conf.command == "list":
-        logger.info(f'Load scanner plugins: {colors.y}{len(KB["registered"])-1}{colors.e}')
-    # 加载指纹识别插件
-    num = 0
-    for root, dirs, files in os.walk(path.fingprints):
-        files = filter(lambda x: not x.startswith("__") and x.endswith(".py"), files)
-        for _ in files:
-            filename = os.path.join(root, _)
-            if not os.path.exists(filename):
-                continue
-            name = os.path.split(os.path.dirname(filename))[-1]
-            mod = load_file_to_module(filename)
-            if not getattr(mod, 'fingerprint'):
-                logger.error("Filename: {} load faild, not function 'fingerprint'".format(filename))
-                continue
-            if name not in KB["fingerprint"]:
-                KB["fingerprint"][name] = []
-            KB["fingerprint"][name].append(mod)
-            num += 1
-    if not conf.command == "list":
-        logger.info(f'Load fingerprint plugins: {colors.y}{num}{colors.e}')
-    # 加载模糊字典并储存为列表
-    conf.dicts = dict()
-    for root, dirs, files in os.walk(path.dicts):
-        files = list(filter(lambda x: x.endswith('.txt'), files))
-        for _ in files:
-            name = os.path.splitext(_)[0]
-            file = os.path.join(path.dicts, _)
-            try:
-                with open(file, 'r', encoding='utf-8') as f:
-                    content = [line.strip() for line in f.readlines() if line.strip()]
-                    # TODO: replace
-                    conf.dicts[name] = content
-            except Exception as e:
-                logger.warning(f'Error loading list {file}: {str(e)}')
+        logger.warning(f'Skip Scanners (Require Reverse): {colors.y}{require_reverse_list}{colors.e}')
+    if not require_risk_list == []:
+        logger.warning(f'Skip Scanners (Require Risk): {colors.y}{require_risk_list}{colors.e}')
+    logger.info(f'Load Scanners: {colors.y}{len(KB["registered"])-1}{colors.e}')
+    logger.info(f'Load Fingers: FINGER {colors.y}{Fcount()}{colors.e} | WAF {colors.y}{Wcount()}{colors.e}')
+    logger.info(f'Load Dicts: {colors.y}{len(conf.dicts)}{colors.e}')
 
 def _merge_options(cmdline):
     # 命令行配置 将覆盖 config配置
@@ -324,8 +306,8 @@ def _set_conf():
         conf.pause_scanners = False # 仅队列不扫描
 
 def _init_stdout():
-    logger.info(f"Number of Threads: {colors.y}{conf.threads}{colors.e} / {colors.y}{conf.plugin_threads}{colors.e}")
-    logger.info(f"Scan Level: {colors.y}[#{conf.level}]{colors.e}")
+    logger.info(f"Threads: TASK {colors.y}{conf.threads}{colors.e} | SCANNER {colors.y}{conf.plugin_threads}{colors.e}")
+    logger.info(f"Scan Level: {colors.y}{conf.level}{colors.e}")
     logger.info(f"Scan Risk: {colors.y}{conf.risk}{colors.e}")
     if conf.smartscan["enable"]:
         message = chat("API validity verification: If you can receive this message, please reply 'OK'")
@@ -339,31 +321,21 @@ def _init_stdout():
             sys.exit(0)
     if conf.ignore_waf:
         logger.info(f'Ignore WAF Status: {colors.y}True{colors.e}')
-    if conf.ignore_fingerprint:
-        logger.info(f'Ignore Fingerprints Status: {colors.y}True{colors.e}')
-    # 不扫描网址
+    if len(conf["includes"]):
+        logger.info(f"Includes: {colors.y}{repr(conf['includes'])}{colors.e}")
     if len(conf["excludes"]):
-        logger.info(f"Skip Scan: {colors.y}{repr(conf['excludes'])}{colors.e}")
+        logger.info(f"Excludes: {colors.y}{repr(conf['excludes'])}{colors.e}")
     if conf.get("load") and conf.get("load") != []:
         logger.info(f"Load Plugins: {colors.y}{repr(conf.get('load') and conf.get('load') != [])}{colors.e}")
     if conf.html:
-        logger.info(f"HTML Report Path: {colors.y}{KB.output.get_html_filename()}{colors.e}")
-    logger.info(f"JSON Report Path: {colors.y}{KB.output.get_filename()}{colors.e}")
+        logger.info(f"HTML Report: {colors.y}{KB.output.get_html_filename()}{colors.e}")
+    logger.info(f"JSON Report: {colors.y}{KB.output.get_filename()}{colors.e}")
+    logger.info(f"TXT Record: {colors.y}{KB.output.get_txt_filename()}{colors.e}")
+    logger.info(f"Database Record: {colors.y}{KB.output.get_db_filename()}{colors.e}")
 
 def _commands(v):
     if conf.command == "scan":
         return
-    if v == "dbcmd":
-        if conf.command == "dbcmd":
-            try:
-                while True:
-                    cmd = input(f"[{colors.m}CMD{colors.e}] SQL Command ('exit' to quit) >> ")
-                    if cmd.lower() == 'exit':
-                        break
-                    logger.info(f"{colors.br}{execute_sqlite_command(cmd)}{colors.e}\n", showtime=False)
-            except Exception as e:
-                logger.error(e, showtime=False)
-        else: return
     if v == "reverse":
         if conf.command == "reverse":
             from lib.core.reverse import reverse_main
@@ -381,7 +353,173 @@ def _commands(v):
         if conf.get("clean_redis"):
             from lib.core.red import set_conn, cleanred
             cleanred() # 清理redis队列
+    if v == "crawler":
+        if conf.command == "crawler":
+            from lib.core.crawler import CrawlerConfig, CrawlerMode, UniversalCrawler
+            from lib.core.common import random_UA
+            from crawlee.crawlers import BeautifulSoupCrawlingContext, PlaywrightCrawlingContext
+            
+            # 处理起始 URLs
+            start_urls = []
+            if conf.get("url"):
+                start_urls.append(conf.get("url"))
+            if conf.get("url_file"):
+                try:
+                    with open(conf.get("url_file"), 'r', encoding='utf-8') as f:
+                        file_urls = [line.strip() for line in f if line.strip()]
+                        start_urls.extend(file_urls)
+                except Exception as e:
+                    logger.error(f"Failed to read URL file: {e}")
+                    sys.exit(1)
+            
+            if not start_urls:
+                logger.error("No URLs provided for crawling")
+                sys.exit(1)
+            
+            # 处理 User-Agent
+            user_agent = None
+            if conf.get("random_agent"):
+                user_agent = random_UA()
+            
+            # 处理代理
+            proxy = conf.get("proxy")
+            
+            # 处理输出目录
+            output_dir = conf.get("output", "./crawler_output")
+            
+            logger.info(f"Crawler Mode: {colors.y}{conf.get('mode', 'beautifulsoup').upper()}{colors.e}")
+            logger.info(f"Start URLs: {colors.y}{len(start_urls)}{colors.e}")
+            logger.info(f"Max Requests: {colors.y}{conf.get('max_requests', 100)}{colors.e}")
+            logger.info(f"Max Concurrency: {colors.y}{conf.get('max_concurrency', 10)}{colors.e}")
+            logger.info(f"Timeout: {colors.y}{conf.get('timeout', 30)}s{colors.e}")
+            
+            if proxy:
+                logger.info(f"Proxy: {colors.y}{proxy}{colors.e}")
+            if user_agent:
+                logger.info(f"User-Agent: {colors.y}Random{colors.e}")
+            if conf.get("includes"):
+                logger.info(f"Includes: {colors.y}{conf.get('includes')}{colors.e}")
+            if conf.get("excludes"):
+                logger.info(f"Excludes: {colors.y}{conf.get('excludes')}{colors.e}")
+            
+            logger.info(f"Output Dir: {colors.y}{output_dir}{colors.e}")
+            
+            # 定义请求处理器
+            if conf.get("mode", "beautifulsoup").lower() == "beautifulsoup":
+                async def crawler_handler(context: BeautifulSoupCrawlingContext):
+                    try:
+                        context.log.info(f'Crawling: {context.request.url}')
+                        
+                        soup = context.soup
+                        
+                        # 提取数据
+                        data = {
+                            'url': context.request.url,
+                            'title': soup.title.string if soup.title else '',
+                            'status_code': context.http_response.status_code if hasattr(context, 'http_response') else 200,
+                        }
+                        
+                        # 可选：提取更多信息
+                        if conf.get("extract_h1", True):
+                            data['h1_tags'] = [h1.get_text(strip=True) for h1 in soup.find_all('h1')]
+                        
+                        # 保存数据
+                        await context.push_data(data)
+                        
+                        # URL过滤逻辑
+                        def should_crawl_url(url):
+                            if conf.get("includes"):
+                                if not any(keyword in url for keyword in conf.get("includes")):
+                                    return False
+                            if conf.get("excludes"):
+                                if any(keyword in url for keyword in conf.get("excludes")):
+                                    return False
+                            return True
+                        
+                        # 添加新链接到队列
+                        if should_crawl_url(context.request.url):
+                            await context.enqueue_links()
+                        
+                    except Exception as e:
+                        context.log.error(f'Error processing {context.request.url}: {str(e)}')
+            else:
+                async def crawler_handler(context: PlaywrightCrawlingContext):
+                    try:
+                        context.log.info(f'Crawling: {context.request.url}')
+                        
+                        page = context.page
+                        await page.wait_for_load_state('networkidle')
+                        
+                        # 提取数据
+                        data = {
+                            'url': context.request.url,
+                            'title': await page.title(),
+                        }
+                        
+                        if conf.get("extract_h1", True):
+                            h1_elements = await page.query_selector_all('h1')
+                            data['h1_tags'] = [await h1.text_content() for h1 in h1_elements]
+                        
+                        await context.push_data(data)
+                        
+                        def should_crawl_url(url):
+                            if conf.get("includes"):
+                                if not any(keyword in url for keyword in conf.get("includes")):
+                                    return False
+                            if conf.get("excludes"):
+                                if any(keyword in url for keyword in conf.get("excludes")):
+                                    return False
+                            return True
+                        
+                        if should_crawl_url(context.request.url):
+                            await context.enqueue_links()
+                        
+                    except Exception as e:
+                        context.log.error(f'Error processing {context.request.url}: {str(e)}')
+            
+            # 确定爬虫模式
+            crawler_mode = (
+                CrawlerMode.PLAYWRIGHT 
+                if conf.get("mode", "beautifulsoup").lower() == "playwright" 
+                else CrawlerMode.BEAUTIFULSOUP
+            )
+            
+            # 创建爬虫配置
+            crawler_config = CrawlerConfig(
+                start_urls=start_urls,
+                mode=crawler_mode,
+                max_requests_per_crawl=conf.get("max_requests", 100),
+                max_concurrency=conf.get("max_concurrency", 10),
+                request_handler=crawler_handler,
+                headless=conf.get("headless", True),
+                browser_type=conf.get("browser_type", "chromium"),
+                proxy=proxy,
+                timeout=conf.get("timeout", 30),
+                user_agent=user_agent,
+                output_dir=output_dir,
+                json_output=conf.get("json_output", True),
+                min_delay=conf.get("min_delay", 1.0), 
+                max_delay=conf.get("max_delay", 3.0),  
+                verbose=conf.get("verbose", False), 
+            )
+            
+            # 创建并运行爬虫
+            try:
+                logger.info("Starting crawler...")
+                crawler = UniversalCrawler(crawler_config)
+                crawler.run_sync()
+                logger.info(f"{colors.g}Crawler finished successfully{colors.e}")
+                logger.info(f"Results saved to: {colors.y}{output_dir}{colors.e}")
+            except KeyboardInterrupt:
+                logger.warning("Crawler interrupted by user")
+            except Exception as e:
+                logger.error(f"Crawler failed: {str(e)}")
+                if conf.get("debug"):
+                    import traceback
+                    traceback.print_exc()
+                sys.exit(1)
     sys.exit(0)
+
 
 def check_up():
     try:
@@ -391,7 +529,7 @@ def check_up():
             logger.info(f"Desc: {latest['html_url']}", origin="updater")
     except Exception as e:
         pass
-        
+
 def init(root, cmdline):
     cinit(autoreset=True)
     setPaths(root) # 设置工作路径
@@ -400,13 +538,14 @@ def init(root, cmdline):
     check_up()
     _merge_options(cmdline) # 合并命令行与config中的参数
     _commands("version")
-    initdb(root) # 初始化数据库
-    _commands("dbcmd")
+    _commands("crawler") # 初始化爬虫
+    initdb() # 初始化数据库
     _commands("reverse")
     _commands("clean_redis")
     initPlugins() # 初始化插件
     _commands("list")
     _set_conf() # 按照设置配置
+    KB["pocscan"] = API()
     _init_stdout() # 打印初始化后的一些配置信息
     patch_all() # requests全局补丁
     ipv6_patch() # ipv6补丁

@@ -25,3 +25,9 @@ pysmb
 pymongo
 pymysql
 python-dateutil
+elasticsearch
+ldap3
+paramiko
+crawlee
+apify-fingerprint-datapoints
+crawlee[playwright,beautifulsoup]

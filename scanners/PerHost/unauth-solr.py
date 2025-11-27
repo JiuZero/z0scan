@@ -9,6 +9,7 @@ class Z0SCAN(_PluginBase):
     name = "unauth-solr"
     version = "2025.9.12"
     desc = "Apache Solr Unauthorized Access"
+    risk = 2
     ports = [8983]
     fingers = []
     

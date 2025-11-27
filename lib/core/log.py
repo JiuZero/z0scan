@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# JiuZero 2025/5/22
+# JiuZero/z0scan
  
 from colorama import Fore, Style
 import time, sys
@@ -47,33 +47,33 @@ class logger:
  
     @staticmethod
     def warning(value, origin=None, showtime=True):
-        _time = f"[{colors.b}{logger._get_time()}{colors.e}] " if showtime else ""
-        _origin = f"[{colors.cy}{origin}{colors.e}] " if origin else ""
+        _time = f"{colors.b}{logger._get_time()}{colors.e}" if showtime else ""
+        _origin = f"{colors.cy}{origin}{colors.e} " if origin else ""
         dataToStdout(
-            f"{_time}[{colors.y}WAN{colors.e}] {_origin}{value}"
+            f"{_time} {colors.y}WAN{colors.e} {_origin}{value}"
         )
  
     @staticmethod
     def error(value, origin=None, showtime=True):
-        _time = f"[{colors.b}{logger._get_time()}{colors.e}] " if showtime else ""
-        _origin = f"[{colors.cy}{origin}{colors.e}] " if origin else ""
+        _time = f"{colors.b}{logger._get_time()}{colors.e}" if showtime else ""
+        _origin = f"{colors.cy}{origin}{colors.e} " if origin else ""
         dataToStdout(
-            f"{_time}[{colors.r}ERR{colors.e}] {_origin}{value}"
+            f"{_time} {colors.r}ERR{colors.e} {_origin}{value}"
         )
  
     @staticmethod
     def info(value, origin=None, showtime=True):
-        _time = f"[{colors.b}{logger._get_time()}{colors.e}] " if showtime else ""
-        _origin = f"[{colors.cy}{origin}{colors.e}] " if origin else ""
+        _time = f"{colors.b}{logger._get_time()}{colors.e}" if showtime else ""
+        _origin = f"{colors.cy}{origin}{colors.e} " if origin else ""
         dataToStdout(
-            f"{_time}[{colors.g}INF{colors.e}] {_origin}{value}"
+            f"{_time} {colors.g}INF{colors.e} {_origin}{value}"
         )
  
     @staticmethod
-    def debug(value, origin=None, level=1):
-        _origin = f"[{colors.cy}{origin}{colors.e}] " if origin else ""
+    def debug(value, origin=None, level=1, showtime=True):
+        _origin = f"{colors.cy}{origin}{colors.e} " if origin else ""
+        _time = f"{colors.b}{logger._get_time()}{colors.e}" if showtime else ""
         if conf.debug and conf.debug >= level:
-            _time = logger._get_time()
             dataToStdout(
-                f"[{colors.b}{_time}{colors.e}] [{colors.m}DBUG{colors.e}] {_origin}{value}"
+                f"{_time} {colors.m}DBG{colors.e} {_origin}{value}"
             )

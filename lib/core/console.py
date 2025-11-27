@@ -41,7 +41,7 @@ class Command:
   help        - Show this help message
   pause       - Pause current operation
   set         - Set parameter (format: set key=value)
-                Allowed parameters: level, timeout, retry, risk
+                Allowed parameters: level, timeout, retry
   env         - Show current configuration
   status      - Scan status
   enable      - Load new plugins
@@ -55,7 +55,7 @@ Examples:
 
         if cmd == "pause":
             try:
-                KB.pause = True
+                KB["pause_taskrun"] = True
             except Exception:
                 pass
             return "Operation paused"
@@ -67,7 +67,7 @@ Examples:
                 key, value = args[0].split("=", 1)
                 key = key.strip()
                 value = value.strip()
-                if key not in ["level", "timeout", "retry", "risk"]:
+                if key not in ["level", "timeout", "retry"]:
                     return f"Error: Not allowed to set parameter '{key}'"
                 if key in ["level", "retry"]:
                     value = int(value)
@@ -94,7 +94,7 @@ Examples:
             return f"Disable request for: {', '.join(disable_list) if disable_list else '(none)'}"
 
         if cmd == "env":
-            keys = ["level", "timeout", "retry", "risk"]
+            keys = ["level", "timeout", "retry"]
             env_info = "\n".join(f"{k}: {getattr(conf, k, 'N/A')}" for k in keys)
             return f'Current Configuration:\n{env_info}\n\nLoad scanner plugins: {colors.y}{len(KB["registered"])-1}{colors.e}'
             

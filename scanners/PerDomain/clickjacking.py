@@ -12,7 +12,7 @@ class Z0SCAN(PluginBase):
     risk = -1
 
     def audit(self):
-        if not self.risk in conf.risk or not hasattr(self.response, 'headers'):
+        if not hasattr(self.response, 'headers'):
             return
         headers_lower = {k.lower(): v for k, v in self.response.headers.items()}
         protection_rules = {

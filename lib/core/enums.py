@@ -15,30 +15,32 @@ class HTTPMETHOD(object):
     PATCH = "PATCH"
 
 # POST请求的数据传递形式
-class POST_HINT(object):
+class POST_HINT:
     NORMAL = "NORMAL"
-    SOAP = "SOAP"
     JSON = "JSON"
+    XML = "XML"
     JSON_LIKE = "JSON_LIKE"
     MULTIPART = "MULTIPART"
-    XML = "XML"
     ARRAY_LIKE = "ARRAY_LIKE"
+    SOAP = "SOAP"
 
-# 设定注入的数据所处位置
 class PLACE:
+    # 常规情况
     PARAM = "PARAM"
-    URL = "URL"
-    COOKIE = "COOKIE"
-    # 避免出现含XML等格式的请求包中GET参数与cookie参数中存在漏洞
-    # 而插件仅通过post_hint过滤后遗漏漏洞点
-    # DATA = "DATA"
     NORMAL_DATA = "NORMAL_DATA"
-    JSON_DATA = "JSON_DATA"
     XML_DATA = "XML_DATA"
     MULTIPART_DATA = "MULTIPART_DATA"
+    COOKIE = "COOKIE"
+    URL = "URL"
     ARRAY_LIKE_DATA = "ARRAY_LIKE_DATA"
     SOAP_DATA = "SOAP_DATA"
-
+    # JSON 情况
+    JSON_DATA = "JSON"
+    FORM_VALUE_JSON = "FORM_VALUE_JSON"
+    ## 值中的二级参数
+    PARAM_VALUE_JSON = "PARAM_VALUE_JSON"
+    COOKIE_JSON_VALUE = "COOKIE_JSON_VALUE"
+    
 # 插件扫描方式
 class Type(object):
     ANALYZE = "ANALYZE" # 被动分析发现

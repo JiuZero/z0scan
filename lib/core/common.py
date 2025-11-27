@@ -127,12 +127,12 @@ def getmd5(s):
     m.update(b)
     return m.hexdigest()
 
-def is_ipaddr(host):
+def ipaddr(host):
     try:
         ipaddress.ip_address(str(host))
-        return True
+        return host
     except Exception as ex:
-        return False
+        return socket.gethostbyname(host)
 
 def random_UA():
     ua = UserAgent()
@@ -301,6 +301,10 @@ def isListLike(value):
 
     return isinstance(value, (list, tuple, set))
 
+def generate_random_string(length=10):
+    """生成指定长度的随机字符串（数字+字母）"""
+    characters = string.ascii_letters + string.digits  # 字母 + 数字
+    return ''.join(random.choices(characters, k=length))
 
 def findMultipartPostBoundary(post):
     """

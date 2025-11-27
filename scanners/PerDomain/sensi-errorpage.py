@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # w8ay 2019/7/6
-# JiuZero 2025/3/2
+# JiuZero/z0scan
 
 from urllib.parse import urlparse
 import requests
@@ -17,7 +17,7 @@ class Z0SCAN(PluginBase):
     risk = 0
     
     def audit(self):
-        if not conf.level == 0 and 0 in conf.risk:
+        if not conf.level == 0:
             headers = self.requests.headers.copy()
             p = urlparse(self.requests.url)
             domain = "{}://{}/".format(p.scheme, p.netloc) + random_str(6)

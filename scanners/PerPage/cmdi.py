@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # w8ay 2019/7/4
-# JiuZero 2025/6/14
+# JiuZero/z0scan
 
-import hashlib
+import hashlib, re
 from urllib.parse import quote
 from lib.core.settings import acceptedExt
 from lib.api.reverse_api import reverseApi
@@ -20,12 +20,12 @@ def getmd5(s):
 class Z0SCAN(PluginBase):
     name = "cmdi"
     desc = 'Command Execution'
-    version = "2025.8.19"
+    version = "2025.11.20"
     risk = 3
         
     def audit(self):
         url = self.requests.url
-        if conf.level == 0 or not self.risk in conf.risk:
+        if conf.level == 0:
             return
         if not self.fingerprints.waf and self.requests.suffix in acceptedExt:
             num1 = random_num(4)
@@ -82,3 +82,45 @@ class Z0SCAN(PluginBase):
                     })
                 self.success(result)
                 break
+        # 试试执行 set|set&set？
+        rules = [
+            'Path=[\s\S]*?PWD=',
+            'Path=[\s\S]*?PATHEXT=',
+            'Path=[\s\S]*?SHELL=',
+            'Path\x3d[\s\S]*?PWD\x3d',
+            'Path\x3d[\s\S]*?PATHEXT\x3d',
+            'Path\x3d[\s\S]*?SHELL\x3d',
+            'SERVER_SIGNATURE=[\s\S]*?SERVER_SOFTWARE=',
+            'SERVER_SIGNATURE\x3d[\s\S]*?SERVER_SOFTWARE\x3d',
+            'Non-authoritative\sanswer:\s+Name:\s*',
+            'Server:\s*.*?\nAddress:\s*'
+        ]
+        payload = self.insertPayload({
+            "key": k, 
+            "payload": "set|set&set", 
+            "position": position, 
+            })
+        r = self.req(position, payload)
+        if not r:
+            return
+        html1 = r.text
+        for rule in rules:
+            if re.search(rule, html1, re.I | re.S | re.M):
+                result = self.new_result()
+                result.main({
+                    "type": Type.REQUEST, 
+                    "url": r.url, 
+                    "vultype": VulType.CMD_INNJECTION, 
+                    "show": {
+                        "Position": f"{position} >> {k}", 
+                        "Payload": "set|set&set", 
+                        }
+                    })
+                result.step("Request1", {
+                    "position": position,
+                    "request": r.reqinfo, 
+                    "response": generateResponse(r), 
+                    "desc": "Payload: {}".format("set|set&set")
+                    })
+                self.success(result)
+                return

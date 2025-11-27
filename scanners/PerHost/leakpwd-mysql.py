@@ -15,8 +15,10 @@ class Z0SCAN(_PluginBase):
     name = "leakpwd-mysql"
     version = "2025.9.12"
     desc = "Weak Password on MySQL Server"
+    risk = 2
     ports = [3306]
     fingers = [b'mysql_native_password', b'^\x19\x00\x00\x00\x0a', b'^\x2c\x00\x00\x00\x0a', b'hhost \'', b'khost \'', b'mysqladmin', b'whost \'', b'^[.*]\x00\x00\x00\n.*?\x00', b'this MySQL server', b'MariaDB server', b'\x00\x00\x00\xffj\x04Host']
+    
     def __init__(self):
         self.right_pwd = None
         self.allow_connect = True

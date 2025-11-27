@@ -17,7 +17,7 @@ class Z0SCAN(PluginBase):
     
     def audit(self):
         rA = reverseApi()
-        if conf.level == 0 or not self.risk in conf.risk:
+        if conf.level == 0:
             return
         if self.requests.suffix in acceptedExt:
             iterdatas = self.generateItemdatas()

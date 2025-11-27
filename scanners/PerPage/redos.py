@@ -11,7 +11,7 @@ class Z0SCAN(PluginBase):
     risk = -1
 
     def audit(self):
-        if (conf.level != 0) and self.risk in conf.risk:
+        if (conf.level != 0):
             _redos_payloads = [
                 "a" * 500 + "aaaaaab",
                 "x" * 300 + "xxxxxxy",
