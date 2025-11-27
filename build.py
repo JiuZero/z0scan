@@ -189,7 +189,7 @@ def build():
         '--remove-output', 
         '--nofollow-import-to=*.tests,*.test', 
         '--assume-yes-for-downloads',
-        '--playwright-include-browser=all'
+        '--playwright-include-browser=chromium,firefox'
     ]
     nuitka_cmd.extend(base_args)
     
