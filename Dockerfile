@@ -19,6 +19,7 @@ ENV PATH="/usr/local/bin:${PATH}"
 
 ADD . /z0scan/
 RUN pip install -r /z0scan/requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+playwright install
 WORKDIR /z0scan
 
 ENTRYPOINT ["/bin/ash"]

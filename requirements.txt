@@ -28,6 +28,5 @@ python-dateutil
 elasticsearch
 ldap3
 paramiko
-crawlee
-apify-fingerprint-datapoints
+apify_fingerprint_datapoints
 crawlee[playwright,beautifulsoup]
