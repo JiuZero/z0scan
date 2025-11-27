@@ -168,6 +168,7 @@
 git clone https://github.com/JiuZero/z0scan
 cd z0scan
 pip install -r requirements.txt
+playwright install
 python3 z0.py help
 ```  
 

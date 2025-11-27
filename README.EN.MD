@@ -134,6 +134,7 @@
       <h3>📊 Data Processing</h3>
       <ul>
         <li><b>Complex Parameter Parsing</b> - Supports Json, XML and pseudo-static parameter parsing</li>
+        <li><b>Secondary Parameter Parsing</b> - Supports parsing the values of GET and POST parameters as new parameters and automatically decoding them</li>
         <li><b>Data Storage</b> - Provides data storage support through SQLite3</li>
       </ul>
     </td>
@@ -167,6 +168,7 @@ Get the release version: [Download](https://github.com/JiuZero/z0scan/releases)
 git clone https://github.com/JiuZero/z0scan
 cd z0scan
 pip install -r requirements.txt
+playwright install
 python3 z0.py help
 ```  
 
