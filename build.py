@@ -187,9 +187,9 @@ def build():
         '--include-package=api',
         "--include-data-file=patch/effective_tld_names.dat.txt=tld/res/effective_tld_names.dat.txt",
         '--remove-output', 
-        '--nofollow-import-to=*.tests,*.test', 
+        '--nofollow-import-to=*.tests,*.test,crawlee.project_template', 
         '--assume-yes-for-downloads',
-        '--playwright-include-browser=chromium,firefox'
+        '--playwright-include-browser=all'
     ]
     nuitka_cmd.extend(base_args)
     
