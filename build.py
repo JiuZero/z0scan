@@ -180,6 +180,7 @@ def maybe_upx_compress(build_dir: Path):
         print(f":: UPX ERROR: exit {e.returncode} (skip)")
 
 def build():
+    setup_playwright_env()
     nuitka_cmd = find_nuitka()
     
     # 基础编译参数
