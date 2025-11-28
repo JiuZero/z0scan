@@ -28,3 +28,4 @@ python-dateutil
 elasticsearch
 ldap3
 paramiko
+certifi==2025.4.26
