@@ -184,6 +184,7 @@ def build():
         '--nofollow-import-to=helper',
         '--nofollow-import-to=config',
         '--include-package=api',
+        '--include-data-file=bin/*=bin/*'
         "--include-data-file=patch/effective_tld_names.dat.txt=tld/res/effective_tld_names.dat.txt",
         '--remove-output', 
         '--nofollow-import-to=*.tests,*.test,crawlee.project_template', 
