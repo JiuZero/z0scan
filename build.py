@@ -172,8 +172,7 @@ def build():
     
     # 基础编译参数
     base_args = [
-        # '--lto=yes' if platform.system().lower() != 'darwin' else '--lto=no',  # macOS下禁用LTO
-        '--lto=yes',
+        '--lto=yes' if platform.system().lower() != 'darwin' else '--lto=no',  # macOS下禁用LTO
         '--output-dir=z0scan', 
         '--standalone',
         '--onefile',
