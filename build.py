@@ -71,8 +71,6 @@ def get_actual_module_name(pkg_name):
         'psycopg2-binary': 'psycopg2', 
         'python-dateutil': 'dateutil', 
         'pysmb': 'smb', 
-        'PyQt-Fluent-Widgets[full]': 'qfluentwidgets', 
-        'crawlee[playwright,beautifulsoup]': 'crawlee', 
     }
     if pkg_name in common_variants:
         return common_variants[pkg_name]
@@ -187,9 +185,8 @@ def build():
         '--include-data-dir=bin=bin', 
         "--include-data-file=patch/effective_tld_names.dat.txt=tld/res/effective_tld_names.dat.txt",
         '--remove-output', 
-        '--nofollow-import-to=*.tests,*.test,crawlee.project_template', 
+        '--nofollow-import-to=*.tests,*.test', 
         '--assume-yes-for-downloads',
-        '--playwright-include-browser=all'
     ]
     nuitka_cmd.extend(base_args)
     
