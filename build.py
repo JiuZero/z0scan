@@ -19,6 +19,15 @@ import pkgutil
 import zipfile
 from datetime import datetime
 
+def setup_playwright_env():
+    """设置 Playwright 浏览器路径环境变量"""
+    system = platform.system().lower()
+    if system == 'darwin':  # macOS
+        playwright_path = os.path.expanduser("$HOME/Library/Caches/ms-playwright")
+        # 设置环境变量
+        os.environ['PLAYWRIGHT_BROWSERS_PATH'] = playwright_path
+        print(f":: PLAYWRIGHT SETUP: Set PLAYWRIGHT_BROWSERS_PATH to {playwright_path}")
+    return
 
 def find_nuitka():
     """查找nuitka可执行文件的完整路径"""

@@ -82,7 +82,6 @@ jobs:
         run: |
           brew update
           brew install upx
-          export PLAYWRIGHT_BROWSERS_PATH="$HOME/Library/Caches/ms-playwright"
 
       - name: Build up
         env:
