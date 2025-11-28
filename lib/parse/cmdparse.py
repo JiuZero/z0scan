@@ -47,35 +47,61 @@ def cmd_line_parser(argv=None):
         help=''
         )
     version_parser = subparsers.add_parser('version', help='Show program\'s version number and exit')
-    scan_parser = subparsers.add_parser('scan', help='Scan command')
+    scan_parser = subparsers.add_parser('scan', help='Scan command with optional crawler mode')
     reverse_parser = subparsers.add_parser('reverse', help='Reverse command')
     list_parser = subparsers.add_parser('list', help='List of plugins and dicts')
-    crawler_parser = subparsers.add_parser('crawler', help='Web crawler command')
     
 
     ## z0 scan
     # Proxy options
     proxy = scan_parser.add_argument_group('Proxy', 'Passive Agent Mode Options')
     proxy.add_argument("-s", "--server-addr", dest="server_addr", help="Server addr (e.g. --server-addr \"127.0.0.1:5920\").")
+    
     # Target options
     target = scan_parser.add_argument_group('Target', "Options has to be provided to define the target(s).")
     target.add_argument("-u", "--url", dest="url", help="Target URL (e.g. --url \"http://www.site.com/vuln.php?id=1\").")
     target.add_argument("-f", "--file", dest="url_file", help="Scan multiple targets given in a textual file.")
     target.add_argument("-Rs", "--redis-server", dest="redis_server", help="Connect to redis, run as server (e.g. --redis-server password@host:port:db).")
+    
+    # Crawler mode options
+    crawler = scan_parser.add_argument_group('Crawler', 'Web crawler mode options (use with -u)')
+    crawler.add_argument("--crawler", dest="enable_crawler", action="store_true", default=False, help="Enable crawler mode to discover URLs before scanning.")
+    crawler.add_argument("--max-tabs", dest="max_tab_count", type=int, default=8, help="Maximum number of tabs for crawler (Default: 8).")
+    crawler.add_argument("--max-crawled", dest="max_crawled_count", type=int, default=200, help="Maximum crawled URL count (Default: 200).")
+    crawler.add_argument("--filter-mode", dest="filter_mode", choices=["simple", "smart", "strict"], default="smart", help="URL filter mode for crawler (Default: smart).")
+    crawler.add_argument("--tab-timeout", dest="tab_run_timeout", type=int, default=20, help="Single tab timeout in seconds (Default: 20).")
+    crawler.add_argument("--dom-timeout", dest="wait_dom_timeout", type=int, default=5, help="DOM load timeout in seconds (Default: 5).")
+    
+    # Authentication options
+    auth = scan_parser.add_argument_group('Authentication', 'Authentication and session options')
+    auth.add_argument("--cookies", dest="custom_cookies", help="Custom cookies for crawler (e.g. --cookies \"session=xxx; token=yyy\").")
+    auth.add_argument("--headers", dest="custom_headers", help="Custom HTTP headers in JSON format (e.g. --headers '{\"Authorization\": \"Bearer xxx\"}').")
+    
+    # URL filtering options
+    url_filter = scan_parser.add_argument_group('URL Filter', 'URL filtering options for crawler')
+    url_filter.add_argument("--ignore-keywords", dest="ignore_url_keywords", type=str_list, default=["logout", "quit", "exit"], help="Ignore URLs with these keywords (Default: logout,quit,exit).")
+    
     # Connecton options
     conn = scan_parser.add_argument_group('Connection', 'Server Connection Options')
     conn.add_argument("-R", "--reverse-client", dest="reverse_client", action="store_true", default=False, help="Connect to reverse server. (Default False).")
     conn.add_argument("-Rc", "--redis-client", dest="redis_client", help="Connect to redis, run as client (e.g. --redis-client password@host:port:db).")
+    
     # Requests options
     request = scan_parser.add_argument_group("Request", "Network request options")
-    request.add_argument("-p", "--proxy", dest="proxy", type=str, help="Use a proxy/proxies from file to connect to the target URL, Support http,https,socks5,socks4 & txt,json (e.g. http://127.0.0.1:8080 or proxy.txt).")
+    request.add_argument("-p", "--proxy", dest="proxy", type=str, help="Use a proxy to connect to the target URL, Support http,https,socks5,socks4 & txt,json (e.g. http://127.0.0.1:8080 or proxy.txt).")
     request.add_argument("--timeout", dest="timeout", default=config.TIMEOUT, help="Seconds to wait before timeout connection (Default {}).".format(config.TIMEOUT), type=int)
     request.add_argument("--retry", dest="retry", type=list, default=config.RETRY, help="Time out retrials times (Default {}).".format(config.RETRY))
     request.add_argument("--random-agent", dest="random_agent", action="store_true", default=False, help="Use randomly selected HTTP User-Agent header value.")
+    
+    # Passive scanning integration
+    passive = scan_parser.add_argument_group('Passive Scanning', 'Integrate crawler with passive scanner')
+    passive.add_argument("--push-pool", dest="push_pool_max", type=int, default=10, help="Max concurrent push requests (Default: 10).")
+    
     # Output options
     output = scan_parser.add_argument_group("Output", "Output options")
     output.add_argument("--html", dest="html", help="When selected, the output will be output to the output directory by default, or you can specify.", action='store_true')
     output.add_argument("--json", dest="json", help="The json file is generated by default in the output directory, you can change the path.")
+    
     # Optimization options
     optimization = scan_parser.add_argument_group("Optimization", "Optimization options")
     optimization.add_argument("-l", "--level", dest="level", type=int, choices=list(range(0, 4)), default=config.LEVEL, help="Different level use different payloads: 0-3 (Default {}) (When the level is 3, the screening of the payload by the guiding fingerprint will be ignored)".format(config.LEVEL))
@@ -84,7 +110,7 @@ def cmd_line_parser(argv=None):
     optimization.add_argument("-e", "--excludes", dest="excludes", type=str_list, default=config.EXCLUDES, help="Set blacklist keywords (e.g. --includes edu.cn,gov.cn).")
     optimization.add_argument('-t', "--threads", dest="threads", type=int, default=config.THREADS, help="Threads of plugins tasks (Default {}).".format(config.THREADS))
     optimization.add_argument("-cp", "--console-port", dest="console_port", type=int, help=f"Set port for console (Default {config.CONSOLE_PORT}).", default=config.CONSOLE_PORT)
-    optimization.add_argument('-pt', "--plugin-threads", dest="threads", type=int, default=config.PLUGIN_THREADS, help="Threads in scanners (Default {}).".format(config.PLUGIN_THREADS))
+    optimization.add_argument('-pt', "--plugin-threads", dest="plugin_threads", type=int, default=config.PLUGIN_THREADS, help="Threads in scanners (Default {}).".format(config.PLUGIN_THREADS))
     optimization.add_argument("-iw", '--ignore-waf', dest='ignore_waf', action="store_true", default=False, help="Ignore the screening of the waf elements during the scanning process.")
     optimization.add_argument("-sp", '--skip-pocscan', dest='skip_pocscan', action="store_true", default=False, help="Skip to scan for POCs by Nuclei.")
     optimization.add_argument("-sc", '--scan-cookie', dest='scan_cookie', action="store_true", default=False, help="Scan cookie during detection.")
@@ -95,57 +121,32 @@ def cmd_line_parser(argv=None):
     optimization.add_argument('--redis-clean', dest='redis_clean', action="store_true", default=False, help="Clean up the data in Redis that has been queued.")
     optimization.add_argument("--debug", dest="debug", type=int, choices=list(range(1, 4)), help="Show programs's exception: 1-3.")
     
-    ## z0 crawler
-    # Target options
-    crawler_target = crawler_parser.add_argument_group('Target', "Crawler target options")
-    crawler_target.add_argument("-u", "--url", dest="url", type=str, required=True, help="Start URL(s) for crawling (e.g. --url \"http://example.com\" or --url \"http://a.com,http://b.com\").")
-    crawler_target.add_argument("-f", "--file", dest="url_file", help="Crawl multiple URLs given in a textual file.")
-    
-    # Crawler mode options
-    crawler_mode = crawler_parser.add_argument_group('Mode', "Crawler mode options")
-    crawler_mode.add_argument("-m", "--mode", dest="mode", type=str, choices=['beautifulsoup', 'playwright'], default='beautifulsoup', help="Crawler mode: beautifulsoup or playwright (Default beautifulsoup).")
-    crawler_mode.add_argument("--headless", dest="headless", action="store_true", default=True, help="Run Playwright in headless mode (Default True).")
-    
-    # Crawler limits options
-    crawler_limits = crawler_parser.add_argument_group('Limits', "Crawler limits options")
-    crawler_limits.add_argument("--max-requests", dest="max_requests", type=int, default=100, help="Maximum number of requests per crawl (Default 100).")
-    crawler_limits.add_argument("--max-concurrency", dest="max_concurrency", type=int, default=3, help="Maximum concurrency (Default 3).")
-    crawler_limits.add_argument("--min-delay", dest="min_delay", type=float, default=1.0, help="Minimum delay between requests in seconds (Default 1.0).")
-    crawler_limits.add_argument("--max-delay", dest="max_delay", type=float, default=3.0, help="Maximum delay between requests in seconds (Default 3.0).")
-
-    # Request options
-    crawler_request = crawler_parser.add_argument_group("Request", "Network request options for crawler")
-    crawler_request.add_argument("-p", "--proxy", dest="proxy", type=str, help="Use a proxy to connect (e.g. http://127.0.0.1:8080).")
-    crawler_request.add_argument("--timeout", dest="timeout", default=30, type=int, help="Seconds to wait before timeout connection (Default 30).")
-    crawler_request.add_argument("--random-agent", dest="random_agent", action="store_true", default=False, help="Use randomly selected HTTP User-Agent header value.")
-    
-    # Output options
-    crawler_output = crawler_parser.add_argument_group("Output", "Output options for crawler")
-    crawler_output.add_argument("-o", "--output", dest="output", help="Output directory for crawled data (Default ./crawler_output).", default="./crawler_output")
-    crawler_output.add_argument("--json", dest="json_output", action="store_true", default=True, help="Output results in JSON format (Default True).")
-    crawler_output.add_argument("--verbose", dest="verbose", action="store_true", default=False, help="Show detailed crawler logs (Default False).")
-    
-    # Filter options
-    crawler_filter = crawler_parser.add_argument_group("Filter", "URL filter options")
-    crawler_filter.add_argument("-i", "--includes", dest="includes", type=str_list, default=[], help="Include URLs matching keywords (e.g. --includes blog,news).")
-    crawler_filter.add_argument("-e", "--excludes", dest="excludes", type=str_list, default=[], help="Exclude URLs matching keywords (e.g. --excludes logout,admin).")
-    
     args = parser.parse_args()
     dd = args.__dict__
 
-    if not (dd['command'] in ["version", "reverse", "list", "scan", "update", "crawler"]):
-        errMsg = "An error command input (version, scan, reverse, list, crawler, console). "
+    if not (dd['command'] in ["version", "reverse", "list", "scan", "update"]):
+        errMsg = "An error command input (version, scan, reverse, list, console). "
         errMsg += "Use -h for help\n"
         parser.error(errMsg)
 
-    if args.command == 'scan' and not any((dd.get("server_addr"), dd.get("url"), dd.get("url_file"), dd.get("redis_server"))):
-        errMsg = "Missing a mandatory option (-s, --server-addr, -u, --url, -f, --file, -Rs, --redis_server). "
-        errMsg += "Use -h for basic and -hh for advanced help\n"
-        parser.error(errMsg)
-
-    if args.command == 'crawler' and not ((dd.get("url") or dd.get("url_file")) and dd.get("proxy")):
-        errMsg = "Missing a mandatory option for crawler (-u, --url, -f, --file, -p, --proxy). "
-        errMsg += "Use -h for help\n"
-        parser.error(errMsg)
-
+    if args.command == 'scan':
+        # 验证基本参数
+        if not any((dd.get("server_addr"), dd.get("url"), dd.get("url_file"), dd.get("redis_server"))):
+            errMsg = "Missing a mandatory option (-s, --server-addr, -u, --url, -f, --file, -Rs, --redis_server). "
+            errMsg += "Use -h for basic and -hh for advanced help\n"
+            parser.error(errMsg)
+        # crawler 模式，验证必需参数
+        if dd.get("enable_crawler"):
+            if not dd.get("url"):
+                parser.error("Crawler mode requires a single target URL (-u, --url)")
+            if not dd.get("server_addr"):
+                parser.error("Crawler mode requires to set server_addr (-s, --server-addr)")
+            # 解析自定义 headers
+            if dd.get("custom_headers"):
+                import json
+                try:
+                    dd["custom_headers"] = json.loads(dd["custom_headers"])
+                except json.JSONDecodeError:
+                    logger.error("Invalid JSON format for custom headers.")
+                    sys.exit(1)
     return args

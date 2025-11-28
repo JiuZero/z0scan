@@ -117,6 +117,7 @@
         <li><b>分布式与本地式一体化</b> - 灵活适应不同的扫描与情景需求</li>
         <li><b>第三方扫描集成</b> - ObserverWard指纹检测、Nuclei POCs精准切入</li>
         <li><b>高自定义插件系统</b> - 可外部扩展并动态导入的插件系统</li>
+        <li><b>无头爬虫</b> - 内置Crawlergo实现</li>
       </ul>
     </td>
     <td width="50%" valign="top">
@@ -168,7 +169,6 @@
 git clone https://github.com/JiuZero/z0scan
 cd z0scan
 pip install -r requirements.txt
-playwright install
 python3 z0.py help
 ```  
 

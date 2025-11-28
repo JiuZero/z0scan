@@ -47,33 +47,33 @@ class logger:
  
     @staticmethod
     def warning(value, origin=None, showtime=True):
-        _time = f"{colors.b}{logger._get_time()}{colors.e}" if showtime else ""
-        _origin = f"{colors.cy}{origin}{colors.e} " if origin else ""
+        _time = f"{colors.br}{colors.b}{logger._get_time()}{colors.e}" if showtime else ""
+        _origin = f"{colors.br}{colors.cy}{origin}{colors.e} " if origin else ""
         dataToStdout(
-            f"{_time} {colors.y}WAN{colors.e} {_origin}{value}"
+            f"{_time} {colors.br}{colors.y}WAN{colors.e} {_origin}{value}"
         )
  
     @staticmethod
     def error(value, origin=None, showtime=True):
-        _time = f"{colors.b}{logger._get_time()}{colors.e}" if showtime else ""
-        _origin = f"{colors.cy}{origin}{colors.e} " if origin else ""
+        _time = f"{colors.br}{colors.b}{logger._get_time()}{colors.e}" if showtime else ""
+        _origin = f"{colors.br}{colors.cy}{origin}{colors.e} " if origin else ""
         dataToStdout(
-            f"{_time} {colors.r}ERR{colors.e} {_origin}{value}"
+            f"{_time} {colors.br}{colors.r}ERR{colors.e} {_origin}{value}"
         )
  
     @staticmethod
     def info(value, origin=None, showtime=True):
-        _time = f"{colors.b}{logger._get_time()}{colors.e}" if showtime else ""
-        _origin = f"{colors.cy}{origin}{colors.e} " if origin else ""
+        _time = f"{colors.br}{colors.b}{logger._get_time()}{colors.e}" if showtime else ""
+        _origin = f"{colors.br}{colors.cy}{origin}{colors.e} " if origin else ""
         dataToStdout(
-            f"{_time} {colors.g}INF{colors.e} {_origin}{value}"
+            f"{_time} {colors.br}{colors.g}INF{colors.e} {_origin}{value}"
         )
  
     @staticmethod
     def debug(value, origin=None, level=1, showtime=True):
-        _origin = f"{colors.cy}{origin}{colors.e} " if origin else ""
-        _time = f"{colors.b}{logger._get_time()}{colors.e}" if showtime else ""
+        _origin = f"{colors.br}{colors.cy}{origin}{colors.e} " if origin else ""
+        _time = f"{colors.br}{colors.b}{logger._get_time()}{colors.e}" if showtime else ""
         if conf.debug and conf.debug >= level:
             dataToStdout(
-                f"{_time} {colors.m}DBG{colors.e} {_origin}{value}"
+                f"{_time} {colors.br}{colors.m}DBG{colors.e} {_origin}{value}"
             )

@@ -69,6 +69,39 @@ BRUTE_DELAY = 0.03  # 每次请求之后sleep的间隔
 # ssti
 SSTI_LEVEL = 0  # 0-5 扫描速度，越往后数据包越多，个别fuzz情况可配置大一些
 
+"""
+插件配置
+"""
+CHROME_PATH = "" # chrome 路径，为空时自动寻找
+# 爬虫模式设置
+CRAWLER_HEADLESS = True        # 无头模式运行浏览器（无图形界面）
+# 表单填充设置
+FORM_VALUES = {"mail": "test@test.com", "password": "Pass123"}       # 按类型分类的表单字段值
+FORM_KEYWORD_VALUES = {"username": "admin", "pass": "123456"}  # 表单关键字对应值
+# URL过滤设置
+CRAWLER_IGNORE_KEYWORDS = [
+    'logout',
+    'log_out',
+    'loginesc',
+    'loginout',
+    'delete',
+    'signout',
+    'logoff',
+    'signoff',
+    'exit',
+    'quit',
+    'byebye',
+    'bye-bye',
+    'clearuser',
+    'invalidate',
+    'reboot',
+    'shutdown',
+]  # 忽略包含这些关键词的URL
+CRAWLER_FUZZ = {
+    "enable": False,      # 启用路径模糊测试
+    "path": "", # 字典路径
+}
+CRAWLER_ROBOTS_PATH = False    # 解析robots.txt文件
 
 """
 服务端&客户端反连配置

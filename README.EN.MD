@@ -117,6 +117,7 @@
         <li><b>Distributed & Local Integration</b> - Flexibly adapt to different scanning and scenario requirements</li>
         <li><b>Third-party Scanning Integration</b> - ObserverWard fingerprint detection, Nuclei POCs precision scanning</li>
         <li><b>Highly Customizable Plugin System</b> - Externally extensible and dynamically importable plugin system</li>
+        <li><b>Headless Crawler</b> - Built-in Crawlergo implementation</li>
       </ul>
     </td>
     <td width="50%" valign="top">
@@ -193,6 +194,9 @@ docker run z0scan
 > Ling does not include the z0scan core, requires a locally available z0 executable file or script
 
 ### **z0 - Command Line**
+
+> [!Note]
+> ObserverWard fingerprint, Nuclei POCs linkage - Configure ObserverWard and nuclei to environment variables and configure plugins & fingerprints, refer to: [Guide](https://jiuzero.github.io/tags/z0scan/)
 
 ### ✔ Passive Scanning  
 
@@ -386,7 +390,11 @@ z0 scan -f urls.txt -c 3
 
 ## 🍀 Contributing
 
-[![Star History Chart](https://api.star-history.com/svg?repos=JiuZero/z0scan&type=Date)](https://star-history.com/#JiuZero/z0scan&Date)
+<a href="https://github.com/JiuZero/z0scan/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=JiuZero/z0scan" />
+</a>
+
+![Alt](https://repobeats.axiom.co/api/embed/9c54ad12caa9f9b34f4da6bca8090f388f3538d0.svg "Repobeats analytics image")
 
 ---
 

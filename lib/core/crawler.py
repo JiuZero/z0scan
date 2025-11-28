@@ -1,323 +1,273 @@
-from typing import Optional, Callable, List, Dict, Any
-from dataclasses import dataclass
-from enum import Enum
-import asyncio
-import json
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import os
-import random
-from pathlib import Path
-from datetime import timedelta
-from lib.core.data import path
-from crawlee.crawlers import (
-    BeautifulSoupCrawler,
-    PlaywrightCrawler,
-)
-from crawlee.storages import Dataset
-from crawlee.http_clients import HttpxHttpClient
+import json
+import subprocess
+from typing import List, Dict, Optional
+from lib.core.data import conf, path
+from lib.core.log import logger
 
 
-class CrawlerMode(Enum):
-    """爬虫模式"""
-    BEAUTIFULSOUP = "beautifulsoup"
-    PLAYWRIGHT = "playwright"
-
-
-@dataclass
-class CrawlerConfig:
-    """爬虫配置"""
-    start_urls: List[str]
-    mode: CrawlerMode = CrawlerMode.BEAUTIFULSOUP
-    max_requests_per_crawl: Optional[int] = 100
-    max_concurrency: int = 10
-    request_handler: Optional[Callable] = None
-
-    # Playwright 特定配置
-    headless: bool = True
-    browser_type: str = "chromium"
-
-    # 请求配置
-    proxy: Optional[str] = None
-    timeout: int = 30
-    user_agent: Optional[str] = None
-
-    # 反反爬虫配置
-    retry_on_blocked: bool = True
-    max_session_rotations: int = 5
-    max_request_retries: int = 0
-
-    # Crawlee 高级配置
-    use_session_pool: bool = True
-    keep_alive: bool = False
-    configure_logging: bool = True
-    request_handler_timeout: Optional[timedelta] = None 
-
-    # 延迟配置
-    min_delay: float = 1.0  # 最小延迟（秒）
-    max_delay: float = 3.0  # 最大延迟（秒）
-
-    # 日志配置
-    verbose: bool = False
-
-    # 输出配置
-    output_dir: str = path.temp
-    json_output: bool = True
-
-
-class UniversalCrawler:
-    """通用爬虫类"""
-
-    # 常用的 User-Agent 列表
-    USER_AGENTS = [
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15',
-        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    ]
-
-    def __init__(self, config: CrawlerConfig):
-        self.config = config
-        self.crawler = None
-        self.results: List[Dict[str, Any]] = []
-        self._setup_output_dir()
-
-    def _setup_output_dir(self):
-        """设置输出目录"""
-        Path(self.config.output_dir).mkdir(parents=True, exist_ok=True)
-
-    def _get_random_user_agent(self) -> str:
-        """获取随机 User-Agent"""
-        if self.config.user_agent:
-            return self.config.user_agent
-        return random.choice(self.USER_AGENTS)
-
-    def _get_proxy_config(self) -> Optional[str]:
-        """解析代理配置"""
-        if not self.config.proxy:
-            return None
-
-        proxy_url = self.config.proxy
-        if not proxy_url.startswith(('http://', 'https://', 'socks4://', 'socks5://')):
-            proxy_url = f'http://{proxy_url}'
-
-        return proxy_url
-
-    def _get_additional_headers(self) -> Dict[str, str]:
-        """获取额外的 HTTP 头"""
-        return {
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'none',
-            'Sec-Fetch-User': '?1',
-            'Cache-Control': 'max-age=0',
-        }
-
-    async def _delay_between_requests(self):
-        """请求之间的随机延迟"""
-        delay = random.uniform(self.config.min_delay, self.config.max_delay)
-        await asyncio.sleep(delay)
-
-    def _wrap_request_handler(self, handler: Callable) -> Callable:
-        """包装请求处理器以添加延迟"""
-        async def wrapped_handler(context):
-            # 请求前延迟
-            await self._delay_between_requests()
-            # 执行原始处理器
-            result = await handler(context)
-            return result
-        return wrapped_handler
-
-    def _setup_crawler(self):
-        """根据配置初始化爬虫"""
-        # 基础配置
-        crawler_kwargs = {
-            'max_requests_per_crawl': self.config.max_requests_per_crawl,
-            'request_handler_timeout': (
-                self.config.request_handler_timeout
-                or timedelta(seconds=self.config.timeout)
-            ),
-            'max_session_rotations': self.config.max_session_rotations,
-            'max_request_retries': self.config.max_request_retries,
-            'retry_on_blocked': self.config.retry_on_blocked,
-        }
-
-        # 根据模式创建对应的爬虫
-        if self.config.mode == CrawlerMode.PLAYWRIGHT:
-            # Playwright 特定配置
-            playwright_options = {
-                'headless': self.config.headless,
-                'browser_type': self.config.browser_type,
-            }
-
-            # 添加代理配置
-            proxy_url = self._get_proxy_config()
-            launch_options: Dict[str, Any] = {}
-            if proxy_url:
-                launch_options['proxy'] = {'server': proxy_url}
-
-            # 添加其他浏览器启动选项
-            launch_options['args'] = [
-                '--disable-blink-features=AutomationControlled',
-                '--disable-dev-shm-usage',
-                '--disable-web-security',
-                '--no-sandbox',
-                '--disable-logging',  # 禁用浏览器日志
-            ]
-            playwright_options['browser_launch_options'] = launch_options
-
-            # 浏览器上下文配置
-            context_options = {
-                'user_agent': self._get_random_user_agent(),
-                'viewport': {'width': 1920, 'height': 1080},
-                'locale': 'en-US',
-                'timezone_id': 'America/New_York',
-                'extra_http_headers': self._get_additional_headers(),
-            }
-            playwright_options['browser_new_context_options'] = context_options
-
-            crawler_kwargs.update(playwright_options)
-            self.crawler = PlaywrightCrawler(**crawler_kwargs)
-
+class SimpleCrawlergo:
+    def __init__(self, chrome_path: Optional[str] = None):
+        self.chrome_path = chrome_path
+        self.crawlergo_path = getattr(path, 'crawlergo', 'crawlergo')
+    
+    def crawl(self, target_url: str, **kwargs) -> List[Dict]:
+        """
+        爬取 URL 并返回请求列表
+        
+        参数:
+            target_url: 要爬取的 URL
+            **kwargs: 额外选项
+            
+        返回:
+            请求字典列表
+        """
+        # Build command
+        cmd = self._build_command(target_url, **kwargs)
+        
+        try:
+            logger.debug(f"Executing crawlergo: {' '.join(cmd)}")
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+            )
+            
+            if result.returncode != 0:
+                logger.error(f"Crawlergo execution failed: {result.stderr}")
+                return []
+            
+            # Parse output
+            return self._parse_output(result.stdout)
+            
+        except subprocess.TimeoutExpired:
+            logger.error("Crawlergo execution timed out")
+            return []
+        except Exception as e:
+            logger.error(f"Crawlergo execution error: {e}")
+            return []
+    
+    def _build_command(self, target_url: str, **kwargs) -> List[str]:
+        """构建 crawlergo 命令行参数"""
+        cmd = [self.crawlergo_path]
+        # Chrome path
+        if self.chrome_path:
+            cmd.extend(["-c", self.chrome_path])
+        # Output mode
+        cmd.extend(["-o", "json"])
+        # Optional parameters
+        if "max_tabs" in kwargs:
+            cmd.extend(["-t", str(kwargs["max_tabs"])])
         else:
-            # BeautifulSoup 配置 - 创建 HTTP 客户端
-            http_client_kwargs: Dict[str, Any] = {
-                'timeout': self.config.timeout,
-                'follow_redirects': True,
-            }
-
-            # 添加代理
-            proxy_url = self._get_proxy_config()
-            if proxy_url:
-                http_client_kwargs['proxies'] = proxy_url
-
-            # 添加自定义头
-            headers = {
-                'User-Agent': self._get_random_user_agent(),
-                **self._get_additional_headers(),
-            }
-            http_client_kwargs['headers'] = headers
-            http_client = HttpxHttpClient(**http_client_kwargs)
-            crawler_kwargs['http_client'] = http_client
-
-            self.crawler = BeautifulSoupCrawler(**crawler_kwargs)
-        if self.config.request_handler:
-            wrapped_handler = self._wrap_request_handler(self.config.request_handler)
-            self.crawler.router.default_handler(wrapped_handler)
-
-    async def run(self):
-        self._setup_crawler()
+            cmd.extend(["-t", str(conf.get("max_tabs", 8))])
+        if "max_crawled" in kwargs:
+            cmd.extend(["-m", str(kwargs["max_crawled"])])
+        else:
+            cmd.extend(["-m", str(conf.get("max_crawled", 200))])
+        # Filter mode
+        filter_mode = kwargs.get("filter_mode", "smart")
+        cmd.extend(["-f", filter_mode])
+        # Proxy
+        if "proxy" in kwargs and kwargs["proxy"]:
+            cmd.extend(["--request-proxy", kwargs["proxy"]])
+        elif conf.get("proxies", {}):
+            # Use first available proxy
+            proxy = next(iter(conf.get("proxies", {}).values()), [None])[0]
+            if proxy:
+                cmd.extend(["--request-proxy", proxy])
+        # Custom headers
+        if "headers" in kwargs and kwargs["headers"]:
+            cmd.extend(["--custom-headers", json.dumps(kwargs["headers"])])
+        # Cookies
+        if "cookies" in kwargs and kwargs["cookies"]:
+            cmd.extend(["--custom-cookies", kwargs["cookies"]])
+        # Ignore URL keywords
+        if "ignore_keywords" in kwargs and kwargs["ignore_keywords"]:
+            if isinstance(kwargs["ignore_keywords"], list):
+                for keyword in kwargs["ignore_keywords"]:
+                    cmd.extend(["-iuk", keyword])
+            else:
+                cmd.extend(["-iuk", kwargs["ignore_keywords"]])
+        # Additional crawlergo options
+        if "tab_run_timeout" in kwargs:
+            cmd.extend(["--tab-run-timeout", f"{kwargs['tab_run_timeout']}s"])
+        if "wait_dom_timeout" in kwargs:
+            cmd.extend(["--wait-dom-content-loaded-timeout", f"{kwargs['wait_dom_timeout']}s"])
+        if "push_pool_max" in kwargs:
+            cmd.extend(["--push-pool-max", str(kwargs["push_pool_max"])])
+        # Fuzz options
+        if kwargs.get("fuzz_path"):
+            cmd.append("--fuzz-path")
+        if "fuzz_path_dict" in kwargs and kwargs["fuzz_path_dict"]:
+            cmd.extend(["--fuzz-path-dict", kwargs["fuzz_path_dict"]])
+        # Robots.txt parsing
+        if kwargs.get("robots_path") is True:
+            cmd.append("--robots-path")
+        # Headless mode
+        if kwargs.get("no_headless") is True:
+            cmd.append("--no-headless")
+        # Target URL (last argument)
+        cmd.append(target_url)
+        return cmd
+    
+    def _parse_output(self, output: str) -> List[Dict]:
+        """解析 crawlergo JSON 输出"""
         try:
-            await self.crawler.run(self.config.start_urls)
+            separator = "--[Mission Complete]--"
+            if separator not in output:
+                logger.warning("Crawlergo output may be incomplete")
+                return []
+            # Extract JSON part
+            json_part = output.split(separator)[1].strip()
+            result_dict = json.loads(json_part)
+            # Return request list
+            req_list = result_dict.get("req_list", [])
+            logger.info(f"Crawlergo found {len(req_list)} requests")
+            return req_list
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse crawlergo output: {e}")
+            return []
         except Exception as e:
-            self.last_error = e
-
-        # 如果需要 JSON 输出，导出数据
-        if self.config.json_output:
-            await self._export_results()
-
-    async def _export_results(self):
-        """导出爬取结果为 JSON"""
-        try:
-            dataset = await Dataset.open()
-            data = await dataset.get_data()
-
-            # 保存为 JSON
-            output_file = os.path.join(
-                self.config.output_dir,
-                'crawler_results.json'
-            )
-
-            with open(output_file, 'w', encoding='utf-8') as f:
-                json.dump(data.items, f, ensure_ascii=False, indent=2)
-
-            # 保存 URL 列表
-            txt_file = os.path.join(
-                self.config.output_dir,
-                'crawler_urls.txt'
-            )
-            with open(txt_file, 'w', encoding='utf-8') as f:
-                for item in data.items:
-                    f.write(f"{item.get('url', '')}\n")
-
-            # 保存统计信息
-            stats_file = os.path.join(
-                self.config.output_dir,
-                'crawler_stats.json'
-            )
-            stats = {
-                'total_items': len(data.items),
-                'unique_urls': len(set(item.get('url', '') for item in data.items)),
-                'output_file': output_file,
-                'txt_file': txt_file,
-            }
-            with open(stats_file, 'w', encoding='utf-8') as f:
-                json.dump(stats, f, ensure_ascii=False, indent=2)
-
-            return output_file
-
-        except Exception as e:
-            return None
-
-    def run_sync(self):
-        try:
-            return asyncio.run(self.run())
-        except Exception as e:
-            self.last_error = e
-            return None
+            logger.error(f"Error processing crawlergo output: {e}")
+            return []
 
 
-def create_crawler(
-    start_urls: List[str],
-    mode: str = "beautifulsoup",
-    max_requests: int = 100,
-    max_concurrency: int = 10,
-    request_handler: Optional[Callable] = None,
-    headless: bool = True,
-    browser_type: str = "chromium",
-    proxy: Optional[str] = None,
-    timeout: int = 30,
-    user_agent: Optional[str] = None,
-    output_dir: str = "./crawler_output",
-    json_output: bool = True,
-    retry_on_blocked: bool = True,
-    max_session_rotations: int = 5,
-    max_request_retries: int = 0,
-    min_delay: float = 1.0,
-    max_delay: float = 3.0,
-    verbose: bool = False,
-) -> UniversalCrawler:
-    """快速创建爬虫"""
-    crawler_mode = (
-        CrawlerMode.PLAYWRIGHT
-        if mode.lower() == "playwright"
-        else CrawlerMode.BEAUTIFULSOUP
-    )
+def crawl_url(target_url: str, **kwargs) -> List[str]:
+    """
+    简化函数，爬取 URL 并返回 URL 列表
+    
+    参数:
+        target_url: 要爬取的 URL
+        **kwargs: crawlergo 的额外选项
+        
+    返回:
+        爬取过程中发现的 URL 列表
+    """
+    crawler = SimpleCrawlergo()
+    requests = crawler.crawl(target_url, **kwargs)
+    return [req.get("url", "") for req in requests if req.get("url")]
 
-    config = CrawlerConfig(
-        start_urls=start_urls,
-        mode=crawler_mode,
-        max_requests_per_crawl=max_requests,
-        max_concurrency=max_concurrency,
-        request_handler=request_handler,
-        headless=headless,
-        browser_type=browser_type,
-        proxy=proxy,
-        timeout=timeout,
-        user_agent=user_agent,
-        output_dir=output_dir,
-        json_output=json_output,
-        retry_on_blocked=retry_on_blocked,
-        max_session_rotations=max_session_rotations,
-        max_request_retries=max_request_retries,
-        min_delay=min_delay,
-        max_delay=max_delay,
-        verbose=verbose,
-    )
 
-    return UniversalCrawler(config)
+def crawl_with_auth(target_url: str, cookies: str, chrome_path: Optional[str] = None, **kwargs) -> List[str]:
+    """
+    带认证的 URL 爬取
+    
+    参数:
+        target_url: 要爬取的 URL
+        cookies: 认证用的 Cookie 字符串
+        chrome_path: Chrome 可执行文件路径
+        **kwargs: crawlergo 的额外选项
+        
+    返回:
+        爬取过程中发现的 URL 列表
+    """
+    crawler = SimpleCrawlergo(chrome_path)
+    kwargs["cookies"] = cookies
+    requests = crawler.crawl(target_url, **kwargs)
+    return [req.get("url", "") for req in requests if req.get("url")]
+
+
+def start_crawler_from_conf(target_url: str, proxy_addr: Optional[str] = None) -> List[Dict]:
+    """
+    使用全局 conf 对象的配置启动爬虫
+    
+    参数:
+        target_url: 要爬取的 URL
+        proxy_addr: 代理服务器地址（可选，如未提供则使用 conf.server_addr）
+        
+    返回:
+        请求字典列表
+    """
+    # 使用配置中的 Chrome 路径初始化爬虫
+    chrome_path = getattr(conf, 'chrome_path', None)
+    crawler = SimpleCrawlergo(chrome_path)
+    
+    # 从 conf 对象构建选项
+    options = {
+        "max_tabs": getattr(conf, 'max_tab_count', 8),
+        "max_crawled": getattr(conf, 'max_crawled_count', 200),
+        "filter_mode": getattr(conf, 'filter_mode', "smart"),
+    }
+    
+    # 添加代理配置
+    if proxy_addr:
+        options["proxy"] = proxy_addr
+    elif hasattr(conf, 'server_addr'):
+        options["proxy"] = f"http://{conf.server_addr}"
+
+    if hasattr(conf, 'custom_headers') and conf.custom_headers:
+        options["headers"] = conf.custom_headers
+    if hasattr(conf, 'custom_cookies') and conf.custom_cookies:
+        options["cookies"] = conf.custom_cookies
+    if hasattr(conf, 'ignore_url_keywords') and conf.ignore_url_keywords:
+        options["ignore_keywords"] = conf.ignore_url_keywords
+    if hasattr(conf, 'tab_run_timeout'):
+        options["tab_run_timeout"] = conf.tab_run_timeout
+    if hasattr(conf, 'wait_dom_timeout'):
+        options["wait_dom_timeout"] = conf.wait_dom_timeout
+    if hasattr(conf, 'push_pool_max'):
+        options["push_pool_max"] = conf.push_pool_max
+    if hasattr(conf, 'crawler_fuzz') and conf.crawler_fuzz.get("enable") is True:
+        options["fuzz_path"] = True
+        if conf.crawler_fuzz.get("path"):
+            options["fuzz_path_dict"] = conf.crawler_fuzz["path"]
+    if hasattr(conf, 'crawler_robots_path') and conf.crawler_robots_path is True:
+        options["robots_path"] = True
+    if hasattr(conf, 'crawler_headless') and conf.crawler_headless is False:
+        options["no_headless"] = True
+    
+    # 执行爬取
+    logger.info(f"Crawler target: {target_url}")
+    if options.get("proxy"):
+        logger.info(f"Crawler traffic will be proxied to: {options['proxy']}")
+    config_info = []
+    config_info.append(f"Max tabs: {options['max_tabs']}")
+    config_info.append(f"Max crawled: {options['max_crawled']}")
+    config_info.append(f"Filter mode: {options['filter_mode']}")
+    
+    if options.get("tab_run_timeout"):
+        config_info.append(f"Tab timeout: {options['tab_run_timeout']}s")
+    
+    if options.get("wait_dom_timeout"):
+        config_info.append(f"DOM timeout: {options['wait_dom_timeout']}s")
+    
+    if options.get("push_pool_max"):
+        config_info.append(f"Push pool max: {options['push_pool_max']}")
+    
+    if options.get("headers"):
+        config_info.append(f"Custom headers: {len(options['headers'])} headers")
+    
+    if options.get("cookies"):
+        config_info.append(f"Custom cookies: {len(options['cookies'])} characters")
+    
+    if options.get("ignore_keywords"):
+        if isinstance(options["ignore_keywords"], list):
+            config_info.append(f"Ignore keywords: {len(options['ignore_keywords'])} items")
+        else:
+            config_info.append(f"Ignore keywords: {options['ignore_keywords']}")
+    
+    if options.get("fuzz_path"):
+        config_info.append(f"Fuzz path: enabled")
+        if options.get("fuzz_path_dict"):
+            config_info.append(f"Fuzz dict: {options['fuzz_path_dict']}")
+    
+    if options.get("robots_path"):
+        config_info.append(f"Parse robots.txt: enabled")
+    
+    if options.get("no_headless"):
+        config_info.append(f"Headless mode: disabled")
+    else:
+        config_info.append(f"Headless mode: enabled")
+    
+    if hasattr(crawler, 'crawlergo_path'):
+        config_info.append(f"Crawlergo path: {crawler.crawlergo_path}")
+    
+    if crawler.chrome_path:
+        config_info.append(f"Chrome path: {crawler.chrome_path}")
+    
+    logger.info(f"Crawler configuration: {', '.join(config_info)}")
+    
+    return crawler.crawl(target_url, **options)

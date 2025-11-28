@@ -3,7 +3,7 @@
 # w8ay 2019/6/29
 # JiuZero/z0scan
 
-import os, sys
+import os, sys, platform
 import threading
 import json, re
 import time
@@ -36,10 +36,9 @@ def setPaths(root):
     path.helper = os.path.join("helper")
     path.data = os.path.join("data")
     path.scanners = os.path.join(root, 'scanners')
-    path.temp = os.path.join(root, "temp")
-    Path(path.temp).mkdir(exist_ok=True)
     path.output = os.path.join(root, "output")
     path.fingerprints = os.path.join(root, "fingerprints")
+    path.bin = os.path.join(root, "bin")
     Path(path.output).mkdir(exist_ok=True)
     
 def initKb():
@@ -334,6 +333,47 @@ def _init_stdout():
     logger.info(f"Database Record: {colors.y}{KB.output.get_db_filename()}{colors.e}")
 
 def _commands(v):
+    if v == "crawler":
+        if conf.enable_crawler is True:
+            # 确定系统架构
+            system = platform.system().lower()
+            machine = platform.machine().lower()
+            # 映射架构名称
+            if system == "windows":
+                arch = "win"
+                extension = ".exe"
+            elif system == "linux":
+                arch = "linux"
+                extension = ""
+            elif system == "darwin":
+                arch = "darwin"
+                extension = ""
+            else:
+                logger.error(f"Unsupported operating system: {system}")
+                sys.exit(1)
+            # 确定CPU架构
+            if machine in ("x86_64", "amd64"):
+                arch_name = "amd64"
+            elif machine in ("i386", "i686", "x86"):
+                arch_name = "386"
+            elif machine in ("arm64", "aarch64"):
+                arch_name = "arm64"
+            elif machine.startswith("arm"):
+                arch_name = "arm64"
+            else:
+                logger.warning(f"Unknown CPU architecture: {machine}.")
+                sys.exit(1)
+            # 构建预期的文件名
+            crawlergo_filename = f"crawlergo_{arch}_{arch_name}{extension}"
+            crawlergo_path = os.path.join(path.bin, crawlergo_filename)
+            # 检查文件是否存在
+            if not os.path.exists(crawlergo_path):
+                logger.error(f"Crawlergo executable not found in {path.bin}")
+                logger.error(f"Expected file: {crawlergo_filename}")
+                sys.exit(1)
+            else:
+                path.crawlergo = crawlergo_path
+                logger.info(f"Found crawlergo: {crawlergo_path}")
     if conf.command == "scan":
         return
     if v == "reverse":
@@ -353,171 +393,6 @@ def _commands(v):
         if conf.get("clean_redis"):
             from lib.core.red import set_conn, cleanred
             cleanred() # 清理redis队列
-    if v == "crawler":
-        if conf.command == "crawler":
-            from lib.core.crawler import CrawlerConfig, CrawlerMode, UniversalCrawler
-            from lib.core.common import random_UA
-            from crawlee.crawlers import BeautifulSoupCrawlingContext, PlaywrightCrawlingContext
-            
-            # 处理起始 URLs
-            start_urls = []
-            if conf.get("url"):
-                start_urls.append(conf.get("url"))
-            if conf.get("url_file"):
-                try:
-                    with open(conf.get("url_file"), 'r', encoding='utf-8') as f:
-                        file_urls = [line.strip() for line in f if line.strip()]
-                        start_urls.extend(file_urls)
-                except Exception as e:
-                    logger.error(f"Failed to read URL file: {e}")
-                    sys.exit(1)
-            
-            if not start_urls:
-                logger.error("No URLs provided for crawling")
-                sys.exit(1)
-            
-            # 处理 User-Agent
-            user_agent = None
-            if conf.get("random_agent"):
-                user_agent = random_UA()
-            
-            # 处理代理
-            proxy = conf.get("proxy")
-            
-            # 处理输出目录
-            output_dir = conf.get("output", "./crawler_output")
-            
-            logger.info(f"Crawler Mode: {colors.y}{conf.get('mode', 'beautifulsoup').upper()}{colors.e}")
-            logger.info(f"Start URLs: {colors.y}{len(start_urls)}{colors.e}")
-            logger.info(f"Max Requests: {colors.y}{conf.get('max_requests', 100)}{colors.e}")
-            logger.info(f"Max Concurrency: {colors.y}{conf.get('max_concurrency', 10)}{colors.e}")
-            logger.info(f"Timeout: {colors.y}{conf.get('timeout', 30)}s{colors.e}")
-            
-            if proxy:
-                logger.info(f"Proxy: {colors.y}{proxy}{colors.e}")
-            if user_agent:
-                logger.info(f"User-Agent: {colors.y}Random{colors.e}")
-            if conf.get("includes"):
-                logger.info(f"Includes: {colors.y}{conf.get('includes')}{colors.e}")
-            if conf.get("excludes"):
-                logger.info(f"Excludes: {colors.y}{conf.get('excludes')}{colors.e}")
-            
-            logger.info(f"Output Dir: {colors.y}{output_dir}{colors.e}")
-            
-            # 定义请求处理器
-            if conf.get("mode", "beautifulsoup").lower() == "beautifulsoup":
-                async def crawler_handler(context: BeautifulSoupCrawlingContext):
-                    try:
-                        context.log.info(f'Crawling: {context.request.url}')
-                        
-                        soup = context.soup
-                        
-                        # 提取数据
-                        data = {
-                            'url': context.request.url,
-                            'title': soup.title.string if soup.title else '',
-                            'status_code': context.http_response.status_code if hasattr(context, 'http_response') else 200,
-                        }
-                        
-                        # 可选：提取更多信息
-                        if conf.get("extract_h1", True):
-                            data['h1_tags'] = [h1.get_text(strip=True) for h1 in soup.find_all('h1')]
-                        
-                        # 保存数据
-                        await context.push_data(data)
-                        
-                        # URL过滤逻辑
-                        def should_crawl_url(url):
-                            if conf.get("includes"):
-                                if not any(keyword in url for keyword in conf.get("includes")):
-                                    return False
-                            if conf.get("excludes"):
-                                if any(keyword in url for keyword in conf.get("excludes")):
-                                    return False
-                            return True
-                        
-                        # 添加新链接到队列
-                        if should_crawl_url(context.request.url):
-                            await context.enqueue_links()
-                        
-                    except Exception as e:
-                        context.log.error(f'Error processing {context.request.url}: {str(e)}')
-            else:
-                async def crawler_handler(context: PlaywrightCrawlingContext):
-                    try:
-                        context.log.info(f'Crawling: {context.request.url}')
-                        
-                        page = context.page
-                        await page.wait_for_load_state('networkidle')
-                        
-                        # 提取数据
-                        data = {
-                            'url': context.request.url,
-                            'title': await page.title(),
-                        }
-                        
-                        if conf.get("extract_h1", True):
-                            h1_elements = await page.query_selector_all('h1')
-                            data['h1_tags'] = [await h1.text_content() for h1 in h1_elements]
-                        
-                        await context.push_data(data)
-                        
-                        def should_crawl_url(url):
-                            if conf.get("includes"):
-                                if not any(keyword in url for keyword in conf.get("includes")):
-                                    return False
-                            if conf.get("excludes"):
-                                if any(keyword in url for keyword in conf.get("excludes")):
-                                    return False
-                            return True
-                        
-                        if should_crawl_url(context.request.url):
-                            await context.enqueue_links()
-                        
-                    except Exception as e:
-                        context.log.error(f'Error processing {context.request.url}: {str(e)}')
-            
-            # 确定爬虫模式
-            crawler_mode = (
-                CrawlerMode.PLAYWRIGHT 
-                if conf.get("mode", "beautifulsoup").lower() == "playwright" 
-                else CrawlerMode.BEAUTIFULSOUP
-            )
-            
-            # 创建爬虫配置
-            crawler_config = CrawlerConfig(
-                start_urls=start_urls,
-                mode=crawler_mode,
-                max_requests_per_crawl=conf.get("max_requests", 100),
-                max_concurrency=conf.get("max_concurrency", 10),
-                request_handler=crawler_handler,
-                headless=conf.get("headless", True),
-                browser_type="chromium",
-                proxy=proxy,
-                timeout=conf.get("timeout", 30),
-                user_agent=user_agent,
-                output_dir=output_dir,
-                json_output=conf.get("json_output", True),
-                min_delay=conf.get("min_delay", 1.0), 
-                max_delay=conf.get("max_delay", 3.0),  
-                verbose=conf.get("verbose", False), 
-            )
-            
-            # 创建并运行爬虫
-            try:
-                logger.info("Starting crawler...")
-                crawler = UniversalCrawler(crawler_config)
-                crawler.run_sync()
-                logger.info(f"{colors.g}Crawler finished successfully{colors.e}")
-                logger.info(f"Results saved to: {colors.y}{output_dir}{colors.e}")
-            except KeyboardInterrupt:
-                logger.warning("Crawler interrupted by user")
-            except Exception as e:
-                logger.error(f"Crawler failed: {str(e)}")
-                if conf.get("debug"):
-                    import traceback
-                    traceback.print_exc()
-                sys.exit(1)
     sys.exit(0)
 
 
@@ -538,7 +413,7 @@ def init(root, cmdline):
     check_up()
     _merge_options(cmdline) # 合并命令行与config中的参数
     _commands("version")
-    _commands("crawler") # 初始化爬虫
+    _commands("crawler")
     initdb() # 初始化数据库
     _commands("reverse")
     _commands("clean_redis")
