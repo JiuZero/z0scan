@@ -61,7 +61,7 @@ jobs:
       - name: Install Nuitka and build tools
         run: |
           python -m pip install --upgrade pip
-          pip install nuitka==2.7.12 zstandard imageio
+          pip install nuitka==2.5.7 zstandard imageio
           pip install crawlee[playwright,beautifulsoup]
           playwright install
           pip install -r requirements.txt
