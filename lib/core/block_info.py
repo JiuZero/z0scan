@@ -18,7 +18,6 @@ class block_count():
         try:
             # 检查记录是否存在
             result = selectdb("block_count", "count", where="id=?", where_values=[self.host_port])
-            
             if result is False or result is None:
                 # 记录不存在，创建新记录
                 insertdb("block_count", {"id": self.host_port, "count": str(status)})
@@ -26,24 +25,20 @@ class block_count():
             else:
                 # 记录存在，获取当前计数
                 origin = result[0] if result else ""
-            
             # 构建新的计数字符串
             new_count = origin + str(status)
-            
             # 更新记录（使用UPDATE而不是INSERT）
             if result is False or result is None:
                 insertdb("block_count", {"id": self.host_port, "count": new_count})
             else:
                 # 使用UPDATE更新现有记录
                 updatedb("block_count", "count=?", "id=?", [new_count, self.host_port])
-            
             # 检查是否需要阻塞
             if len(new_count) >= 10:  # 至少要有10个状态才能判断
                 recent_status = new_count[-10:]  # 最近10个状态
                 if recent_status.count("0") >= int(conf.block_count):
                     insertdb("block_host", {"id": self.host_port})
                     logger.warning("{} blocked, never test it.".format(self.host_port))
-            
             return True
             
         except Exception as e:
