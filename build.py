@@ -30,19 +30,16 @@ def get_platform_specific_args():
     """返回平台特定的Nuitka编译参数"""
     args = []
     system = platform.system().lower()
-    
     # Windows特定参数
     if system == 'windows':
         args.extend([
             '--windows-icon-from-ico=doc/logo.png',
         ])
-    
     # macOS特定参数
     elif system == 'darwin':
         args.extend([
             '--macos-app-icon=doc/logo.png',
         ])
-    
     # Linux特定参数
     elif system == 'linux':
         args.extend([
@@ -50,69 +47,6 @@ def get_platform_specific_args():
         ])
     
     return args
-
-def get_actual_module_name(pkg_name):
-    """模块名检测"""
-    try:
-        module = importlib.import_module(pkg_name)
-        return module.__name__.split('.')[0]  # 返回顶级包名
-    except ImportError:
-        pass
-    common_variants = {
-        'pyzmq': 'zmq',
-        'Pillow': 'PIL',
-        'python-dateutil': 'dateutil',
-        'pyyaml': 'yaml',
-        'beautifulsoup4': 'bs4',
-        'dnspython': 'dns',
-        'pyOpenSSL': 'OpenSSL',
-        'PySocks': 'socks', 
-        'requests-toolbelt': 'requests_toolbelt', 
-        'psycopg2-binary': 'psycopg2', 
-        'python-dateutil': 'dateutil', 
-        'pysmb': 'smb', 
-    }
-    if pkg_name in common_variants:
-        return common_variants[pkg_name]
-    try:
-        try:
-            dist = distribution(pkg_name)
-            if dist is not None:
-                # 检查包的顶级模块
-                if dist.files:
-                    for file in dist.files:
-                        parts = file.parts
-                        if len(parts) > 0 and parts[0].endswith('.py'):
-                            return parts[0][:-3]  # 移除.py后缀
-                # 检查importlib导入
-                for finder in pkgutil.iter_importers():
-                    if finder.find_spec(pkg_name):
-                        return pkg_name
-        except PackageNotFoundError:
-            pass
-        # 回退到pkg_resources
-        if get_distribution is not None:
-            dist = get_distribution(pkg_name)
-            if dist.has_metadata('top_level.txt'):
-                top_level = dist.get_metadata('top_level.txt')
-                if top_level:
-                    return top_level.split('\n')[0].strip()
-    except Exception:
-        pass
-    return pkg_name
-
-def verify_import(pkg_name, actual_name):
-    """验证模块是否可以导入"""
-    try:
-        __import__(actual_name)
-        return True
-    except ImportError:
-        try:
-            # 尝试直接导入原始名称（某些包可能同时注册多个名称）
-            __import__(pkg_name)
-            return True
-        except ImportError:
-            return False
 
 
 def find_built_binary(build_dir: Path) -> Path:
@@ -148,6 +82,8 @@ def maybe_upx_compress(build_dir: Path):
       - 可用 UPX_PATH 指定 upx 二进制路径
       - 可用 UPX_FLAGS 自定义参数（默认 '--best --lzma'）
     """
+    if platform.system().lower() == 'darwin':
+        return
     upx_bin = os.getenv("UPX_PATH") or which("upx")
     if not upx_bin:
         print(":: UPX SKIP: upx not found (set UPX_PATH or install upx)")
@@ -172,58 +108,30 @@ def build():
     
     # 基础编译参数
     base_args = [
-        '--lto=yes' if platform.system().lower() != 'darwin' else '--lto=no',  # macOS下禁用LTO
+        '--lto=yes' if platform.system().lower() == 'linux' else '--lto=no',  # macOS下禁用LTO
         '--output-dir=z0scan', 
         '--standalone',
         '--onefile',
         '--python-flag=-u', 
-        '--include-package=lib',
-        '--nofollow-import-to=helper',
-        '--nofollow-import-to=config',
-        '--include-package=api',
-        '--include-data-dir=bin=bin', 
+        '--include-plugin-directory=scanners', # 把scanners导入
         "--include-data-file=patch/effective_tld_names.dat.txt=tld/res/effective_tld_names.dat.txt",
-        '--remove-output', 
+        '--include-data-dir=bin=bin', # crawlergo
+        '--include-data-dir=data=data', # db
+        '--follow-imports', 
+        '--nofollow-import-to=config', # config 动态导入
         '--nofollow-import-to=*.tests,*.test', 
+        '--noinclude-setuptools-mode=nofollow', 
+        '--noinclude-pytest-mode=nofollow', 
+        '--remove-output', 
         '--assume-yes-for-downloads',
+        '--include-package-data=dateutil', 
+        '--include-package-data=dateutil.zoneinfo', 
     ]
     nuitka_cmd.extend(base_args)
     
     # 添加平台特定参数
     platform_args = get_platform_specific_args()
     nuitka_cmd.extend(platform_args)
-
-    # 依赖处理（与release.yml配合）
-    if not os.path.isfile("requirements.txt"):
-        print("Error: requirements.txt not found!")
-        sys.exit(1)
-    
-    missing_modules = []
-    with open("requirements.txt", "r") as f:
-        for line in f:
-            line = line.split('#')[0].strip()
-            if line:
-                pkg_name = re.split(r'[=<>~\[\]]', line)[0]
-                actual_name = get_actual_module_name(pkg_name)
-                
-                if not verify_import(pkg_name, actual_name):
-                    missing_modules.append(f"{pkg_name} -> {actual_name}")
-                    continue
-                
-                # 添加包含指令
-                nuitka_cmd.extend([
-                    f"--include-module={actual_name}",
-                    f"--include-package={actual_name}",
-                ])
-
-    if missing_modules:
-        print("\n:: Warning: Missing modules detected (will continue for CI):")
-        for mod in missing_modules:
-            print(f"  - {mod}")
-        if not os.getenv('CI'):
-            if input("Continue compiling? (y/n): ").lower() != 'y':
-                sys.exit(1)
-
     nuitka_cmd.append('z0.py')
     
     # 在CI环境中显示完整命令
@@ -245,7 +153,7 @@ def build():
 def setup_build_directory():
     """优化资源文件处理，与release.yml配合"""
     # 需要复制的资源文件
-    resource_dirs = ['config.py', 'scanners', 'dicts', 'helper', 'data', 'pocs']
+    resource_dirs = ['config.py', 'dicts']
     
     build_dir = Path('z0scan')
     try:
