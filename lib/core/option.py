@@ -492,7 +492,7 @@ def _commands(v):
                 max_concurrency=conf.get("max_concurrency", 10),
                 request_handler=crawler_handler,
                 headless=conf.get("headless", True),
-                browser_type=conf.get("browser_type", "chromium"),
+                browser_type="chromium",
                 proxy=proxy,
                 timeout=conf.get("timeout", 30),
                 user_agent=user_agent,

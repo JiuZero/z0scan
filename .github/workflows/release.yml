@@ -60,7 +60,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install nuitka==2.5.7 zstandard imageio
           pip install crawlee[playwright,beautifulsoup]
-          playwright install
+          playwright install chromium
           pip install -r requirements.txt
 
       - name: Install UPX (Linux)

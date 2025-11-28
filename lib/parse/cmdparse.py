@@ -105,7 +105,6 @@ def cmd_line_parser(argv=None):
     crawler_mode = crawler_parser.add_argument_group('Mode', "Crawler mode options")
     crawler_mode.add_argument("-m", "--mode", dest="mode", type=str, choices=['beautifulsoup', 'playwright'], default='beautifulsoup', help="Crawler mode: beautifulsoup or playwright (Default beautifulsoup).")
     crawler_mode.add_argument("--headless", dest="headless", action="store_true", default=True, help="Run Playwright in headless mode (Default True).")
-    crawler_mode.add_argument("--browser-type", dest="browser_type", type=str, choices=['chromium', 'firefox'], default='chromium', help="Browser type for Playwright: chromium, firefox, webkit (Default chromium).")
     
     # Crawler limits options
     crawler_limits = crawler_parser.add_argument_group('Limits', "Crawler limits options")

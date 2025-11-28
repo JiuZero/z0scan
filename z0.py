@@ -6,7 +6,6 @@ import inspect
 import os
 import sys
 import threading
-import requests
 from colorama import deinit
 from urllib.parse import urlparse
 
@@ -69,6 +68,7 @@ def main():
             urls.extend(_urls)
         if urls == []:
             sys.exit()
+        import requests
         for url in urls:
             try:
                 req = requests.get(url)
