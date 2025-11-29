@@ -63,6 +63,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install nuitka zstandard imageio
           pip install -r requirements.txt
+          pip install certifi==2025.4.26
 
       - name: Install UPX (Linux)
         if: runner.os == 'Linux'
