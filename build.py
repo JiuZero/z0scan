@@ -180,7 +180,9 @@ def build():
         '--onefile',
         '--python-flag=-u', 
         "--include-data-file=patch/effective_tld_names.dat.txt=tld/res/effective_tld_names.dat.txt",
-        '--include-data-dir=bin=bin', # crawlergo
+        # '--include-data-dir=bin=bin', # crawlergo
+        '--include-package=api', 
+        '--include-package=lib', 
         '--follow-imports', 
         '--nofollow-import-to=config', # config 动态导入
         '--nofollow-import-to=*.tests,*.test', 
@@ -249,7 +251,7 @@ def build():
 def setup_build_directory():
     """优化资源文件处理，与release.yml配合"""
     # 需要复制的资源文件
-    resource_dirs = ['config.py', 'scanners', 'dicts', 'helper', 'data']
+    resource_dirs = ['config.py', 'scanners', 'dicts', 'helper', 'data', 'lib']
     
     build_dir = Path('z0scan')
     try:
