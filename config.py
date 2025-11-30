@@ -5,7 +5,6 @@
 """
 总配置
 """
-
 THREADS = 18  # 默认线程数量
 EXCLUDES = ["google", '.gov.', 'baidu', 'firefox', 'microsoft', '.bing.', 'msn.cn']  # 排除包含关键字的网址
 DEFAULT_PROXY_PORT = 5920 # 被动模式默认监听端口
@@ -22,13 +21,15 @@ SMARTSCAN = {
     "model": "gpt-3.5-turbo", 
     "api_key": "", 
 } # AI智能插件优化（支持所有openai库所能调用的模型）
-MAX_DIR = 2 # PerDir插件的扫描深度(目录深度)
+MAX_DIR = 2 # PerDir插件的扫描深度（目录深度）
 CONSOLE_PORT = 9331 # console交互通信端口
 HIDDEN_VUL_REMINDER = True # 漏洞隐患提醒
 BLOCK_COUNT = 20 # 请求多次失败后诊断为网站对本机IP封禁，加入请求黑名单
 SHORT_OUT = False # 简洁的终端报告输出（像W13Scan那样~）
-STATUS_FLASH_TIME = 60 # 扫描状态输出间隔(>=60)
+STATUS_FLASH_TIME = 60 # 扫描状态输出间隔（>=60）
 DEDUPLICATE_LEVEL = 1 # 去重级别（0-2）
+OBSERVERWARD_PATH = "" # 自定义ObserverWard路径（为空时自动寻找）
+NUCLEI_PATH = "" # 自定义Nuclei路径（为空时自动寻找）
 NOTICE = {
     # 企业微信推送
     "wechat": {
@@ -54,7 +55,6 @@ NOTICE = {
 """
 插件配置
 """
-
 PLUGIN_THREADS = 2 # 插件内线程（针对多参数情况）
 DISLOAD = ["unauth", "redos"]  # 不加载的插件
 # xss
@@ -69,9 +69,11 @@ BRUTE_DELAY = 0.03  # 每次请求之后sleep的间隔
 # ssti
 SSTI_LEVEL = 0  # 0-5 扫描速度，越往后数据包越多，个别fuzz情况可配置大一些
 
+
 """
-插件配置
+爬虫配置
 """
+CRAWLERGO_PATH = "" # 自定义Crawlergo路径（为空时使用内嵌）
 CHROME_PATH = "" # chrome 路径，为空时自动寻找
 # 爬虫模式设置
 CRAWLER_HEADLESS = True        # 无头模式运行浏览器（无图形界面）
@@ -103,10 +105,10 @@ CRAWLER_FUZZ = {
 }
 CRAWLER_ROBOTS_PATH = False    # 解析robots.txt文件
 
+
 """
 服务端&客户端反连配置
 """
-
 REVERSE = {
     # 客户端
     "sleep": 5,  # 反连后延时检测时间，单位是(秒)
