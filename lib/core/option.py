@@ -335,45 +335,51 @@ def _init_stdout():
 def _commands(v):
     if v == "crawler":
         if conf.enable_crawler is True:
-            # 确定系统架构
-            system = platform.system().lower()
-            machine = platform.machine().lower()
-            # 映射架构名称
-            if system == "windows":
-                arch = "win"
-                extension = ".exe"
-            elif system == "linux":
-                arch = "linux"
-                extension = ""
-            elif system == "darwin":
-                arch = "darwin"
-                extension = ""
+            if conf.crawlergo_path == "":
+                # 使用内嵌
+                # 确定系统架构
+                system = platform.system().lower()
+                machine = platform.machine().lower()
+                # 映射架构名称
+                if system == "windows":
+                    arch = "win"
+                    extension = ".exe"
+                elif system == "linux":
+                    arch = "linux"
+                    extension = ""
+                elif system == "darwin":
+                    arch = "darwin"
+                    extension = ""
+                else:
+                    logger.error(f"Unsupported operating system: {system}")
+                    sys.exit(1)
+                # 确定CPU架构
+                if machine in ("x86_64", "amd64"):
+                    arch_name = "amd64"
+                elif machine in ("i386", "i686", "x86"):
+                    arch_name = "386"
+                elif machine in ("arm64", "aarch64"):
+                    arch_name = "arm64"
+                elif machine.startswith("arm"):
+                    arch_name = "arm64"
+                else:
+                    logger.warning(f"Unknown CPU architecture: {machine}.")
+                    sys.exit(1)
+                # 构建预期的文件名
+                crawlergo_filename = f"crawlergo_{arch}_{arch_name}{extension}"
+                crawlergo_path = os.path.join(path.bin, crawlergo_filename)
+                # 检查文件是否存在
+                if not os.path.exists(crawlergo_path):
+                    logger.error(f"Crawlergo executable not found in {path.bin}")
+                    logger.error(f"Expected file: {crawlergo_filename}")
+                    sys.exit(1)
+                else:
+                    path.crawlergo = crawlergo_path
+                    logger.info(f"Found crawlergo: {crawlergo_path}")
             else:
-                logger.error(f"Unsupported operating system: {system}")
-                sys.exit(1)
-            # 确定CPU架构
-            if machine in ("x86_64", "amd64"):
-                arch_name = "amd64"
-            elif machine in ("i386", "i686", "x86"):
-                arch_name = "386"
-            elif machine in ("arm64", "aarch64"):
-                arch_name = "arm64"
-            elif machine.startswith("arm"):
-                arch_name = "arm64"
-            else:
-                logger.warning(f"Unknown CPU architecture: {machine}.")
-                sys.exit(1)
-            # 构建预期的文件名
-            crawlergo_filename = f"crawlergo_{arch}_{arch_name}{extension}"
-            crawlergo_path = os.path.join(path.bin, crawlergo_filename)
-            # 检查文件是否存在
-            if not os.path.exists(crawlergo_path):
-                logger.error(f"Crawlergo executable not found in {path.bin}")
-                logger.error(f"Expected file: {crawlergo_filename}")
-                sys.exit(1)
-            else:
-                path.crawlergo = crawlergo_path
-                logger.info(f"Found crawlergo: {crawlergo_path}")
+                path.crawlergo = conf.crawlergo_path
+                logger.info(f"Load crawlergo: {conf.crawlergo_path}")
+                
     if conf.command == "scan":
         return
     if v == "reverse":
