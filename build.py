@@ -251,7 +251,7 @@ def build():
 def setup_build_directory():
     """优化资源文件处理，与release.yml配合"""
     # 需要复制的资源文件
-    resource_dirs = ['config.py', 'scanners', 'dicts', 'helper', 'data', 'lib']
+    resource_dirs = ['config.py', 'scanners', 'dicts', 'helper', 'data']
     
     build_dir = Path('z0scan')
     try:
