@@ -3,9 +3,9 @@
 # w8ay 2019/6/29
 # JiuZero/z0scan
 
-import os, sys, platform
+import os, sys
+from shutil import which
 import threading
-import json, re
 import time
 from queue import Queue
 import config
@@ -37,9 +37,11 @@ def setPaths(root):
     path.data = os.path.join("data")
     path.scanners = os.path.join(root, 'scanners')
     path.output = os.path.join(root, "output")
-    path.fingerprints = os.path.join(root, "fingerprints")
-    path.bin = os.path.join(root, "bin")
     Path(path.output).mkdir(exist_ok=True)
+    path.fingerprints = os.path.join(root, "fingerprints")
+    # observerward等第三方json报告导出
+    path.temp = os.path.join(root, "temp")
+    Path(path.temp).mkdir(exist_ok=True)
     
 def initKb():
     KB['continue'] = False  # 线程一直继续
@@ -130,21 +132,22 @@ def initPlugins():
                     mod = mod.Z0SCAN()
                     mod.checkImplemennted()
                     plugin_key = os.path.splitext(_)[0]
-                    if conf.get("enable", []) != []:
-                        if plugin_key not in conf.get("enable", []):
-                            continue
-                    if plugin_key in conf.get("disable", []):
-                        continue
-                    if not mod.risk in conf.risk:
-                        require_risk_list.append(plugin_key)
-                        continue
-                    if conf.command != "reverse_client":
-                        try:
-                            if mod.require_reverse is True:
-                                require_reverse_list.append(plugin_key)
+                    if conf.command != "list":
+                        if conf.get("enable", []) != []:
+                            if plugin_key not in conf.get("enable", []):
                                 continue
-                        except:
-                            pass
+                        if plugin_key in conf.get("disable", []):
+                            continue
+                        if not mod.risk in conf.risk:
+                            require_risk_list.append(plugin_key)
+                            continue
+                        if conf.command != "reverse_client":
+                            try:
+                                if mod.require_reverse is True:
+                                    require_reverse_list.append(plugin_key)
+                                    continue
+                            except:
+                                pass
                     plugin_type = os.path.split(root)[1]
                     relative_path = ltrim(filename, path.root)
                     if getattr(mod, 'type', None) is None:
@@ -167,14 +170,15 @@ def initPlugins():
                     mod = mod.Z0SCAN()
                     mod.checkImplemennted()
                     plugin_key = os.path.splitext(_)[0]
-                    if conf.get("enable", []) != []:
-                        if plugin_key not in conf.get("enable", []):
+                    if conf.command != "list":
+                        if conf.get("enable", []) != []:
+                            if plugin_key not in conf.get("enable", []):
+                                continue
+                        if plugin_key in conf.get("disable", []):
                             continue
-                    if plugin_key in conf.get("disable", []):
-                        continue
-                    if not mod.risk in conf.risk:
-                       require_risk_list.append(plugin_key)
-                       continue
+                        if not mod.risk in conf.risk:
+                            require_risk_list.append(plugin_key)
+                            continue
                     plugin_type = os.path.split(root)[1]
                     relative_path = ltrim(filename, path.root)
                     if getattr(mod, 'type', None) is None:
@@ -214,71 +218,6 @@ def _merge_options(cmdline):
         conf[key] = value
         continue
 
-def import_proxies_from_file(file_path: str):
-    """
-    从文件中导入代理并返回字典
-    等价于 AutoProxy.import_proxies 的实现：
-      - JSON: [{"url": "http://1.2.3.4:8080", "protocol": "http"}, {"ip": "1.2.3.4", "port": 8080, "protocol": "socks5"}]
-      - 文本: 每行一种格式：
-          http://1.2.3.4:8080
-          socks5://1.2.3.4:1080
-          http,1.2.3.4:8080
-    规则：
-      - https 归并为 http
-      - 仅接受形如 ip:port 的地址
-    """
-    proxies_by_protocol = {'http': [], 'socks4': [], 'socks5': []}
-    valid_parse_protocols = {'http', 'https', 'socks4', 'socks5'}
-    try:
-        _, ext = os.path.splitext(file_path)
-        if ext.lower() == '.json':
-            with open(file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                if isinstance(data, list):
-                    for item in data:
-                        url = item.get('url')
-                        protocol = item.get('protocol', 'http').lower()
-                        if url:
-                            m = re.match(r'(\w+)://(.+)', url)
-                            if m:
-                                protocol, proxy = m.groups()
-                            else:
-                                proxy = url
-                        else:
-                            proxy = f"{item.get('ip')}:{item.get('port')}"
-                        if protocol == 'https':
-                            protocol = 'http'
-                        if protocol in proxies_by_protocol:
-                            proxies_by_protocol[protocol].append(proxy)
-        else:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                for line in f:
-                    line = line.strip()
-                    if not line or line.startswith('#'):
-                        continue
-                    protocol, proxy_address = 'http', line
-                    m = re.match(r'(\w+)://(.+)', line)
-                    if m:
-                        proto_part, proxy_part = m.groups()
-                        if proto_part.lower() in valid_parse_protocols:
-                            proxy_address = proxy_part
-                            protocol = 'http' if proto_part.lower() == 'https' else proto_part.lower()
-                    elif ',' in line:
-                        parts = [p.strip().lower() for p in line.split(',', 1)]
-                        if len(parts) == 2 and parts[0] in valid_parse_protocols:
-                            proxy_address, protocol = parts[1], 'http' if parts[0] == 'https' else parts[0]
-                    if protocol in proxies_by_protocol and re.match(r'^\d{1,3}(?:\.\d{1,3}){3}:\d+$', proxy_address):
-                        proxies_by_protocol[protocol].append(proxy_address)
-        total_imported = sum(len(v) for v in proxies_by_protocol.values())
-        if total_imported == 0:
-            logger.error(f"No found proxy lines in {file_path}.")
-            sys.exit(0)
-        logger.info(f"Success import {total_imported} proxys.")
-        return proxies_by_protocol
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        sys.exit(0)
-
 def _set_conf():
     # server_addr
     if conf.get("server_addr", False):
@@ -291,11 +230,13 @@ def _set_conf():
     if conf.get("proxy", False):
         if "://" in conf["proxy"]:
             method, ip = conf["proxy"].split("://")
+            # 整理为字典以供requests处理
             conf["proxies"] = {
-                method.lower(): [ip]
+                method.lower(): ip
             }
         else:
-            conf["proxies"] = import_proxies_from_file(conf["proxy"])
+            logger.error("Requests PROXY args fail. eg.http://127.0.0.1:6620")
+            sys.exit(0)
     # user-agent
     if conf.get("random_agent", False):
         conf.agent = random_UA()
@@ -334,56 +275,26 @@ def _init_stdout():
 
 def _commands(v):
     if v == "crawler":
+        if conf.command != "scan":
+            return
         if conf.enable_crawler is True:
-            # 确定系统架构
-            system = platform.system().lower()
-            machine = platform.machine().lower()
-            # 映射架构名称
-            if system == "windows":
-                arch = "win"
-                extension = ".exe"
-            elif system == "linux":
-                arch = "linux"
-                extension = ""
-            elif system == "darwin":
-                arch = "darwin"
-                extension = ""
-            else:
-                logger.error(f"Unsupported operating system: {system}")
-                sys.exit(1)
-            # 确定CPU架构
-            if machine in ("x86_64", "amd64"):
-                arch_name = "amd64"
-            elif machine in ("i386", "i686", "x86"):
-                arch_name = "386"
-            elif machine in ("arm64", "aarch64"):
-                arch_name = "arm64"
-            elif machine.startswith("arm"):
-                arch_name = "arm64"
-            else:
-                logger.warning(f"Unknown CPU architecture: {machine}.")
-                sys.exit(1)
-            # 构建预期的文件名
-            crawlergo_filename = f"crawlergo_{arch}_{arch_name}{extension}"
-            crawlergo_path = os.path.join(path.bin, crawlergo_filename)
-            # 检查文件是否存在
-            if not os.path.exists(crawlergo_path):
-                logger.error(f"Crawlergo executable not found in {path.bin}")
-                logger.error(f"Expected file: {crawlergo_filename}")
-                sys.exit(1)
+            crawlergo_path = conf.crawlergo_path if conf.get("crawlergo_path", "") != "" else which('crawlergo')
+            if not crawlergo_path:
+                logger.warning("Crawlergo executable not found. Set CRAWLERGO_PATH in config.py or set it to system enviroment.", origin="crawler")
+                logger.error("Stop crawler. Exit..")
             else:
                 path.crawlergo = crawlergo_path
                 logger.info(f"Found crawlergo: {crawlergo_path}")
-    if conf.command == "scan":
-        return
     if v == "reverse":
         if conf.command == "reverse":
             from lib.core.reverse import reverse_main
             reverse_main()
+            sys.exit(0)
         else: return
     if v == "list":
         if conf.command == "list":
             _list()
+            sys.exit(0)
         else: return
     if v == "version":
         if conf.command == "version":
@@ -393,7 +304,7 @@ def _commands(v):
         if conf.get("clean_redis"):
             from lib.core.red import set_conn, cleanred
             cleanred() # 清理redis队列
-    sys.exit(0)
+            sys.exit(0)
 
 
 def check_up():

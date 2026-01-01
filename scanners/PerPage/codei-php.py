@@ -3,7 +3,7 @@
 # JiuZero/z0scan
 
 import random
-import re
+import re, base64
 from api import VulType, md5, generateResponse, conf, PluginBase, Type, logger, Threads, PLACE, KB
 from helper.basesensitive import sensitive_page_error_message_check
 
@@ -11,7 +11,7 @@ from helper.basesensitive import sensitive_page_error_message_check
 class Z0SCAN(PluginBase):
     name = "codei-php"
     desc = 'PHP Code Execution'
-    version = "2025.6.16"
+    version = "2025.12.15"
     risk = 3
             
     def audit(self):
@@ -21,8 +21,9 @@ class Z0SCAN(PluginBase):
             randint = random.randint(10120, 10240)
             verify_result = md5(str(randint).encode())
             _payloads = [
-                r"print(md5({}));".format(randint),
-                r";print(md5({}));".format(randint),
+                r";assert(base64_decode('{}'));".format(base64(randint)), 
+                # r"print(md5({}));".format(randint),
+                # r";print(md5({}));".format(randint),
                 r"';print(md5({}));$a='".format(randint),
                 r"\";print(md5({}));$a=\"".format(randint),
                 r"${{@print(md5({}))}}".format(randint),
@@ -38,12 +39,13 @@ class Z0SCAN(PluginBase):
         k, v, position = _
         if position in [PLACE.JSON_DATA, PLACE.MULTIPART_DATA, PLACE.XML_DATA]:
             return
-        regx = r'Parse error: syntax error,.*?\sin\s'
+        regx = r'Parse error: syntax error,.*?\sin\s.*?\(\d+\).*?eval\(\)\'d\scode\son\sline\s<i>\d+<\/i>'
         errors = None
         errors_raw = ()
         for _payload in _payloads:
             payload = self.insertPayload({
                 "key": k, 
+                "value": v, 
                 "position": position, 
                 "payload": _payload
                 })

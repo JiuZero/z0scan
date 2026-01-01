@@ -75,7 +75,7 @@ class Z0SCAN(PluginBase):
                 "payload": _payload
                 })
             r = self.req(position, payload)
-            if not r.text:
+            if not r:
                 continue
             is_vuln, error_info = self._detect_errors(r.text)
             if is_vuln:

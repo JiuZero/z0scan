@@ -35,26 +35,6 @@ class VulnDetector():
         key_safe = any(re.search(p, key, re.IGNORECASE) for p in safe_keys)
         value_safe = any(re.fullmatch(p, value, re.IGNORECASE) for p in safe_values)
         if not (key_safe or value_safe):
-            if self.remind:
-                logger.info(f"InteractiveDatabaseParam: {self.url} => {key}")
-            return True
-        return False
-    
-    def is_redirect(self, key, value):
-        """重定向检测"""
-        redirect_keys = [
-            r'^(url|jump|to|link|domain|addr|source|go|redir)[a-z0-9]*$',
-            r'^callbackurl$'
-        ]
-        args = ('open', 'location', 'target', 'imageurl', 'wap', '3g', 'g', 'go', 'share', 'u', 'to', 'src', 'display')
-        if (any(re.fullmatch(p, key, re.IGNORECASE) for p in redirect_keys)) or re.match(r'^(http|https|ftp|javascript):', value, re.IGNORECASE):
-            if self.remind:
-                logger.info(f"RedirectParam: {self.url} => {key}")
-            return True
-        for arg in args:
-            if arg.lower() == key.lower():
-                return True
-        if conf.level == 3:
             return True
         return False
         
@@ -62,38 +42,40 @@ class VulnDetector():
         """文件操作检测"""
         patterns = [
             r'^(file|path|name)[a-z0-9]*$',
-            r'^(metainf|webinf)$',
+            r'^(metainf|webinf|page)$',
             r'^(topic|attach|download)[a-z0-9]*$'
         ]
         if any(re.fullmatch(p, key, re.IGNORECASE) for p in patterns):
             if self.remind:
-                logger.info(f"FileOperationsParam: {self.url} => {key}")
+                logger.info(f"FileAccessParam: {self.url} → {key}")
             return True
         if conf.level == 3:
             return True
         return False
     
-    def is_ssrf(self, key, value):
-        """SSRF检测"""
+    def is_ssrf_redir(self, key, value):
+        """SSRF/Redir检测"""
+        keys = [
+            r'^(url|uri|jump|to|link|domain|addr|source|go|redir|src)[a-z0-9]*$',
+            r'^(api|service|endpoint|callback|return)[a-z0-9]*$',
+            r'^image(url|uri|src)$', 
+            r'^img(url|uri|src)$'
+        ]
         args = [
-            'url', 'uri', 'link', 'host', 'ip', 'address', 'target', 'site',
-            'website', 'web', 'src', 'source', 'dest', 'destination', 'redirect',
-            'redirect_to', 'redirect_url', 'callback', 'api', 'endpoint',
-            'webhook', 'proxy', 'fetch', 'resource', 'feed', 'service',
-            'location', 'remote', 'forward', 'next', 'continue', 'return',
-            'return_url', 'continue_url', 'next_url', 'request', 
-            'open', 'location', 'goto', 'address', 'target', 
-            'wap', 'domain', '3g', 'g', 'go', 'share', 'redir', 
-            'addr', 'u', 'to', 'display'
+            'host', 'ip', 'target', 'site',
+            'website', 'web', 'src', 'dest', 'destination', 
+            'webhook', 'proxy', 'fetch', 'resource', 'feed', 
+            'location', 'remote', 'forward', 'next', 'continue', 
+            'continue_url', 'next_url', 'request', 
+            'open', 'target', 
+            'wap', 'domain', '3g', 'g', 'share', 
+            'u', 'to', 'display'
+            "oauth_callback", "ref_url", "text", "content",
+            "download", "windows", "data", "reference", "site", "html",
         ]
-        ssrf_keys = [
-            r'^(url|link|src|source)[a-z0-9]*$',
-            r'^(api|service|endpoint)[a-z0-9]*$',
-            r'^image(url|uri|src)$'
-        ]
-        if (any(re.fullmatch(p, key, re.IGNORECASE) for p in ssrf_keys)) or re.search(r'(127\.|192\.168|10\.|172\.(1[6-9]|2\d|3[01]))', value) or key.lower() in args:
+        if re.search(r'(127\.|192\.168|10\.|172\.(1[6-9]|2\d|3[01]))', value) or key.lower() in args or re.match(r'^(http|https|ftp|javascript):', value, re.IGNORECASE):
             if self.remind:
-                logger.info(f"SSRFParam: {self.url} => {key}")
+                logger.info(f"SSRF/RedirParam: {self.url} → {key}")
             return True
         if conf.level == 3:
             return True

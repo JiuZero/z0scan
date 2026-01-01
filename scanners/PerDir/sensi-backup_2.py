@@ -54,6 +54,7 @@ class Z0SCAN(PluginBase):
             for payload in file_dic:
                 test_url = url + "/" + payload
                 r = requests.get(test_url, headers=headers, allow_redirects=False, stream=True)
+                if r is None: return
                 content = r.raw.read(10)
                 if r.status_code == 200 and self._check(content):
                     if int(r.headers.get('Content-Length', 0)) == 0:

@@ -49,10 +49,10 @@ class Z0SCAN(PluginBase):
                 '%u000d%u000a', # UNICODE
                 '%25250a', # 三次URL编码
             ]
-        rand_str = ''.join(random.choices(string.hexdigits, k=8)).lower()
+        rand_str = ''.join(random.choices(string.hexdigits, k=6)).lower()
         test_header = {
-            'header_name': f"NAME-{rand_str}",
-            'header_value': f"VALUE-{rand_str}"
+            'header_name': f"NAME{rand_str}",
+            'header_value': f"VALUE{rand_str}"
         }
         iterdatas = self.generateItemdatas()
         z0thread = Threads(name="crlf_1")
@@ -70,6 +70,7 @@ class Z0SCAN(PluginBase):
                 "payload": payload,
             })
             r = self.req(position, injected, quote=False)
+            if r is None: continue
             is_vuln, location = self._check_response(r, test_header)
             if not is_vuln:
                 continue

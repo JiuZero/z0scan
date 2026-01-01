@@ -17,8 +17,10 @@ class Z0SCAN(PluginBase):
         target_url = f"{self.requests.hostname}/{filename}"
         try:
             r1 = requests.put(target_url, data=content, headers=self.requests.headers, verify=False)
+            if r1 is None: return None
             if r1.status_code in [200, 201, 204]:
                 r2 = requests.get(target_url, headers={"Range": "bytes=0-50"})
+                if r2 is None: return None
                 if r2.status_code == 200 and content in r2.text:
                     r = r1, r2
                     return r

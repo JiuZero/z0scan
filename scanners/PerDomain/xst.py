@@ -17,6 +17,7 @@ class Z0SCAN(PluginBase):
         if not conf.level == 0:
             rand_str = ''.join(random.choices(string.hexdigits, k=4)).lower()
             r = requests.request("TRACE", self.requests.netloc + "/*", allow_redirects=True, verify=False, headers={f"{rand_str}": "{rand_str}"})
+            if r is None: return
             if re.search(f"{rand_str}: *?{rand_str}", r.text, re.I):
                 result = self.generate_result()
                 result.main({

@@ -22,10 +22,12 @@ class Z0SCAN(PluginBase):
             payload = "(A({}))/".format(random_str(6))
             url = domain + payload
             req = requests.get(url, headers=self.requests.headers)
+            if req is None: return
             if payload in req.text:
                 new_payload = "(A(\"onerror='{}'{}))/".format(random_str(6), random_str(6))
                 url2 = domain + new_payload
                 req2 = requests.get(url2, headers=self.requests.headers)
+                if req2 is None: return
                 if new_payload in req2.text:
                     result = self.generate_result()
                     result.main({

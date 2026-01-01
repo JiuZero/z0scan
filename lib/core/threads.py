@@ -32,7 +32,7 @@ class Threads:
             try:
                 task_func(item, *args, **kwargs)
             except Exception as task_e:
-                logger.error(f"Task failed: {task_e}", origin=self.name)
+                logger.error(task_e, origin=self.name)
                 self._exception_event.set()
                 # raise
             finally:

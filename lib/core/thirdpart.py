@@ -24,17 +24,17 @@ class API:
     
     def find_executable(self):
         # observerward
-        observerward_path = which('observerward') or which('ward') or which('observer_ward')
-        if observerward_path:
-            self.ward_path = observerward_path
-        if not self.ward_path:
-            logger.warning("ObserverWard executable not found", origin="thirdpart")
+        observerward_path = conf.observerward_path if conf.get("observerward_path", "") != "" else (which('observerward') or which('ward') or which('observer_ward'))
+        if not observerward_path:
+            logger.warning("ObserverWard executable not found. Set OBSERVERWARD_PATH in config.py or set it to system enviroment.", origin="thirdpart")
             return False
+        self.ward_path = observerward_path
         # nuclei
-        self.nuclei_path = which('nuclei')
-        if not self.nuclei_path:
-            logger.warning("Nuclei executable not found", origin="thirdpart")
+        nuclei_path = conf.nuclei_path if conf.get("nuclei_path", "") != "" else which('nuclei')
+        if not nuclei_path:
+            logger.warning("Nuclei executable not found. Set NUCLEI_PATH in config.py or set it to system enviroment.", origin="thirdpart")
             return False
+        self.nuclei_path = nuclei_path
         return True
     
     def check_installation(self):

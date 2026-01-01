@@ -33,7 +33,7 @@ class Z0SCAN(PluginBase):
 
     def calculate_time_probability(self, dbms_type, actual_delay, expected_delay):
         """
-        计算时间盲注存在的概率（完全按照DetSQL原有逻辑）
+        计算时间盲注存在的概率（参考DetSQL）
         :param dbms_type: 数据库类型
         :param actual_delay: 实际延迟时间
         :param expected_delay: 预期延迟时间

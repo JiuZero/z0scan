@@ -17,6 +17,7 @@ class Z0SCAN(PluginBase):
     def audit(self):
         if not "OSS" in self.fingerprints.finger:
             r = requests.get(self.requests.url, verify=False)
+            if r is None: return
             response_text = r.text.lower()
             for keyword in [
                 'no such bucket', 'bucket does not exist', 'bucket not found',

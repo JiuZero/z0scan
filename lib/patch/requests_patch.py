@@ -75,15 +75,18 @@ def request(self, method, url,
             h, p = gethostportfromurl(url)
             block = block_count(h, p)
             if block.is_block():
-                raise
+                return None
     else:
         logger.warning("Requests record args need bool")
+        return None
+    
+    # quote
     if isinstance(quote, bool):
         if quote is False:
             url = KEY_UNQUOTE + url
     else:
         logger.error("Requests quote args need bool")
-        raise
+        return None
 
     # proxies
     if conf.get("proxies", {}) != {} and not proxies:
@@ -101,20 +104,19 @@ def request(self, method, url,
     # cookies
     merged_cookies = merge_cookies(merge_cookies(RequestsCookieJar(), self.cookies), cookies)
     
-    # header：核心修复点 → 先清理非法头名称，再合并
+    # headers
     default_header = {
         "User-Agent": conf.agent, 
         "Connection": "close"
     }
-    # 合并默认头
     merged_hesders = merge_setting(headers, default_header)
-    # 清理传入的headers非法名称
+    # 清理传入的headers非法名称（暂不清楚问题根源）
     merged_hesders = clean_header_name(merged_hesders)
     
     req = Request(
         method=str(method).upper(),
         url=url,
-        headers=merged_hesders,  # 使用清理后的头
+        headers=merged_hesders, 
         files=files,
         data=data or {}, 
         json=json,
@@ -147,14 +149,21 @@ def request(self, method, url,
         'allow_redirects': allow_redirects,
     }
     send_kwargs.update(settings)
+    
     try:
+        KB["request"] += 1
         resp = self.send(prep, **send_kwargs)
     except Exception as e:
-        raise
-    
+        logger.error(e, origin="requests")
+        if record is True:
+            block.push_result_status(1)
+            if conf.get("redis_client"):
+                red = gredis()
+                red.hincrby("count", "request_fail", amount=1)
+        KB["request_fail"] += 1
+        return None
     
     if record is True:
-        KB["request"] += 1
         if resp != None:
             block.push_result_status(0)
         else:
@@ -162,7 +171,10 @@ def request(self, method, url,
             if conf.get("redis_client"):
                 red = gredis()
                 red.hincrby("count", "request_fail", amount=1)
-            KB["request_fail"] += 1
+            return None
+    if resp is None:
+        KB["request_fail"] += 1
+        return None
             
     if resp.encoding == 'ISO-8859-1':
         encodings = get_encodings_from_content(resp.text)

@@ -61,6 +61,7 @@ class Z0SCAN(PluginBase):
                 for i in ['.rar', '.zip']:
                     test_url = domain + payload + i
                     r = requests.get(test_url, headers=headers, allow_redirects=False, stream=True)
+                    if r is None: continue
                     try:
                         content = r.raw.read(10)
                     except:

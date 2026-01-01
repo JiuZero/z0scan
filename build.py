@@ -71,8 +71,6 @@ def get_actual_module_name(pkg_name):
         'psycopg2-binary': 'psycopg2', 
         'python-dateutil': 'dateutil', 
         'pysmb': 'smb', 
-        'PyQt-Fluent-Widgets[full]': 'qfluentwidgets', 
-        'crawlee[playwright,beautifulsoup]': 'crawlee', 
     }
     if pkg_name in common_variants:
         return common_variants[pkg_name]
@@ -150,6 +148,8 @@ def maybe_upx_compress(build_dir: Path):
       - 可用 UPX_PATH 指定 upx 二进制路径
       - 可用 UPX_FLAGS 自定义参数（默认 '--best --lzma'）
     """
+    if platform.system().lower() == 'darwin':
+        return
     upx_bin = os.getenv("UPX_PATH") or which("upx")
     if not upx_bin:
         print(":: UPX SKIP: upx not found (set UPX_PATH or install upx)")
@@ -174,22 +174,24 @@ def build():
     
     # 基础编译参数
     base_args = [
-        # '--lto=yes' if platform.system().lower() != 'darwin' else '--lto=no',  # macOS下禁用LTO
-        '--lto=yes',
+        '--lto=yes' if platform.system().lower() == 'linux' else '--lto=no',  # macOS下禁用LTO
         '--output-dir=z0scan', 
         '--standalone',
         '--onefile',
         '--python-flag=-u', 
-        '--include-package=lib',
-        '--nofollow-import-to=helper',
-        '--nofollow-import-to=config',
-        '--include-package=api',
-        '--include-data-dir=bin=bin', 
         "--include-data-file=patch/effective_tld_names.dat.txt=tld/res/effective_tld_names.dat.txt",
+        # '--include-data-dir=bin=bin', # crawlergo
+        '--include-package=api', 
+        '--include-package=lib', 
+        '--follow-imports', 
+        '--nofollow-import-to=config', # config 动态导入
+        '--nofollow-import-to=*.tests,*.test', 
+        '--noinclude-setuptools-mode=nofollow', 
+        '--noinclude-pytest-mode=nofollow', 
         '--remove-output', 
-        '--nofollow-import-to=*.tests,*.test,crawlee.project_template', 
         '--assume-yes-for-downloads',
-        '--playwright-include-browser=all'
+        '--include-package-data=dateutil', 
+        '--include-package-data=dateutil.zoneinfo', 
     ]
     nuitka_cmd.extend(base_args)
     
@@ -249,7 +251,7 @@ def build():
 def setup_build_directory():
     """优化资源文件处理，与release.yml配合"""
     # 需要复制的资源文件
-    resource_dirs = ['config.py', 'scanners', 'dicts', 'helper', 'data', 'pocs']
+    resource_dirs = ['config.py', 'scanners', 'dicts', 'helper', 'data', 'lib']
     
     build_dir = Path('z0scan')
     try:

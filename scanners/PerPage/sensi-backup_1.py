@@ -86,6 +86,7 @@ class Z0SCAN(PluginBase):
         # http://xxxxx.com/index.php => index.php.bak index.bak index.rar
         for payload in valid_payloads:
             r = requests.get(payload, headers=headers, allow_redirects=False, timeout=10)
+            if r is None: return
             if r.status_code == 200:
                 try:
                     content = r.raw.read(10)

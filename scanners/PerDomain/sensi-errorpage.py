@@ -22,6 +22,7 @@ class Z0SCAN(PluginBase):
             p = urlparse(self.requests.url)
             domain = "{}://{}/".format(p.scheme, p.netloc) + random_str(6)
             r = requests.get(domain, headers=headers)
+            if r is None: return
             messages = sensitive_page_error_message_check(r.text)
             if messages:
                 result = self.generate_result()

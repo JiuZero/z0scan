@@ -316,4 +316,7 @@ class waf:
             return "UNKNOW"
         except Exception as e:
             logger.error(e, origin="waf")
+            cv = {"hostname": self.hostname,
+                  "waf": "UNKNOW"}
+            insertdb("info", cv)
             return "UNKNOW"

@@ -20,7 +20,7 @@ def getmd5(s):
 class Z0SCAN(PluginBase):
     name = "cmdi"
     desc = 'Command Execution'
-    version = "2025.11.20"
+    version = "2025.12.15"
     risk = 3
         
     def audit(self):
@@ -82,7 +82,7 @@ class Z0SCAN(PluginBase):
                     })
                 self.success(result)
                 break
-        # 试试执行 set|set&set？
+        # 下面的思路来自 W13Scan、Jie并完善
         rules = [
             'Path=[\s\S]*?PWD=',
             'Path=[\s\S]*?PATHEXT=',
@@ -95,32 +95,70 @@ class Z0SCAN(PluginBase):
             'Non-authoritative\sanswer:\s+Name:\s*',
             'Server:\s*.*?\nAddress:\s*'
         ]
-        payload = self.insertPayload({
-            "key": k, 
-            "payload": "set|set&set", 
-            "position": position, 
-            })
-        r = self.req(position, payload)
-        if not r:
-            return
-        html1 = r.text
-        for rule in rules:
-            if re.search(rule, html1, re.I | re.S | re.M):
-                result = self.new_result()
-                result.main({
-                    "type": Type.REQUEST, 
-                    "url": r.url, 
-                    "vultype": VulType.CMD_INNJECTION, 
-                    "show": {
-                        "Position": f"{position} >> {k}", 
-                        "Payload": "set|set&set", 
-                        }
-                    })
-                result.step("Request1", {
-                    "position": position,
-                    "request": r.reqinfo, 
-                    "response": generateResponse(r), 
-                    "desc": "Payload: {}".format("set|set&set")
-                    })
-                self.success(result)
+        # 全替换检测
+        for payload in ['" "set" | "set" & "set" |"', 'set|set&set']:
+            payload = self.insertPayload({
+                "key": k, 
+                "payload": payload, 
+                "position": position, 
+                })
+            r = self.req(position, payload)
+            if not r:
                 return
+            html1 = r.text
+            for rule in rules:
+                if re.search(rule, html1, re.I | re.S | re.M):
+                    result = self.new_result()
+                    result.main({
+                        "type": Type.REQUEST, 
+                        "url": r.url, 
+                        "vultype": VulType.CMD_INNJECTION, 
+                        "show": {
+                            "Position": f"{position} >> {k}", 
+                            "Payload": "set|set&set", 
+                            }
+                        })
+                    result.step("Request1", {
+                        "position": position,
+                        "request": r.reqinfo, 
+                        "response": generateResponse(r), 
+                        "desc": "Payload: {}".format("set|set&set")
+                        })
+                    self.success(result)
+                    return
+        # 保留value拼接检测
+        if not conf.level == 3:
+            return
+        payload = ['{}set|set&set', '" {} "set" | "set" & "set']
+        for spli in ["", ";", "&&", "|"]:
+            for payload in payload:
+                payload = self.insertPayload({
+                    "key": k, 
+                    "value": v, 
+                    "payload": spli + payload, 
+                    "position": position, 
+                    })
+                r = self.req(position, payload)
+                if not r:
+                    return
+                html1 = r.text
+                for rule in rules:
+                    if re.search(rule, html1, re.I | re.S | re.M):
+                        result = self.new_result()
+                        result.main({
+                            "type": Type.REQUEST, 
+                            "url": r.url, 
+                            "vultype": VulType.CMD_INNJECTION, 
+                            "show": {
+                                "Position": f"{position} >> {k}", 
+                                "Payload": "set|set&set", 
+                                }
+                            })
+                        result.step("Request1", {
+                            "position": position,
+                            "request": r.reqinfo, 
+                            "response": generateResponse(r), 
+                            "desc": "Payload: {}".format("set|set&set")
+                            })
+                        self.success(result)
+                        return

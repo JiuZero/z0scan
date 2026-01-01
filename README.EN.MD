@@ -252,99 +252,102 @@ z0 scan -f urls.txt -c 3
 
 | Plugin Name | Function Description | Risk Level |
 |:--------:|:--------:|:--------:|
-| sqli-bool | SQL Boolean-based Blind Injection Detection | 2 |
-| sqli-time | SQL Time-based Blind Injection Detection | 2 |
-| sqli-error | SQL Error Injection Detection | 2 |
-| codei-asp | ASP Code Execution Vulnerability Detection | 3 |
-| codei-php | PHP Code Execution Vulnerability Detection | 3 |
-| cmdi | System Command Execution Vulnerability Detection | 3 |
+| cmdi | Command Execution | 3 |
+| cmdi-blind | Command Execution | 3 |
+| codei-asp | ASP Code Execution | 3 |
+| codei-java | Java Code Injection Vulnerability Scanner (EL/SpEL/OGNL) | 3 |
+| codei-php | PHP Code Execution | 3 |
+| cors-passive | CORS Vulnerability (Passive Analysis) | 1 |
+| crlf_1 | CRLF Vulnerability Detection | 2 |
+| fileinclude | File Include | 2 |
+| jndi-error | JNDI Injection Vulnerability Scanner | 3 |
+| jsonp | Jsonp Sensitive Information Leak & Jacking | 1 |
+| ldap-error | Error-based LDAP Injection | 2 |
+| leakpwd-page-passive | Weak Password on Login Page | 2 |
 | objectdese | Deserialization Parameter Analysis | 3 |
-| sensi-js | JavaScript Sensitive Information Leakage | 0 |
-| sensi-jsonp | JSONP Sensitive Information Leakage | 1 |
-| sensi-php-realpath | PHP Real Path Leakage | 0 |
-| redirect | Redirection Vulnerability Detection | 1 |
-| sensi-webpack | Webpack Source Code Leakage | 1 |
-| other-webdav-passive | WebDAV Service Passive Detection | 1 |
-| xpathi-error | Error-based XPath Injection Detection | 2 |
-| trave-path | Path Traversal Vulnerability Detection | 2 |
+| other-captcha-bypass | Frontend Captcha Bypass Detection | 0 |
+| other-fastjson-blind | fastjson-blind | 2 |
+| other-json-error | other-json-error | 2 |
+| other-webdav-passive | WebDAV Service Passive Detection | 0 |
+| redirect | Redirect Vulnerability | 1 |
+| redos | Regular Expression Denial of Service (ReDoS) Vulnerability Scanner | -1 |
 | sensi-backup_1 | Backup File Detection (File-based) | 1 |
-| sensi-viewstate | Unencrypted VIEWSTATE Discovery | 0 |
-| xss | Semantic-based XSS Scanning | 1 |
-| crlf_1 | CRLF Injection Vulnerability Detection | 2 |
-| cors-passive | CORS Vulnerability Passive Analysis | 2 |
-| unauth | Unauthorized Access Vulnerability Detection | 2 |
-| leakpwd-page-passive | Login Page Weak Password Detection | 2 |
-| sensi-editfile | Editor Backup File Leakage | 1 |
-| sensi-sourcecode | Source Code Leakage Detection | 1 |
-| other-captcha-bypass | CAPTCHA Bypass Detection | 0 |
+| sensi-editfile | Editor Backup File Leak Detection | 1 |
+| sensi-js | JS Sensitive Information Leak (with AI Context Validation) | 0 |
+| sensi-php-realpath | PHP Real Path Discovery | 0 |
 | sensi-retirejs | Outdated JS Component Detection | -1 |
-| ssti | Server-Side Template Injection Vulnerability Detection | 3 |
-| ssti-angularjs | AngularJS Client-side Template Injection Detection | 2 |
-| ssrf | Server-Side Request Forgery Vulnerability Detection | 2 |
-| xxe | XML External Entity Injection Vulnerability Detection | 3 |
-| xxe-blind | Blind XXE Data Exfiltration Detection | 3 |
-| codei-java | Java Code Injection Vulnerability Scanning (EL/SpEL/OGNL) | 3 |
-| redos | Regular Expression Denial of Service Vulnerability Scanning | -1 |
-| jndi-error | JNDI Injection Vulnerability Scanning | 3 |
+| sensi-sourcecode | Source Code Disclosure Detection | 1 |
+| sensi-viewstate | Unencrypted VIEWSTATE Discovery | 0 |
+| sqli-bool | SQL Boolean-based Blind Injection | 2 |
+| sqli-dnslog | sqli-dnslog | 2 |
+| sqli-error | SQL Error-based Injection | 2 |
+| sqli-time | SQL Time-based Blind Injection | 2 |
+| ssrf | SSRF plugin detects server-side request forgery vulnerabilities via crafted payloads. | 2 |
+| ssti | SSTI Vulnerability Detection | 3 |
+| ssti-angularjs | AngularJS Client-Side Template Injection Detector | 2 |
+| unauth | Unauthorized Access Vulnerability | 2 |
+| webpack | Webpack Source Code Leak | 1 |
+| xpathi-error | Error-based XPATH Injection | 2 |
+| xss | JS Semantic-based XSS Scanning | 1 |
+| xxe | XXE plugin detects XML external entity injection vulnerabilities via malicious payloads. | 3 |
+| xxe-blind | Blind XXE plugin detects out-of-band data exfiltration. | 3 |
 
 ### **Directory-level Scanning Plugins (PerDir)**
 
 | Plugin Name | Function Description | Risk Level |
 |:--------:|:--------:|:--------:|
-| sensi-backup_2 | Backup File Scanning (Directory-based) | 1 |
-| trave-list_2 | Directory Traversal List Detection | 2 |
-| sensi-files | Sensitive File Leakage Detection (such as phpinfo, .git, etc.) | 1 |
-| upload-oss | OSS Storage Bucket Arbitrary File Upload Detection | 2 |
-| sensi-frontpage | FrontPage Configuration Information Leakage | 1 |
+| dirlisting | Directory browsing vulnerability (Directory-based) | 2 |
+| sensi-backup_2 | Backup File Of Each Folder (Directory-based) | 1 |
+| sensi-files | Sensitive File Leak (e.g., phpinfo, .git) | 1 |
+| sensi-frontpage | FrontPage configuration information discloure | 1 |
+| upload-oss | Detect the vulnerability of uploading arbitrary files to OSS | 3 |
 
 ### **Domain-level Scanning Plugins (PerDomain)**
 
 | Plugin Name | Function Description | Risk Level |
 |:--------:|:--------:|:--------:|
-| sensi-errorpage | Error Page Sensitive Information Leakage | 0 |
-| xss-net | .NET Generic XSS Detection | 1 |
-| dns-zonetransfer | DNS Zone Transfer Vulnerability Detection | 1 |
-| xss-flash | Flash Generic XSS Detection | 1 |
-| idea-parse | Idea Directory Parsing | 1 |
-| xst | Cross-Site Tracking Vulnerability Detection | -1 |
-| unauth-webdav-active | WebDAV Service Discovery | 1 |
-| upload-put | PUT Method-based Arbitrary File Upload Detection | 3 |
-| sensi-backup_3 | Backup File Detection (Domain-based) | 1 |
-| cors-active | CORS Vulnerability Active Detection | 2 |
-| crlf_3 | CRLF Line Injection Vulnerability Detection | 2 |
+| clickjacking | Clickjacking Vulnerability Scanner | -1 |
+| cors-active | CORS Vulnerability (Active Detection) | 2 |
+| crlf_3 | CRLF Line Injection Vulnerability (Domain-based) | 2 |
+| dns-zonetransfer | DNS Zone Transfer Vulnerability | 1 |
 | hosti | Host Header Injection Detection | 1 |
-| takeover-oss | OSS Storage Bucket Takeover Vulnerability Detection | 3 |
-| clickjacking | Clickjacking Vulnerability Detection | -1 |
-| sensi-baseline | Service Version Information Leakage | -1 |
-| smuggling | Request Smuggling Vulnerability Detection | 3 |
-| trave-list_3 | Directory Listing Leakage Detection | 2 |
+| idea-parse | Idea Parse | 1 |
+| listing | Listing | 2 |
+| oss-takeover | OSS Bucket Takeover | 3 |
+| sensi-backup_3 | Backup File Detection (Domain-based) | 1 |
+| sensi-baseline | Check for version leak on response | -1 |
+| sensi-errorpage | Leak information in Error Page | 0 |
+| smuggling | Request Smuggling Vulnerability | 3 |
+| unauth-webdav-active | WebDAV authentication bypass vulnerability, | 1 |
+| upload-put | PUT-based Arbitrary File Upload | 3 |
+| xss-flash | Flash SWF XSS | 1 |
+| xss-net | .NET XSS | 1 |
+| xst | XST Vulnerability Detection | -1 |
 
 ### **Host-level Scanning Plugins (PerHost)**
 
 | Plugin Name | Function Description |
 |:--------:|:--------:|
-| leakpwd-mssql | MSSQL Server Weak Password Detection |
-| leakpwd-mysql | MySQL Server Weak Password Detection |
-| leakpwd-postgresql | PostgreSQL Server Weak Password Detection |
-| leakpwd-redis | Redis Server Weak Password Detection |
-| leakpwd-smb | SMB Server Weak Password Detection |
-| leakpwd-activemq | ActiveMQ Server Weak Password Detection |
-| ftp-anonymous | FTP Anonymous Login Detection |
-| solr-rce | Apache Solr Velocity Template RCE Detection |
-| unauth-docker | Docker Unauthorized Access Detection |
-| unauth-jenkins | Jenkins Unauthorized Access Detection |
-| unauth-memcached | Memcached Unauthorized Access Detection |
-| unauth-mongodb | MongoDB Unauthorized Access Detection |
-| unauth-resis | Redis Unauthorized Access Detection |
-| unauth-rsync | Rsync Unauthorized Access Detection |
-| unauth-solr | Apache Solr Unauthorized Access Detection |
-| unauth-zookeeper | Zookeeper Unauthorized Access Detection |
-| rce-javarmi | JavaRMI RCE Vulnerability Detection |
-| leakpwd-ssh | SSH Server Weak Password Detection |
-| unauth-ldaps | LDAP Unauthorized Access Detection |
-| unauth-elastic | Elasticsearch Unauthorized Access Detection |
-
----
+| leakpwd-activemq | Weak Password on ActiveMQ |
+| leakpwd-mssql | Weak Password on MSSQL Server |
+| leakpwd-mysql | Weak Password on MySQL Server |
+| leakpwd-postgresql | Weak Password on PostgreSQL Server |
+| leakpwd-redis | Weak Password on Redis Server |
+| leakpwd-smb | Weak Password on SMB Server |
+| leakpwd-ssh | Weak Password on SSH Server |
+| other-ftp-anonymous | FTP anonymous Login |
+| rce-javarmi | Check the JavaRMI RCE |
+| rce-solr | Apache Solr RCE via Velocity |
+| unauth-docker | Docker Unauthorized Access |
+| unauth-elastic | Elasticsearch Unauthorized Access |
+| unauth-jenkins | Jenkins Unauthorized Access |
+| unauth-ldaps | Ldaps Unauthorized Access |
+| unauth-memcache | Memcache Unauthorized Access |
+| unauth-mongodb | Mongodb Unauthorized Access |
+| unauth-resis | Redis Unauthorized Access |
+| unauth-rsync | Rsync Unauthorized Access |
+| unauth-solr | Apache Solr Unauthorized Access |
+| unauth-zookeeper | Zookeeper Unauthorized access |
 
 ## 🔀 Workflow
 

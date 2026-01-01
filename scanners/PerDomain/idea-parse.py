@@ -22,6 +22,7 @@ class Z0SCAN(PluginBase):
             domain = "{}://{}/".format(p.scheme, p.netloc)
             payload = domain + ".idea/workspace.xml"
             r = requests.get(payload, headers=headers, allow_redirects=False)
+            if r is None: return
             path_lst = []
             if '<component name="' in r.text:
                 root = etree.XML(r.text.encode())

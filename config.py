@@ -29,6 +29,8 @@ BLOCK_COUNT = 20 # 请求多次失败后诊断为网站对本机IP封禁，加�
 SHORT_OUT = False # 简洁的终端报告输出（像W13Scan那样~）
 STATUS_FLASH_TIME = 60 # 扫描状态输出间隔(>=60)
 DEDUPLICATE_LEVEL = 1 # 去重级别（0-2）
+OBSERVERWARD_PATH = r"" # observerward 路径，为空时自动寻找
+NUCLEI_PATH = r"" # nuclei 路径，为空时自动寻找
 NOTICE = {
     # 企业微信推送
     "wechat": {
@@ -70,9 +72,11 @@ BRUTE_DELAY = 0.03  # 每次请求之后sleep的间隔
 SSTI_LEVEL = 0  # 0-5 扫描速度，越往后数据包越多，个别fuzz情况可配置大一些
 
 """
-插件配置
+爬虫配置
 """
-CHROME_PATH = "" # chrome 路径，为空时自动寻找
+
+CRAWLERGO_PATH = r"" # crawlergo 路径，为空时自动寻找
+CHROME_PATH = r"" # chrome 路径，为空时自动寻找
 # 爬虫模式设置
 CRAWLER_HEADLESS = True        # 无头模式运行浏览器（无图形界面）
 # 表单填充设置

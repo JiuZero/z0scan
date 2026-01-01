@@ -48,7 +48,9 @@ class Z0SCAN(PluginBase):
             for key in parse_params:
                 params_data[key] = random_str(6)
             params_data.update(self.requests.data)
-            resp = requests.post(self.requests.url, data=params_data, headers=self.requests.headers).text
+            resp = requests.post(self.requests.url, data=params_data, headers=self.requests.headers)
+            if resp is None: return
+            resp = resp.text
             iterdatas = self.generateItemdatas()
             for k, v in params_data.items():
                 for position in positions:
@@ -70,6 +72,7 @@ class Z0SCAN(PluginBase):
                 "position": position
                 })
             r1 = self.req(position, payload)
+            if r1 is None: return
             if not re.search(xsschecker, r1.text, re.I):
                 continue
             html_type = r1.headers.get("Content-Type", "").lower()

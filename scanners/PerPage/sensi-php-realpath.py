@@ -56,6 +56,7 @@ class Z0SCAN(PluginBase):
             return
             
         r = self.req(position, payload)
+        if r is None: return
         if r and "Warning" in r.text and "array given in " in r.text:
             path = get_middle_text(r.text, 'array given in ', ' on line')
             result = self.generate_result()

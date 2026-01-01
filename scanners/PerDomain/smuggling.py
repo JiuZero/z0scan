@@ -40,11 +40,13 @@ class Z0SCAN(PluginBase):
                     temp_header[k] = v
             try:
                 r = requests.post(url, headers=temp_header, data=data, timeout=30)
+                if r is None: continue
             except:
                 continue
             if r.status_code == 403 and self.response.text != r.text:
                 r2 = requests.get(url, headers=headers)
-                if r2 == 200:
+                if r2 is None: continue
+                if r2.status_code == 200:
                     result = self.generate_result()
                     result.main({
                         "type": Type.ANALYZE, 
@@ -82,10 +84,12 @@ class Z0SCAN(PluginBase):
             s = Session()
             try:
                 r = s.send(prepped)
+                if r is None: continue
             except:
                 continue
             if r.status_code == 403 and self.response.text != r.text:
                 r2 = requests.get(url, headers=headers)
+                if r2 is None: continue
                 if r2.status_code == 200:
                     result = self.generate_result()
                     result.main({

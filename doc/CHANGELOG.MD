@@ -1,4 +1,4 @@
-# Z0SCAN CHANGE LOGS
+# Z0SCAN CHANGE LOGS（最后更新在文末）
 
 **2025.2.7**
 1. 对指纹进行合并调整 (也做少量的删减)
@@ -642,3 +642,34 @@
 1. 内嵌crawlergo以实现无头爬虫
 
 ### 1.0.0.1 发布
+
+**2025.12.10**
+1. 移除crawlergo内嵌，开放自定义第三方程序路径设定
+2. 支持主动扫描自定义headers与cookies
+3. 移除SQLi注入参数点提示
+
+**2025.12.11**
+1. 重新核验scanners有效性与泛用性，修复大量Bug
+2. 修复requests补丁中block记录问题
+
+**2025.12.15**
+1. 合并SSRF与重定向参数发现规则
+2. 参考excavator完善SSRF与重定向参数发现规则
+3. 修改插件
+* sensi-jsonp→jsonp 参考excavator完善Jsonp参数发现规则
+* trave-path→fileinclude 参考SZhe_Scan支持远程文件包含
+4. PATH_TRAVERSAL替换为FILE_INCLUDE并重新定义部分插件所检测的漏洞类型
+5. 更新JS敏感信息匹配规则
+
+**2025.12.16**
+1. 修改插件
+* sqli-error 规则与Jie合并整合
+* xxe 支持WIN环境并优化实现逻辑
+
+**2025.12.22**
+1. 爬虫模式支持通过文件导入目标
+2. 移除代理文本导入功能（配合代理软件能够完美取代）
+3. 优化Crawlergo的功能对接实现
+4. 修复list功能报错
+
+### 1.0.1.5 发布 新年快乐~

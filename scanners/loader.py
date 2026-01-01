@@ -82,10 +82,9 @@ class Z0SCAN(PluginBase):
             iterdatas = self.generateItemdatas()
             for _ in iterdatas:
                 k, v, position = _
-                VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_sql_injection(k, v)
                 VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_file_access(k, v)
-                VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_redirect(k, v)
-                VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_ssrf(k, v)
+                VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_ssrf_redir(k, v)
+                VulnDetector(self.requests.url, conf.hidden_vul_reminder).is_file_access(k, v)
             task_push('PerPage', self.requests, self.response, self.fingerprints)
             
         # PerDir

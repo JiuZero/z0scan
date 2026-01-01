@@ -28,7 +28,7 @@ class Z0SCAN(PluginBase):
         k, v, position = _
         if position in [PLACE.JSON_DATA, PLACE.MULTIPART_DATA, PLACE.XML_DATA]:
             return
-        if VulnDetector(self.requests.url).is_ssrf(k, v) or re.search("^http[s]?://", v):
+        if VulnDetector(self.requests.url).is_ssrf_redir(k, v) or re.search("^http[s]?://", v):
             url = self.requests.url
             host = urlparse.urlparse(v).netloc.split(":")[0] if re.search("^http[s]?://", v) else self.requests.hostname
             for type in ["http", "dns"]:

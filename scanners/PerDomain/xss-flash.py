@@ -42,6 +42,7 @@ class Z0SCAN(PluginBase):
             for payload in FileList:
                 payload1 = payload + "?movieName=%22]%29}catch%28e%29{if%28!window.x%29{window.x=1;alert%28%22xss%22%29}}//"
                 req = requests.get(payload1, headers=self.requests.headers)
+                if req is None: continue
                 if req.status_code == 200:
                     md5_value = md5(req.content)
                     if md5_value in md5_list:

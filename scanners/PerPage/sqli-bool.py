@@ -82,6 +82,7 @@ class Z0SCAN(PluginBase):
                 "payload": payload_false
                 })
         r2 = self.req(position, payload)
+        if r2 is None: return False
         payload = self.insertPayload({
                 "key": k, 
                 "value": v, 
@@ -89,6 +90,7 @@ class Z0SCAN(PluginBase):
                 "payload": payload_true
                 })
         r = self.req(position, payload)
+        if r is None: return False
 
         truePage = removeDynamicContent(r.text, self.dynamic)
         falsePage = removeDynamicContent(r2.text, self.dynamic)
@@ -165,6 +167,7 @@ class Z0SCAN(PluginBase):
                 r = requests.post(self.requests.url, data=self.requests.body, headers=self.requests.headers)
             else:
                 r = requests.get(self.requests.url, headers=self.requests.headers)
+            if r is None: return
             html = removeDynamicContent(r.text, self.dynamic)
             self.resp_str = removeDynamicContent(self.resp_str, self.dynamic)
             try:
@@ -228,16 +231,20 @@ class Z0SCAN(PluginBase):
             if str(v).isdigit():
                 payloads = [
                     ["-0", "-10000"],
+                    ["/1", "/0"], 
                 ]
-                if conf.level >= 2:
-                    payloads += [["/1", "/0"],]
-                if conf.level == 3:
+                if conf.level > 2:
                     payloads += [
                         ["'/'1", "'/'0"], 
-                        ['"/"1', '"/"0'],
+                        ['"/"1', '"/"0'], 
                     ]
             else:
-                return
+                if conf.level > 2:
+                    payloads += [
+                        ["'/'1", "'/'0"], 
+                        ['"/"1', '"/"0'], 
+                    ]
+                else: return
         for payload in payloads:
             payload_true, payload_false = payload
             ret1 = self.inject(k, v, position, payload_false, payload_true)

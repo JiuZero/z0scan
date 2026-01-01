@@ -51,7 +51,7 @@ class VulType(object):
     CODE_INJECTION = "CODE_INJECTION" # 代码注入漏洞
     XSS = "XSS" # 跨站脚本攻击
     SQLI = "SQLI" # SQL注入漏洞
-    PATH_TRAVERSAL = "PATH_TRAVERSAL" # 路径遍历漏洞
+    FILE_INCLUDE = "FILE_INCLUDE" # 文件包含漏洞
     XXE = "XXE" # XML外部实体注入
     SSRF = "SSRF" # 服务器端请求伪造
     CSRF = "CSRF" # CSRF

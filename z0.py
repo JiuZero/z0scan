@@ -40,21 +40,6 @@ def modulePath():
     dir_path = os.path.dirname(abs_path)
     return dir_path
 
-def start_crawler_with_proxy():
-    """启动 crawler 并将其流量代理到被动扫描器"""
-    try:
-        from lib.core.crawler import start_crawler_from_conf
-        # 所有配置参数在 crawler 模块内部处理
-        result = start_crawler_from_conf(conf.url, f"http://{conf.server_addr[0]}:{conf.server_addr[1]}")
-        if result and len(result) > 0:
-            logger.info(f"Crawler completed: discovered {len(result)} requests")
-        else:
-            logger.warning("Crawler completed but discovered no requests")
-        return result
-    except Exception as e:
-        logger.error(f"Failed to start crawler: {e}")
-        sys.exit(1)
-
 def main():
     version_check()
 
@@ -63,22 +48,44 @@ def main():
     cmdline = cmd_line_parser()
     init(root, cmdline)
 
-    # crawler
-    if conf.enable_crawler and conf.url and conf.server_addr:
+    # 主动爬虫的被动扫描
+    if conf.enable_crawler:
         KB["continue"] = True
         # 启动漏洞扫描器
         scanner = threading.Thread(target=start)
         scanner.daemon = True
         scanner.start()
-        logger.info("Vulnerability scanner started")
+        logger.info("Running in DIRECT SCAN mode with CRAWLER")
         # 启动代理服务器
         baseproxy = AsyncMitmProxy(server_addr=conf.server_addr, https=True)
         proxy_thread = threading.Thread(target=baseproxy.serve_forever)
         proxy_thread.daemon = True
         proxy_thread.start()
-        logger.info("Starting crawler to discover URLs...")
+        if conf.url:
+            urls = []
+            urls.append(conf.url)
+        elif conf.url_file:
+            urlfile = conf.url_file
+            if not os.path.exists(urlfile):
+                logger.error("File:{} don't exists".format(urlfile))
+                sys.exit(0)
+            with open(urlfile) as f:
+                _urls = f.readlines()
+            _urls = [i.strip() for i in _urls]
+            urls.extend(_urls)
+        if urls == []:
+            sys.exit()
         try:
-            start_crawler_with_proxy()
+            try:
+                from lib.core.crawler import Crawlergo
+                crawlergo = Crawlergo()
+                for url in urls:
+                    logger.info(f"Crawler target: {url}")
+                    result = crawlergo.crawl(url)
+                    logger.info(f"Completed: {url}; Requests: {len(result)}")
+            except Exception as e:
+                logger.error(f"Failed to start crawler: {e}")
+                sys.exit(1)
             KB["continue"] = False
         except KeyboardInterrupt:
             logger.warning("Scan interrupted by user")
@@ -89,7 +96,8 @@ def main():
             proxy_thread.join(2)
             deinit()
             logger.info("Crawler mode shutdown complete")
-            
+    
+    # 主动扫描
     elif conf.url or conf.url_file:
         logger.info("Running in DIRECT SCAN mode")
         urls = []
@@ -109,7 +117,9 @@ def main():
         import requests
         for url in urls:
             try:
-                req = requests.get(url)
+                headers = conf.custom_headers if conf.get("custom_headers", False) else None
+                cookies = conf.custom_cookies if conf.get("custom_cookies", False) else None
+                req = requests.get(url, headers=headers, cookies=cookies)
             except Exception as e:
                 logger.error("Request {} faild, {}".format(url, str(e)))
                 continue
@@ -117,7 +127,8 @@ def main():
             fake_resp = FakeResp(req.status_code, req.content, req.headers)
             task_push_from_name('loader', fake_req, fake_resp)
         start()
-        
+    
+    # 被动扫描
     elif conf.server_addr:
         logger.info("Running in PASSIVE SCAN mode")
         server = start_web_console(host="127.0.0.1", port=conf.console_port)

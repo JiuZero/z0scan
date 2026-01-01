@@ -71,6 +71,7 @@ def cmd_line_parser(argv=None):
     crawler.add_argument("--filter-mode", dest="filter_mode", choices=["simple", "smart", "strict"], default="smart", help="URL filter mode for crawler (Default: smart).")
     crawler.add_argument("--tab-timeout", dest="tab_run_timeout", type=int, default=20, help="Single tab timeout in seconds (Default: 20).")
     crawler.add_argument("--dom-timeout", dest="wait_dom_timeout", type=int, default=5, help="DOM load timeout in seconds (Default: 5).")
+    crawler.add_argument("--push-pool", dest="push_pool_max", type=int, default=3, help="Max concurrent push requests (Default: 10).")
     
     # Authentication options
     auth = scan_parser.add_argument_group('Authentication', 'Authentication and session options')
@@ -88,14 +89,10 @@ def cmd_line_parser(argv=None):
     
     # Requests options
     request = scan_parser.add_argument_group("Request", "Network request options")
-    request.add_argument("-p", "--proxy", dest="proxy", type=str, help="Use a proxy to connect to the target URL, Support http,https,socks5,socks4 & txt,json (e.g. http://127.0.0.1:8080 or proxy.txt).")
+    request.add_argument("-p", "--proxy", dest="proxy", type=str, help="Use a proxy to connect to the target URL, Support http,https,socks5,socks4 (e.g. http://127.0.0.1:8080).")
     request.add_argument("--timeout", dest="timeout", default=config.TIMEOUT, help="Seconds to wait before timeout connection (Default {}).".format(config.TIMEOUT), type=int)
     request.add_argument("--retry", dest="retry", type=list, default=config.RETRY, help="Time out retrials times (Default {}).".format(config.RETRY))
     request.add_argument("--random-agent", dest="random_agent", action="store_true", default=False, help="Use randomly selected HTTP User-Agent header value.")
-    
-    # Passive scanning integration
-    passive = scan_parser.add_argument_group('Passive Scanning', 'Integrate crawler with passive scanner')
-    passive.add_argument("--push-pool", dest="push_pool_max", type=int, default=10, help="Max concurrent push requests (Default: 10).")
     
     # Output options
     output = scan_parser.add_argument_group("Output", "Output options")
@@ -137,16 +134,16 @@ def cmd_line_parser(argv=None):
             parser.error(errMsg)
         # crawler 模式，验证必需参数
         if dd.get("enable_crawler"):
-            if not dd.get("url"):
-                parser.error("Crawler mode requires a single target URL (-u, --url)")
+            if not any((dd.get("url"), dd.get("url_file"))):
+                parser.error("Crawler mode requires a single target URL or a file list (-u, --url, -f, --file)")
             if not dd.get("server_addr"):
                 parser.error("Crawler mode requires to set server_addr (-s, --server-addr)")
-            # 解析自定义 headers
-            if dd.get("custom_headers"):
-                import json
-                try:
-                    dd["custom_headers"] = json.loads(dd["custom_headers"])
-                except json.JSONDecodeError:
-                    logger.error("Invalid JSON format for custom headers.")
-                    sys.exit(1)
+        # 解析自定义 headers
+        if dd.get("custom_headers"):
+            import json
+            try:
+                dd["custom_headers"] = json.loads(dd["custom_headers"])
+            except json.JSONDecodeError:
+                logger.error("Invalid JSON format for custom headers.")
+                sys.exit(1)
     return args

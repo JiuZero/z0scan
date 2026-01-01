@@ -12,17 +12,19 @@ class Z0SCAN(PluginBase):
     
     def audit(self):
         headers = self.requests.headers.copy()
-        if "access-control-allow-origin" in headers and headers["access-control-allow-origin"] == "*":
-            if "access-control-allow-credentials" in headers and headers["access-control-allow-credentials"].lower() == 'true':
-                result = self.generate_result()
-                result.main({
-                    "type": Type.ANALYZE,
-                    "url": self.requests.protocol + "://" + self.requests.hostname + ":" + str(self.requests.port),
-                    "vultype": VulType.CORS,
-                })
-                result.step("Request1", {
-                    "request": self.requests.raw,
-                    "response": self.response.raw,
-                    "desc": "access-control-allow-origin: * and access-control-allow-credentials: true"
-                })
-                self.success(result)
+        for k, v in headers.items():
+            if k.lower() == "access-control-allow-origin" and (headers[k] == "*" or headers[k] == "https://www.test.com"):
+                for k, v in headers.items():
+                    if k.lower() == "access-control-allow-credentials" and headers[k].lower() == 'true':
+                        result = self.generate_result()
+                        result.main({
+                            "type": Type.ANALYZE,
+                            "url": self.requests.protocol + "://" + self.requests.hostname + ":" + str(self.requests.port),
+                            "vultype": VulType.CORS,
+                        })
+                        result.step("Request0", {
+                            "request": self.requests.raw,
+                            "response": self.response.raw,
+                            "desc": "access-control-allow-origin: * and access-control-allow-credentials: true"
+                        })
+                        self.success(result)

@@ -21,6 +21,7 @@ rules = {
     'ueditor': r'(ueditor\.(config|all)\.js)',
     'swagger_ui': r'((swagger-ui.html)|(\"swagger\":)|(Swagger UI)|(swaggerUi)|(swaggerVersion))',
     'json_web_token': r'​(eyJ[A-Za-z0-9_-]{10,}​\\​.[A-Za-z0-9._-]{10,}|eyJ[A-Za-z0-9_​\\​/+-]{10,}​\\​.[A-Za-z0-9._​\\​/+-]{10,})',
+    "druid": r'(Druid Stat Index)', 
 
     ## Maybe Vulnerability
     # 'dos_paramters': r'((size=)|(page=)|(num=)|(limit=)|(start=)|(end=)|(count=))', 
@@ -30,9 +31,12 @@ rules = {
     # "url": r'(\b|\'|")(?:http:|https:)(?:[\w/\.]+)?(?:[a-zA-Z0-9_\-\.]{1,})\.(?:php|asp|ashx|jspx|aspx|jsp|json|action|html|txt|xml|do)(\b|\'|")',
     # "email": r'[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(?:\.[a-zA-Z0-9_-]+)+',
     # "ip": r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b',
+    'mac_address': r"(^([a-fA-F0-9]{2}(:[a-fA-F0-9]{2}){5})|[^a-zA-Z0-9]([a-fA-F0-9]{2}(:[a-fA-F0-9]{2}){5}))", 
+    'windows_file_dir_path': r'[^\w](([a-zA-Z]:\\(?:\w+\\?)*)|([a-zA-Z]:\\(?:\w+\\)*\w+\.\w+))',
 
     ## Sensitive Infomation
     "wechat_appid": r'(?i)(?:app(?:[\-_]?)(?:id|secret)).?[=:].*?(wx[a-fA-F0-9]{16,18})',
+    "qiyuesuo_api": r'(licenseId).*(token).*(secret)', 
     "cloudfront_cloud": r'[\w]+\.cloudfront\.net',
     "appspot_cloud": r'[\w\-.]+\.appspot\.com',
     "digitalocean_cloud": r'([\w\-.]*\.?digitaloceanspaces\.com\/?[\w\-.]*)',

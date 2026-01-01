@@ -113,11 +113,11 @@
     <td width="50%" valign="top">
       <h3>🔍 安全检测</h3>
       <ul>
-        <li><b>指纹与扫描插件共舞</b> - WAF嗅探、指纹信息识别指导插件扫描</li>
+        <li><b>指纹与扫描插件联动</b> - WAF嗅探、指纹信息识别指导插件扫描</li>
         <li><b>分布式与本地式一体化</b> - 灵活适应不同的扫描与情景需求</li>
-        <li><b>第三方扫描集成</b> - ObserverWard指纹检测、Nuclei POCs精准切入</li>
+        <li><b>第三方绑定</b> - ObserverWard指纹检测、Nuclei POCs精准切入</li>
         <li><b>高自定义插件系统</b> - 可外部扩展并动态导入的插件系统</li>
-        <li><b>无头爬虫</b> - 内置Crawlergo实现</li>
+        <li><b>无头爬虫支持</b> - 联动Crawlergo实现</li>
       </ul>
     </td>
     <td width="50%" valign="top">
@@ -195,7 +195,7 @@ docker run z0scan
 ### **z0 - 命令行**
 
 > [!Note]
-> ObserverWard指纹、Nuclei POCs联动 - 配置ObserverWard与nuclei到环境变量中并配置插件&指纹即可，参阅：[指南](https://jiuzero.github.io/tags/z0scan/)  
+> Crawlergo无头爬虫、ObserverWard+Nuclei联动 - 需要配置Crawlergo或(ObserverWard与nuclei)到环境变量中，参阅：[指南](https://jiuzero.github.io/tags/z0scan/)  
 
 ### ✔ 被动扫描  
 
@@ -231,12 +231,12 @@ z0 scan -s 127.0.0.1:5920
 ```  
 # 直接检测  
 z0 scan -u https://example.com/?id=1
-# 基础爬虫（路径深度为3）并检测
-z0 scan -u https://example.com/?id=1 -c 3
 # 从URL列表进行批量检测
 z0 scan -f urls.txt
-# 从URL列表中依次爬虫（路径深度为3）并检测
-z0 scan -f urls.txt -c 3
+# 爬虫并检测
+z0 scan -u https://example.com/?id=1 --crawler
+# 从URL列表中依次爬虫并检测
+z0 scan -f urls.txt --crawler
 ```  
 
 ![示例](doc/example2.png)  
@@ -251,126 +251,104 @@ z0 scan -f urls.txt -c 3
 
 | 插件名称 | 功能描述 | 风险等级 |
 |:--------:|:--------:|:--------:|
-| sqli-bool | SQL布尔盲注检测 | 2 |
-| sqli-time | SQL时间盲注检测 | 2 |
-| sqli-error | SQL报错注入检测 | 2 |
-| codei-asp | ASP代码执行漏洞检测 | 3 |
-| codei-php | PHP代码执行漏洞检测 | 3 |
-| cmdi | 系统命令执行漏洞检测 | 3 |
-| objectdese | 反序列化参数分析 | 3 |
-| sensi-js | JavaScript敏感信息泄露 | 0 |
-| sensi-jsonp | JSONP敏感信息泄露 | 1 |
-| sensi-php-realpath | PHP真实路径泄露 | 0 |
-| redirect | 重定向漏洞检测 | 1 |
-| sensi-webpack | Webpack源码泄露 | 1 |
-| other-webdav-passive | WebDAV服务被动检测 | 1 |
-| xpathi-error | 报错型XPath注入检测 | 2 |
-| trave-path | 路径遍历漏洞检测 | 2 |
-| sensi-backup_1 | 备份文件检测（基于文件） | 1 |
-| sensi-viewstate | 未加密VIEWSTATE发现 | 0 |
-| xss | 基于语义的XSS扫描 | 1 |
-| crlf_1 | CRLF注入漏洞检测 | 2 |
-| cors-passive | CORS漏洞被动分析 | 2 |
-| unauth | 未授权访问漏洞检测 | 2 |
-| leakpwd-page-passive | 登录页面弱密码检测 | 2 |
-| sensi-editfile | 编辑器备份文件泄露 | 1 |
-| sensi-sourcecode | 源代码泄露检测 | 1 |
-| other-captcha-bypass | 验证码绕过检测 | 0 |
-| sensi-retirejs | 过时JS组件检测 | -1 |
-| ssti | 服务端模板注入漏洞检测 | 3 |
-| ssti-angularjs | AngularJS客户端模板注入检测 | 2 |
-| ssrf | 服务端请求伪造漏洞检测 | 2 |
-| xxe | XML外部实体注入漏洞检测 | 3 |
-| xxe-blind | 盲XXE数据外带检测 | 3 |
-| codei-java | Java代码注入漏洞扫描（EL/SpEL/OGNL） | 3 |
-| redos | 正则表达式拒绝服务漏洞扫描 | -1 |
-| jndi-error | JNDI注入漏洞扫描 | 3 |
+| cmdi | Command Execution | 3 |
+| cmdi-blind | Command Execution | 3 |
+| codei-asp | ASP Code Execution | 3 |
+| codei-java | Java Code Injection Vulnerability Scanner (EL/SpEL/OGNL) | 3 |
+| codei-php | PHP Code Execution | 3 |
+| cors-passive | CORS Vulnerability (Passive Analysis) | 1 |
+| crlf_1 | CRLF Vulnerability Detection | 2 |
+| fileinclude | File Include | 2 |
+| jndi-error | JNDI Injection Vulnerability Scanner | 3 |
+| jsonp | Jsonp Sensitive Information Leak & Jacking | 1 |
+| ldap-error | Error-based LDAP Injection | 2 |
+| leakpwd-page-passive | Weak Password on Login Page | 2 |
+| objectdese | Deserialization Parameter Analysis | 3 |
+| other-captcha-bypass | Frontend Captcha Bypass Detection | 0 |
+| other-fastjson-blind | fastjson-blind | 2 |
+| other-json-error | other-json-error | 2 |
+| other-webdav-passive | WebDAV Service Passive Detection | 0 |
+| redirect | Redirect Vulnerability | 1 |
+| redos | Regular Expression Denial of Service (ReDoS) Vulnerability Scanner | -1 |
+| sensi-backup_1 | Backup File Detection (File-based) | 1 |
+| sensi-editfile | Editor Backup File Leak Detection | 1 |
+| sensi-js | JS Sensitive Information Leak (with AI Context Validation) | 0 |
+| sensi-php-realpath | PHP Real Path Discovery | 0 |
+| sensi-retirejs | Outdated JS Component Detection | -1 |
+| sensi-sourcecode | Source Code Disclosure Detection | 1 |
+| sensi-viewstate | Unencrypted VIEWSTATE Discovery | 0 |
+| sqli-bool | SQL Boolean-based Blind Injection | 2 |
+| sqli-dnslog | sqli-dnslog | 2 |
+| sqli-error | SQL Error-based Injection | 2 |
+| sqli-time | SQL Time-based Blind Injection | 2 |
+| ssrf | SSRF plugin detects server-side request forgery vulnerabilities via crafted payloads. | 2 |
+| ssti | SSTI Vulnerability Detection | 3 |
+| ssti-angularjs | AngularJS Client-Side Template Injection Detector | 2 |
+| unauth | Unauthorized Access Vulnerability | 2 |
+| webpack | Webpack Source Code Leak | 1 |
+| xpathi-error | Error-based XPATH Injection | 2 |
+| xss | JS Semantic-based XSS Scanning | 1 |
+| xxe | XXE plugin detects XML external entity injection vulnerabilities via malicious payloads. | 3 |
+| xxe-blind | Blind XXE plugin detects out-of-band data exfiltration. | 3 |
 
 ### **目录级扫描插件 (PerDir)**
 
 | 插件名称 | 功能描述 | 风险等级 |
 |:--------:|:--------:|:--------:|
-| sensi-backup_2 | 备份文件扫描（基于目录） | 1 |
-| trave-list_2 | 目录遍历列表检测 | 2 |
-| sensi-files | 敏感文件泄露检测（如phpinfo、.git等） | 1 |
-| upload-oss | OSS存储桶任意文件上传检测 | 2 |
-| sensi-frontpage | FrontPage配置信息泄露 | 1 |
+| dirlisting | Directory browsing vulnerability (Directory-based) | 2 |
+| sensi-backup_2 | Backup File Of Each Folder (Directory-based) | 1 |
+| sensi-files | Sensitive File Leak (e.g., phpinfo, .git) | 1 |
+| sensi-frontpage | FrontPage configuration information discloure | 1 |
+| upload-oss | Detect the vulnerability of uploading arbitrary files to OSS | 3 |
 
 ### **域名级扫描插件 (PerDomain)**
 
 | 插件名称 | 功能描述 | 风险等级 |
 |:--------:|:--------:|:--------:|
-| sensi-errorpage | 错误页面敏感信息泄露 | 0 |
-| xss-net | .NET通用XSS检测 | 1 |
-| dns-zonetransfer | DNS区域传输漏洞检测 | 1 |
-| xss-flash | Flash通用XSS检测 | 1 |
-| idea-parse | Idea目录解析 | 1 |
-| xst | 跨站跟踪漏洞检测 | -1 |
-| unauth-webdav-active | WebDAV服务发现 | 1 |
-| upload-put | 基于PUT方法的任意文件上传检测 | 3 |
-| sensi-backup_3 | 备份文件检测（基于域名） | 1 |
-| cors-active | CORS漏洞主动检测 | 2 |
-| crlf_3 | CRLF行注入漏洞检测 | 2 |
-| hosti | 主机头注入检测 | 1 |
-| takeover-oss | OSS存储桶接管漏洞检测 | 3 |
-| clickjacking | 点击劫持漏洞检测 | -1 |
-| sensi-baseline | 服务版本信息泄露 | -1 |
-| smuggling | 请求走私漏洞检测 | 3 |
-| trave-list_3 | 目录列表泄露检测 | 2 |
+| clickjacking | Clickjacking Vulnerability Scanner | -1 |
+| cors-active | CORS Vulnerability (Active Detection) | 2 |
+| crlf_3 | CRLF Line Injection Vulnerability (Domain-based) | 2 |
+| dns-zonetransfer | DNS Zone Transfer Vulnerability | 1 |
+| hosti | Host Header Injection Detection | 1 |
+| idea-parse | Idea Parse | 1 |
+| listing | Listing | 2 |
+| oss-takeover | OSS Bucket Takeover | 3 |
+| sensi-backup_3 | Backup File Detection (Domain-based) | 1 |
+| sensi-baseline | Check for version leak on response | -1 |
+| sensi-errorpage | Leak information in Error Page | 0 |
+| smuggling | Request Smuggling Vulnerability | 3 |
+| unauth-webdav-active | WebDAV authentication bypass vulnerability, | 1 |
+| upload-put | PUT-based Arbitrary File Upload | 3 |
+| xss-flash | Flash SWF XSS | 1 |
+| xss-net | .NET XSS | 1 |
+| xst | XST Vulnerability Detection | -1 |
 
 ### **主机级扫描插件 (PerHost)**
 
 | 插件名称 | 功能描述 |
 |:--------:|:--------:|
-| leakpwd-mssql | MSSQL服务器弱密码检测 |
-| leakpwd-mysql | MySQL服务器弱密码检测 |
-| leakpwd-postgresql | PostgreSQL服务器弱密码检测 |
-| leakpwd-redis | Redis服务器弱密码检测 |
-| leakpwd-smb | SMB服务器弱密码检测 |
-| leakpwd-activemq | ActiveMQ服务器弱密码检测 |
-| ftp-anonymous | FTP匿名登录检测 |
-| solr-rce | Apache Solr Velocity模板RCE检测 |
-| unauth-docker | Docker未授权访问检测 |
-| unauth-jenkins | Jenkins未授权访问检测 |
-| unauth-memcached | Memcached未授权访问检测 |
-| unauth-mongodb | MongoDB未授权访问检测 |
-| unauth-resis | Redis未授权访问检测 |
-| unauth-rsync | Rsync未授权访问检测 |
-| unauth-solr | Apache Solr未授权访问检测 |
-| unauth-zookeeper | Zookeeper未授权访问检测 |
-| rce-javarmi | JavaRMI RCE漏洞检测 |
-| leakpwd-ssh | SSH服务器弱密码检测 |
-| unauth-ldaps | LDAP未授权访问检测 |
-| unauth-elastic | Elasticsearch未授权访问检测 |
+| leakpwd-activemq | Weak Password on ActiveMQ |
+| leakpwd-mssql | Weak Password on MSSQL Server |
+| leakpwd-mysql | Weak Password on MySQL Server |
+| leakpwd-postgresql | Weak Password on PostgreSQL Server |
+| leakpwd-redis | Weak Password on Redis Server |
+| leakpwd-smb | Weak Password on SMB Server |
+| leakpwd-ssh | Weak Password on SSH Server |
+| other-ftp-anonymous | FTP anonymous Login |
+| rce-javarmi | Check the JavaRMI RCE |
+| rce-solr | Apache Solr RCE via Velocity |
+| unauth-docker | Docker Unauthorized Access |
+| unauth-elastic | Elasticsearch Unauthorized Access |
+| unauth-jenkins | Jenkins Unauthorized Access |
+| unauth-ldaps | Ldaps Unauthorized Access |
+| unauth-memcache | Memcache Unauthorized Access |
+| unauth-mongodb | Mongodb Unauthorized Access |
+| unauth-resis | Redis Unauthorized Access |
+| unauth-rsync | Rsync Unauthorized Access |
+| unauth-solr | Apache Solr Unauthorized Access |
+| unauth-zookeeper | Zookeeper Unauthorized access |
 
----
-
-## 🔀 工作流程
-
-![流程图](doc/lct.png)
-
----
-
-## 🔗 联系
-
-- 高三在校，项目不定期维护更新QAQ
-- 欢迎大师傅们向我申请协作位吖~
-
-<table>
-  <tr>
-    <td width="25%" valign="top">
-      <h3>公众号</h3>
-      <ul>
-        <li><b>90Safe</b></li>
-      </ul>
-    </td>
-    <td width="25%" valign="top">
-      <h3>微信</h3>
-      <ul>
-        <li><b>JiuZer1</b></li>
-      </ul>
-    </td>
-    <td width="25%" valign="top">
+th="25%" valign="top">
       <h3>QQ</h3>
       <ul>
         <li><b>1703417187</b></li>

@@ -41,7 +41,7 @@ class Z0SCAN(PluginBase):
     
     def process(self, _):
         k, v, position = _
-        if VulnDetector().is_redirect(k, v):
+        if VulnDetector().is_ssrf_redir(k, v):
             value = urlparse.unquote(v).strip()
             randomstr = random_str(length=6).lower()
             if re.search("^http[s]?://", value):
@@ -66,18 +66,18 @@ class Z0SCAN(PluginBase):
                     f"z.{randomstr}.com"
                 ]
             for test_domain in test_domains:
+                r = self.req(position, payload, allow_redirects=False)
+                if not r:
+                    continue
+                vuln_type, evidence = self._detect_redirect_type(r, test_domain, randomstr)
+                if not vuln_type:
+                    continue
+                result = self.generate_result()
                 payload = self.insertPayload({
                     "key": k, 
                     "position": position, 
                     "payload": self.test_domain
                     })
-                r = self.req(position, payload, allow_redirects=False)
-                if not r:
-                    return
-                vuln_type, evidence = self._detect_redirect_type(r, test_domain, randomstr)
-                if not vuln_type:
-                    return
-                result = self.generate_result()
                 result.main({
                     "type": Type.REQUEST, 
                     "url": self.requests.url, 

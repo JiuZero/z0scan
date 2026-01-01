@@ -7,7 +7,7 @@ import difflib, requests
 from urllib.parse import urlparse
 
 class Z0SCAN(PluginBase):
-    name = "sensi-editfileleak"
+    name = "sensi-editfile"
     desc = "Editor Backup File Leak Detection"
     version = "2025.6.7"
     risk = 1
