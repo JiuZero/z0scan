@@ -349,6 +349,8 @@ z0 scan -f urls.txt -c 3
 | unauth-solr | Apache Solr Unauthorized Access |
 | unauth-zookeeper | Zookeeper Unauthorized access |
 
+---
+
 ## 🔀 Workflow
 
 ![Workflow Diagram](doc/lct.png)
