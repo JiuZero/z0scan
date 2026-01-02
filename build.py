@@ -179,8 +179,9 @@ def build():
         '--standalone',
         '--onefile',
         '--python-flag=-u', 
-        "--include-data-file=patch/effective_tld_names.dat.txt=tld/res/effective_tld_names.dat.txt",
-        # '--include-data-dir=bin=bin', # crawlergo
+        "--include-package-data=tld",
+        "--include-package-data=dateutil.zoneinfo",
+        "--include-package-data=fake_useragent", 
         '--include-package=api', 
         '--include-package=lib', 
         '--follow-imports', 
@@ -219,7 +220,6 @@ def build():
                 # 添加包含指令
                 nuitka_cmd.extend([
                     f"--include-module={actual_name}",
-                    f"--include-package={actual_name}",
                 ])
 
     if missing_modules:

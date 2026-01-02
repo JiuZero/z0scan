@@ -129,7 +129,7 @@ class Crawlergo:
         if self.options.get("wait_dom_timeout"):
             cmd.extend(["--wait-dom-content-loaded-timeout", f"{self.options['wait_dom_timeout']}s"])
         if self.options.get("push_to_proxy"):
-            cmd.extend(["--request-proxy", str(self.options["push_to_proxy"])])
+            cmd.extend(["--push-to-proxy", str(self.options["push_to_proxy"])])
         if self.options.get("push_pool_max"):
             cmd.extend(["--push-pool-max", str(self.options["push_pool_max"])])
         # Fuzz options

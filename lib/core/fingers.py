@@ -278,6 +278,11 @@ class waf:
         payload = "UNION ALL SELECT 1,'<script>alert(\"XSS\")</script>' FROM information_schema WHERE --/**/ EXEC xp_cmdshell('cat ../../../etc/passwd')#"
         try:
             r = requests.get(self.protocol + "://" + self.hostname + ":" + str(self.port) + "/" + rand_param + quote(payload))
+            if not r:
+                cv = {"hostname": self.hostname,
+                    "waf": "UNKNOW"}
+                insertdb("info", cv)
+                return "UNKNOW"
             # 1. 匹配指纹
             for _id in range(1, int(Wcount()),1):
                 try:

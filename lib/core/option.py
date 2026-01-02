@@ -282,6 +282,7 @@ def _commands(v):
             if not crawlergo_path:
                 logger.warning("Crawlergo executable not found. Set CRAWLERGO_PATH in config.py or set it to system enviroment.", origin="crawler")
                 logger.error("Stop crawler. Exit..")
+                sys.exit(0)
             else:
                 path.crawlergo = crawlergo_path
                 logger.info(f"Found crawlergo: {crawlergo_path}")

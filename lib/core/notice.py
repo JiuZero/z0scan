@@ -47,6 +47,7 @@ def wechat(text, card=False, title="Z0Scan Notice", url="#"):
 def ftqq(content):
     resp = requests.post("https://sc.ftqq.com/{}.send".format(conf.notice["ftqq"]["key"]),
                   data={"text": "Z0SCAN-Push-Vlu:", "desp": content})
+    if not resp: return
     if resp.json()["errno"] != 0:
         raise ValueError("Push ftqq failed, %s" % resp.text)
 

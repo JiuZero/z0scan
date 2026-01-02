@@ -3,7 +3,7 @@
 # JiuZero/z0scan
 
 import inspect
-import os
+import os, time
 import sys
 import threading
 from colorama import deinit
@@ -86,8 +86,16 @@ def main():
             except Exception as e:
                 logger.error(f"Failed to start crawler: {e}")
                 sys.exit(1)
-            KB["continue"] = False
+            # 等待任务队列清空并等待扫描器线程结束
+            while (KB["continue"] and not KB["task_queue"].empty()) or KB.get("running", 0) > 0:
+                time.sleep(2)
+            logger.info("Scanner completed, preparing to shutdown...")
         except KeyboardInterrupt:
+            if scanner.is_alive():
+                logger.info("Waiting for scanner thread to finish...")
+                scanner.join(timeout=5)
+                if scanner.is_alive():
+                    logger.warning("Scanner thread did not finish in time")
             logger.warning("Scan interrupted by user")
         finally:
             # 清理资源

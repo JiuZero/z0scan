@@ -45,40 +45,6 @@ __all__ = [
     'Response',
     'HttpTransfer'
 ]
-
-
-def process_task(request, response):
-    netloc = "http"
-    if request.https:
-        netloc = "https"
-    if (netloc == "https" and int(request.port) == 443) or (netloc == "http" and int(request.port) == 80):
-        url = "{0}://{1}{2}".format(netloc, request.hostname, request.path)
-    else:
-        url = "{0}://{1}:{2}{3}".format(netloc, request.hostname, request.port, request.path)
-    method = request.command.lower()
-    if method == "get":
-        method = HTTPMETHOD.GET
-    elif method == "post":
-        method = HTTPMETHOD.POST
-    elif method == "put":
-        method = HTTPMETHOD.PUT
-    try:
-        body_data = request.get_body_data().decode('utf-8')
-    except:
-        body_data = ""
-    req = FakeReq(url, request._headers, method, body_data)
-    resp = FakeResp(int(response.status), response.get_body_data(), response._headers)
-    if conf.includes != []:
-        for rule in conf.includes:
-            if rule in req.hostname:
-                task_push_from_name('loader', req, resp)
-                return
-        return
-    for rule in conf.excludes:
-        if rule in req.hostname:
-            logger.info("Skip Domain: {}".format(url))
-            return
-    task_push_from_name('loader', req, resp)
                         
 class HttpTransfer(object):
     version_dict = {9: 'HTTP/0.9', 10: 'HTTP/1.0', 11: 'HTTP/1.1'}
@@ -554,10 +520,37 @@ class ProxyHandle(BaseHTTPRequestHandler):
                     self.send_error(404, 'response is None {}'.format(errMsg))
                 
                 if not self._is_replay() and response:
-                    # 使用线程池异步
-                    task_thread = threading.Thread(target=process_task, args=(request, response))
-                    task_thread.daemon = True
-                    task_thread.start()
+                    netloc = "http"
+                    if request.https:
+                        netloc = "https"
+                    if (netloc == "https" and int(request.port) == 443) or (netloc == "http" and int(request.port) == 80):
+                        url = "{0}://{1}{2}".format(netloc, request.hostname, request.path)
+                    else:
+                        url = "{0}://{1}:{2}{3}".format(netloc, request.hostname, request.port, request.path)
+                    method = request.command.lower()
+                    if method == "get":
+                        method = HTTPMETHOD.GET
+                    elif method == "post":
+                        method = HTTPMETHOD.POST
+                    elif method == "put":
+                        method = HTTPMETHOD.PUT
+                    try:
+                        body_data = request.get_body_data().decode('utf-8')
+                    except:
+                        body_data = ""
+                    req = FakeReq(url, request._headers, method, body_data)
+                    resp = FakeResp(int(response.status), response.get_body_data(), response._headers)
+                    if conf.includes != []:
+                        for rule in conf.includes:
+                            if rule in req.hostname:
+                                task_push_from_name('loader', req, resp)
+                                return
+                        return
+                    for rule in conf.excludes:
+                        if rule in req.hostname:
+                            logger.info("Skip Domain: {}".format(url))
+                            return
+                    task_push_from_name('loader', req, resp)
             else:
                 self.send_error(404, 'Request is None')
         except ConnectionResetError:
