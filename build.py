@@ -171,7 +171,8 @@ def maybe_upx_compress(build_dir: Path):
 
 def build():
     nuitka_cmd = find_nuitka()
-    
+    import multiprocessing
+    cpu_count = multiprocessing.cpu_count()
     # 基础编译参数
     base_args = [
         '--lto=yes' if platform.system().lower() == 'linux' else '--lto=no',  # macOS下禁用LTO
@@ -179,20 +180,24 @@ def build():
         '--standalone',
         '--onefile',
         '--python-flag=-u', 
+        f"--jobs={cpu_count}",
+        '--python-flag=-OO', 
+        '--python-flag=-OOO', 
+        '--enable-cache', 
+        '--noinclude-ide-mode', 
+        '--noinclude-ipython-mode', 
         "--include-package-data=tld",
         "--include-package-data=dateutil.zoneinfo",
         "--include-package-data=fake_useragent", 
-        '--include-package=api', 
-        '--include-package=lib', 
+        '--follow-import-to=api', 
+        '--follow-import-to=lib', 
         '--follow-imports', 
         '--nofollow-import-to=config', # config 动态导入
         '--nofollow-import-to=*.tests,*.test', 
         '--noinclude-setuptools-mode=nofollow', 
         '--noinclude-pytest-mode=nofollow', 
         '--remove-output', 
-        '--assume-yes-for-downloads',
-        '--include-package-data=dateutil', 
-        '--include-package-data=dateutil.zoneinfo', 
+        '--assume-yes-for-downloads', 
     ]
     nuitka_cmd.extend(base_args)
     
@@ -220,6 +225,7 @@ def build():
                 # 添加包含指令
                 nuitka_cmd.extend([
                     f"--include-module={actual_name}",
+                    f"--include-package={actual_name}"
                 ])
 
     if missing_modules:
@@ -251,7 +257,7 @@ def build():
 def setup_build_directory():
     """优化资源文件处理，与release.yml配合"""
     # 需要复制的资源文件
-    resource_dirs = ['config.py', 'scanners', 'dicts', 'helper', 'data']
+    resource_dirs = ['config.py', 'scanners', 'dicts', 'helper', 'data', 'doc', 'README.MD', 'README.EN.MD']
     
     build_dir = Path('z0scan')
     try:
