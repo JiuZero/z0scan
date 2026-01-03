@@ -183,7 +183,6 @@ def build():
         f"--jobs={cpu_count}",
         '--python-flag=-O', 
         '--python-flag=-OO', 
-        '--static-libpython=yes', 
         "--include-package-data=tld",
         "--include-package-data=dateutil.zoneinfo",
         "--include-package-data=fake_useragent", 
