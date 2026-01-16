@@ -9,7 +9,7 @@ from api import generateResponse, VulType, PLACE, HTTPMETHOD, PluginBase, conf, 
 
 class Z0SCAN(PluginBase):
     name = "xst"
-    desc = 'XST Vulnerability Detection'
+    desc = 'Cross-Site Tracing Vulnerability Detection'
     version = "2025.5.12"
     risk = -1
     

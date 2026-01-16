@@ -10,7 +10,7 @@ from api import generateResponse, random_num, conf, PLACE, VulType, POST_HINT, T
 
 class Z0SCAN(PluginBase):
     name = "cmdi-blind"
-    desc = 'Command Execution'
+    desc = 'Command Execution (Blind) '
     version = "2025.8.19"
     risk = 3
     require_reverse = True

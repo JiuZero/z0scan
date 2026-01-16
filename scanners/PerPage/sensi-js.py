@@ -102,7 +102,7 @@ rules = {
 
 class Z0SCAN(PluginBase):
     name = "sensi-js"
-    desc = 'JS Sensitive Information Leak (with AI Context Validation)'
+    desc = 'JavaScript Sensitive Information Leak (with AI Context Validation) '
     version = "2025.3.4"
     risk = 0
         

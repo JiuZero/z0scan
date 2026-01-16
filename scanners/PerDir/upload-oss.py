@@ -7,7 +7,7 @@ import requests
 
 class Z0SCAN(PluginBase):
     name = "upload-oss"
-    desc = "Detect the vulnerability of uploading arbitrary files to OSS"
+    desc = "OSS Arbitrary File Upload Vulnerability Detection"
     version = "2025.5.31"
     risk = 3
     

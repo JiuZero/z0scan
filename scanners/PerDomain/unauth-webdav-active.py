@@ -8,7 +8,7 @@ from api import generateResponse, VulType, PLACE, HTTPMETHOD, PluginBase, conf, 
 
 class Z0SCAN(PluginBase):
     name = "unauth-webdav-active"
-    desc = 'WebDAV authentication bypass vulnerability,'
+    desc = 'WebDAV Authentication Bypass Vulnerability'
     version = "2025.5.11"
     risk = 1
         

@@ -82,7 +82,7 @@ class Threads:
             for t in threads:
                 t.join(timeout=0.1)
         except Exception as e:
-            logger.error(f"Unexpected error: {e}", origin=self.name)
+            logger.debug(f"Unexpected error: {e}", origin=self.name)
             self._stop_event.set()
             # 等待线程结束
             for t in threads:

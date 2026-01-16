@@ -253,54 +253,54 @@ z0 scan -f urls.txt -c 3
 | Plugin Name | Function Description | Risk Level |
 |:--------:|:--------:|:--------:|
 | cmdi | Command Execution | 3 |
-| cmdi-blind | Command Execution | 3 |
+| cmdi-blind | Command Execution (Blind) | 3 |
 | codei-asp | ASP Code Execution | 3 |
 | codei-java | Java Code Injection Vulnerability Scanner (EL/SpEL/OGNL) | 3 |
 | codei-php | PHP Code Execution | 3 |
 | cors-passive | CORS Vulnerability (Passive Analysis) | 1 |
-| crlf_1 | CRLF Vulnerability Detection | 2 |
+| crlf_1 | CRLF Injection Vulnerability Detection | 2 |
 | fileinclude | File Include | 2 |
 | jndi-error | JNDI Injection Vulnerability Scanner | 3 |
-| jsonp | Jsonp Sensitive Information Leak & Jacking | 1 |
+| jsonp | JSONP Sensitive Information Leak & Jacking | 1 |
 | ldap-error | Error-based LDAP Injection | 2 |
 | leakpwd-page-passive | Weak Password on Login Page | 2 |
 | objectdese | Deserialization Parameter Analysis | 3 |
 | other-captcha-bypass | Frontend Captcha Bypass Detection | 0 |
-| other-fastjson-blind | fastjson-blind | 2 |
-| other-json-error | other-json-error | 2 |
+| other-fastjson-blind | Fastjson Blind Injection | 2 |
+| other-json-error | JSON Error Injection | 2 |
 | other-webdav-passive | WebDAV Service Passive Detection | 0 |
 | redirect | Redirect Vulnerability | 1 |
 | redos | Regular Expression Denial of Service (ReDoS) Vulnerability Scanner | -1 |
 | sensi-backup_1 | Backup File Detection (File-based) | 1 |
 | sensi-editfile | Editor Backup File Leak Detection | 1 |
-| sensi-js | JS Sensitive Information Leak (with AI Context Validation) | 0 |
+| sensi-js | JavaScript Sensitive Information Leak (with AI Context Validation) | 0 |
 | sensi-php-realpath | PHP Real Path Discovery | 0 |
 | sensi-retirejs | Outdated JS Component Detection | -1 |
 | sensi-sourcecode | Source Code Disclosure Detection | 1 |
 | sensi-viewstate | Unencrypted VIEWSTATE Discovery | 0 |
 | sqli-bool | SQL Boolean-based Blind Injection | 2 |
-| sqli-dnslog | sqli-dnslog | 2 |
+| sqli-dnslog | SQL DNS Out-of-band Injection | 2 |
 | sqli-error | SQL Error-based Injection | 2 |
 | sqli-time | SQL Time-based Blind Injection | 2 |
-| ssrf | SSRF plugin detects server-side request forgery vulnerabilities via crafted payloads. | 2 |
+| ssrf | server-side request forgery vulnerabilities | 2 |
 | ssti | SSTI Vulnerability Detection | 3 |
-| ssti-angularjs | AngularJS Client-Side Template Injection Detector | 2 |
+| ssti-angularjs | AngularJS Client-Side Template Injection Detection | 2 |
 | unauth | Unauthorized Access Vulnerability | 2 |
 | webpack | Webpack Source Code Leak | 1 |
 | xpathi-error | Error-based XPATH Injection | 2 |
 | xss | JS Semantic-based XSS Scanning | 1 |
-| xxe | XXE plugin detects XML external entity injection vulnerabilities via malicious payloads. | 3 |
-| xxe-blind | Blind XXE plugin detects out-of-band data exfiltration. | 3 |
+| xxe | XML external entity injection vulnerabilities | 3 |
+| xxe-blind | Blind XXE plugin detects out-of-band data exfiltration | 3 |
 
 ### **Directory-level Scanning Plugins (PerDir)**
 
 | Plugin Name | Function Description | Risk Level |
 |:--------:|:--------:|:--------:|
-| dirlisting | Directory browsing vulnerability (Directory-based) | 2 |
-| sensi-backup_2 | Backup File Of Each Folder (Directory-based) | 1 |
+| dirlisting | Directory Browsing Vulnerability (Directory-based) | 2 |
+| sensi-backup_2 | Backup File of Each Folder (Directory-based) | 1 |
 | sensi-files | Sensitive File Leak (e.g., phpinfo, .git) | 1 |
-| sensi-frontpage | FrontPage configuration information discloure | 1 |
-| upload-oss | Detect the vulnerability of uploading arbitrary files to OSS | 3 |
+| sensi-frontpage | FrontPage Configuration Information Disclosure | 1 |
+| upload-oss | OSS Arbitrary File Upload Vulnerability Detection | 3 |
 
 ### **Domain-level Scanning Plugins (PerDomain)**
 
@@ -311,18 +311,18 @@ z0 scan -f urls.txt -c 3
 | crlf_3 | CRLF Line Injection Vulnerability (Domain-based) | 2 |
 | dns-zonetransfer | DNS Zone Transfer Vulnerability | 1 |
 | hosti | Host Header Injection Detection | 1 |
-| idea-parse | Idea Parse | 1 |
-| listing | Listing | 2 |
+| idea-parse | Idea Directory Parsing | 1 |
+| listing | Directory Listing | 2 |
 | oss-takeover | OSS Bucket Takeover | 3 |
 | sensi-backup_3 | Backup File Detection (Domain-based) | 1 |
-| sensi-baseline | Check for version leak on response | -1 |
-| sensi-errorpage | Leak information in Error Page | 0 |
+| sensi-baseline | Check for Version Leak on Response | -1 |
+| sensi-errorpage | Error Page Information Leak | 0 |
 | smuggling | Request Smuggling Vulnerability | 3 |
-| unauth-webdav-active | WebDAV authentication bypass vulnerability, | 1 |
+| unauth-webdav-active | WebDAV Authentication Bypass Vulnerability | 1 |
 | upload-put | PUT-based Arbitrary File Upload | 3 |
 | xss-flash | Flash SWF XSS | 1 |
 | xss-net | .NET XSS | 1 |
-| xst | XST Vulnerability Detection | -1 |
+| xst | Cross-Site Tracing Vulnerability Detection | -1 |
 
 ### **Host-level Scanning Plugins (PerHost)**
 

@@ -9,7 +9,7 @@ from api import generateResponse, random_num, conf, PLACE, VulType, POST_HINT, T
 
 class Z0SCAN(PluginBase):
     name = "other-json-error"
-    desc = 'other-json-error'
+    desc = 'JSON Error Injection'
     version = "2025.8.20"
     risk = 2
     

@@ -10,7 +10,7 @@ from api import generateResponse, random_num, conf, PLACE, VulType, POST_HINT, T
 
 class Z0SCAN(PluginBase):
     name = "sqli-dnslog"
-    desc = 'sqli-dnslog'
+    desc = 'SQL DNS Out-of-band Injection'
     version = "2025.8.20"
     risk = 2
     require_reverse = True

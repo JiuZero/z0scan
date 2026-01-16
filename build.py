@@ -187,6 +187,8 @@ def build():
         "--include-package-data=tld",
         "--include-package-data=dateutil.zoneinfo",
         "--include-package-data=fake_useragent", 
+        '--include-package=api', 
+        '--include-package=lib', 
         '--follow-import-to=api', 
         '--follow-import-to=lib', 
         '--follow-imports', 

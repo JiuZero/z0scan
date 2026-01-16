@@ -11,7 +11,7 @@ from helper.paramanalyzer import VulnDetector
 
 class Z0SCAN(PluginBase):
     name = "ssrf"
-    desc = 'SSRF plugin detects server-side request forgery vulnerabilities via crafted payloads.'
+    desc = 'SSRF plugin detects server-side request forgery vulnerabilities via crafted payloads'
     version = "2025.8.19"
     risk = 2
     

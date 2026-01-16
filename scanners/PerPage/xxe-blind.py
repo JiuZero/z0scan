@@ -10,7 +10,7 @@ from api import generateResponse, random_num, conf, PLACE, VulType, POST_HINT, T
 
 class Z0SCAN(PluginBase):
     name = "xxe-blind"
-    desc = 'Blind XXE plugin detects out-of-band data exfiltration.'
+    desc = 'Blind XXE plugin detects out-of-band data exfiltration'
     version = "2025.8.20"
     risk = 3
     require_reverse = True

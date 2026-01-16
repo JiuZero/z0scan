@@ -19,7 +19,7 @@ from helper.jscontext import analyse_Literal
 
 class Z0SCAN(PluginBase):
     name = "jsonp"
-    desc = 'Jsonp Sensitive Information Leak & Jacking'
+    desc = 'JSONP Sensitive Information Leak & Jacking'
     version = "2025.6.23"
     risk = 1
     

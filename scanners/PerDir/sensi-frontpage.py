@@ -7,7 +7,7 @@ from api import generateResponse, VulType, PluginBase, conf, KB, Type
 
 class Z0SCAN(PluginBase):
     name = "sensi-frontpage"
-    desc = "FrontPage configuration information discloure"
+    desc = "FrontPage Configuration Information Disclosure"
     risk = 1
     version = "2025.6.26"
 

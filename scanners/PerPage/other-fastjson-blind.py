@@ -11,7 +11,7 @@ from helper.paramanalyzer import VulnDetector
 
 class Z0SCAN(PluginBase):
     name = "other-fastjson-blind"
-    desc = 'fastjson-blind'
+    desc = 'Fastjson Blind Injection'
     version = "2025.8.20"
     risk = 2
     require_reverse = True
