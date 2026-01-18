@@ -6,6 +6,7 @@
 
 import copy
 import ssl, random, threading
+import time
 from urllib.parse import urlparse, quote
 
 from requests.cookies import RequestsCookieJar
@@ -30,8 +31,8 @@ from lib.core.block_info import block_count
 from lib.core.data import conf, KB
 from lib.core.log import logger
 
-from urllib3.exceptions import (LocationParseError, MaxRetryError)
-from requests.exceptions import (MissingSchema, InvalidURL, ConnectTimeout, ConnectionError, Timeout, InvalidHeader)
+from urllib3.exceptions import (LocationParseError, MaxRetryError, ReadTimeoutError)
+from requests.exceptions import (MissingSchema, InvalidURL, ConnectTimeout, ConnectionError, Timeout, InvalidHeader, ReadTimeout)
 import socket
 
 def patch_all():
@@ -144,47 +145,73 @@ def request(self, method, url,
             '\n'.join('{}: {}'.format(k, v) for k, v in _headers.items()))
 
     settings = self.merge_environment_settings(prep.url, proxies, stream, verify, cert)
-    send_kwargs = {
-        'timeout': timeout or conf["timeout"], 
-        'allow_redirects': allow_redirects,
-    }
-    send_kwargs.update(settings)
     
-    try:
-        KB["request"] += 1
-        resp = self.send(prep, **send_kwargs)
-    except Exception as e:
-        logger.error(e, origin="requests")
-        if record is True:
-            block.push_result_status(1)
-            if conf.get("redis_client"):
-                red = gredis()
-                red.hincrby("count", "request_fail", amount=1)
-        KB["request_fail"] += 1
-        return None
+    # 获取重试配置
+    max_retries = conf.get("retry", 2)
+    retry_count = 0
     
-    if record is True:
-        if resp != None:
-            block.push_result_status(0)
-        else:
-            block.push_result_status(1)
-            if conf.get("redis_client"):
-                red = gredis()
-                red.hincrby("count", "request_fail", amount=1)
-            return None
-    if resp is None:
-        KB["request_fail"] += 1
-        return None
+    while retry_count <= max_retries:
+        send_kwargs = {
+            'timeout': timeout or conf["timeout"], 
+            'allow_redirects': allow_redirects,
+        }
+        send_kwargs.update(settings)
+        
+        try:
+            KB["request"] += 1
+            resp = self.send(prep, **send_kwargs)
             
-    if resp.encoding == 'ISO-8859-1':
-        encodings = get_encodings_from_content(resp.text)
-        if encodings:
-            encoding = encodings[0]
-        else:
-            encoding = resp.apparent_encoding
-        resp.encoding = encoding
-    setattr(resp, 'reqinfo', raw)
-    return resp
+            if record is True:
+                if resp != None:
+                    block.push_result_status(0)
+                else:
+                    block.push_result_status(1)
+                    if conf.get("redis_client"):
+                        red = gredis()
+                        red.hincrby("count", "request_fail", amount=1)
+                    return None
+            if resp is None:
+                KB["request_fail"] += 1
+                return None
+                    
+            if resp.encoding == 'ISO-8859-1':
+                encodings = get_encodings_from_content(resp.text)
+                if encodings:
+                    encoding = encodings[0]
+                else:
+                    encoding = resp.apparent_encoding
+                resp.encoding = encoding
+            setattr(resp, 'reqinfo', raw)
+            return resp
+            
+        except (ConnectTimeout, ReadTimeout, socket.timeout, ReadTimeoutError) as e:
+            # 仅在达到最大重试次数时才记录错误
+            if retry_count >= max_retries:
+                logger.error(e, origin="requests")
+                if record is True:
+                    block.push_result_status(1)
+                    if conf.get("redis_client"):
+                        red = gredis()
+                        red.hincrby("count", "request_fail", amount=1)
+                KB["request_fail"] += 1
+                return None
+            else:
+                # 增加重试计数并等待后重试
+                retry_count += 1
+                wait_time = min(2 ** retry_count + random.random(), 5)
+                logger.debug(f"请求超时，第 {retry_count} 次重试，等待 {wait_time:.2f} 秒")
+                time.sleep(wait_time)
+                continue
+                
+        except Exception as e:
+            logger.error(e, origin="requests")
+            if record is True:
+                block.push_result_status(1)
+                if conf.get("redis_client"):
+                    red = gredis()
+                    red.hincrby("count", "request_fail", amount=1)
+            KB["request_fail"] += 1
+            return None
 
 def prepare_url(self, url, params):
     """Prepares the given HTTP URL."""

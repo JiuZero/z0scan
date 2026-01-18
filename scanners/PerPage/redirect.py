@@ -41,7 +41,7 @@ class Z0SCAN(PluginBase):
     
     def process(self, _):
         k, v, position = _
-        if VulnDetector().is_ssrf_redir(k, v):
+        if VulnDetector(self.requests.url).is_ssrf_redir(k, v):
             value = urlparse.unquote(v).strip()
             randomstr = random_str(length=6).lower()
             if re.search("^http[s]?://", value):

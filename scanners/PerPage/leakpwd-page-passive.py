@@ -63,46 +63,48 @@ class Z0SCAN(PluginBase):
 
         
     def audit(self):
-        self.parser = Parser(self.requests, self.response)
-        if not self.parser.run():
-            return
-        if not self.condition:
-            return
-        self.error_length = self.get_error_length()
-        username_dict = conf.dicts["username"]
-        password_dict = conf.dicts["password"]
-        # 常规账号密码爆破
-        res, username, password = self.crack_task(username_dict, password_dict)
-        # 万能密码爆破
-        if (not username and not password) or conf.level == 3:
-            if conf.loginpage_sqli:
-                sqlin_user_dict = sqlin_pass_dict = conf.dicts["sqli-password"]
-                res, username, password = self.crack_task(sqlin_user_dict, sqlin_pass_dict)
-        # 二次验证
-        if username and password:
-            result = self.generate_result()
-            result.main({
-                "type": Type.REQUEST, 
-                "url": self.requests.url, 
-                "vultype": VulType.WEAK_PASSWORD, 
-                "show": {
-                    "Result": f"User/Password: {username}/{password}"
-                    }
-                })
-            result.step("The First Test", {
-                "request": res.reqinfo, 
-                "response": generateResponse(res), 
-                "desc": ""
-                })
-            res2 = self.recheck(username, password)
-            if res2:
-                result.step("The Second Test", {
-                    "request": res2.reqinfo, 
-                    "response": generateResponse(res2), 
+        try:
+            self.parser = Parser(self.requests, self.response)
+            if not self.parser.run():
+                return
+            if not self.condition:
+                return
+            self.error_length = self.get_error_length()
+            username_dict = conf.dicts["username"]
+            password_dict = conf.dicts["password"]
+            # 常规账号密码爆破
+            res, username, password = self.crack_task(username_dict, password_dict)
+            # 万能密码爆破
+            if (not username and not password) or conf.level == 3:
+                if conf.loginpage_sqli:
+                    sqlin_user_dict = sqlin_pass_dict = conf.dicts["sqli-password"]
+                    res, username, password = self.crack_task(sqlin_user_dict, sqlin_pass_dict)
+            # 二次验证
+            if username and password:
+                result = self.generate_result()
+                result.main({
+                    "type": Type.REQUEST, 
+                    "url": self.requests.url, 
+                    "vultype": VulType.WEAK_PASSWORD, 
+                    "show": {
+                        "Result": f"User/Password: {username}/{password}"
+                        }
+                    })
+                result.step("The First Test", {
+                    "request": res.reqinfo, 
+                    "response": generateResponse(res), 
                     "desc": ""
                     })
-                self.success(result)
-                return
+                res2 = self.recheck(username, password)
+                if res2:
+                    result.step("The Second Test", {
+                        "request": res2.reqinfo, 
+                        "response": generateResponse(res2), 
+                        "desc": ""
+                        })
+                    self.success(result)
+                    return
+        except: pass
 
     def crack_request(self, conn, username, password):
         data = self.parser.data

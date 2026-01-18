@@ -7,7 +7,6 @@ from urllib.parse import quote
 from lib.core.settings import acceptedExt
 from lib.api.reverse_api import reverseApi
 from api import generateResponse, random_str, conf, PLACE, VulType, POST_HINT, Type, PluginBase, Threads, KB, isjson
-from helper.paramanalyzer import VulnDetector
 
 class Z0SCAN(PluginBase):
     name = "other-fastjson-blind"

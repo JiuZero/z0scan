@@ -70,12 +70,12 @@ class Z0SCAN(PluginBase):
                         result = self.generate_result()
                         result.main(_vuln)
                         self.success(result)
-            if req:
                 req = requests.get(domain, headers=headers, allow_redirects=False)
-                fake_req = FakeReq(domain, headers, HTTPMETHOD.GET, "")
-                fake_resp = FakeResp(req.status_code, req.content, req.headers)
-                # 主页面指纹嗅探
-                task_push('PerDomain', fake_req, fake_resp, self.fingerprints)
+                if req:
+                    fake_req = FakeReq(domain, headers, HTTPMETHOD.GET, "")
+                    fake_resp = FakeResp(req.status_code, req.content, req.headers)
+                    # 主页面指纹嗅探
+                    task_push('PerDomain', fake_req, fake_resp, self.fingerprints)
             
         # PerPage
         if KB["spiderset"].add(url, 'PerPage'):

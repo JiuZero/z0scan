@@ -9,7 +9,7 @@
 THREADS = 18  # 默认线程数量
 EXCLUDES = ["google", '.gov.', 'baidu', 'firefox', 'microsoft', '.bing.', 'msn.cn']  # 排除包含关键字的网址
 DEFAULT_PROXY_PORT = 5920 # 被动模式默认监听端口
-RETRY = 2  # 超时重试次数
+RETRY = 2  # 请求失败重试次数
 TIMEOUT = 6  # 超时时间
 LEVEL = 2 # 0:纯被动分析模式，不做额外请求，即不加载Payload | 1:最低请求量的扫描，最低的业务影响 | 2:中等请求量的扫描，Payload多为通用 | 3:大量请求扫描，Payload覆盖面更广
 RISK = [0, 1, 2] # -1:几乎无危害的常见漏洞，0:可能导致危害产生，1:低危害，2. 中等危害，3:高危害
