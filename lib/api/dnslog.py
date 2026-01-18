@@ -29,6 +29,7 @@ class DnsLogApi(object):
             resp = self.req.get(self._new_api).text
         except:
             resp = ''
+        if not resp: return ''
         return resp
 
     def check(self) -> list:

@@ -39,7 +39,9 @@ class Z0SCAN(PluginBase):
             for key in parse_params:
                 params_data[key] = random_str(6)
             params_data.update(self.requests.params)
-            resp = requests.get(self.requests.netloc, params=params_data, headers=self.requests.headers).text
+            resp = requests.get(self.requests.netloc, params=params_data, headers=self.requests.headers)
+            if not resp: return
+            resp = resp.text
             for k, v in params_data.items():
                 for position in positions:
                     iterdatas += [(k, v, position)]
@@ -91,6 +93,7 @@ class Z0SCAN(PluginBase):
                     "position": position
                     })
                 req = self.req(position, payload)
+                if req is None: return
                 if _payload in req.text:
                     self.result.main({
                         "type": Type.REQUEST,
@@ -120,6 +123,7 @@ class Z0SCAN(PluginBase):
                             "position": position
                             })
                         req = self.req(position, payload)
+                        if req is None: return
                         _locations = SearchInputInResponse(_payload, req.text)
                         for _item in _locations:
                             if _payload in _item["details"]["content"] and _item["details"]["tagname"] == "style":
@@ -148,6 +152,7 @@ class Z0SCAN(PluginBase):
                         "position": position
                         })
                     req = self.req(position, payload)
+                    if req is None: return
                     _locations = SearchInputInResponse(flag, req.text)
                     for i in _locations:
                         if i["details"]["tagname"] == flag:
@@ -180,6 +185,7 @@ class Z0SCAN(PluginBase):
                             "position": position
                             })
                         req = self.req(position, payload)
+                        if req is None: return
                         _locations = SearchInputInResponse(flag, req.text)
                         for i in _locations:
                             if i["details"]["tagname"] == flag:
@@ -208,6 +214,7 @@ class Z0SCAN(PluginBase):
                             "position": position
                             })
                         req = self.req(position, payload)
+                        if req is None: return
                         _locations = SearchInputInResponse(flag, req.text)
                         for i in _locations:
                             for _k, v in i["details"]["attibutes"]:
@@ -240,6 +247,7 @@ class Z0SCAN(PluginBase):
                                 "position": position
                                 })
                             req = self.req(position, payload)
+                            if req is None: return
                             _occerens = SearchInputInResponse(flag, req.text)
                             for i in _occerens:
                                 for _k, _v in i["details"]["attibutes"]:
@@ -270,6 +278,7 @@ class Z0SCAN(PluginBase):
                                 "position": position
                                 })
                             req = self.req(position, payload)
+                            if req is None: return
                             _occerens = SearchInputInResponse(flag, req.text)
                             for i in _occerens:
                                 if i["details"]["tagname"] == flag:
@@ -301,6 +310,7 @@ class Z0SCAN(PluginBase):
                                 "position": position
                                 })
                             req = self.req(position, payload)
+                            if req is None: return
                             _occerens = SearchInputInResponse(flag, req.text)
                             for i in _occerens:
                                 if len(i["details"]["attibutes"]) > 0 and i["details"]["attibutes"][0][
@@ -333,6 +343,7 @@ class Z0SCAN(PluginBase):
                                 "position": position
                                 })
                             req = self.req(position, payload)
+                            if req is None: return
                             _occerens = SearchInputInResponse(_payload, req.text)
                             for _item in _occerens:
                                 if payload in str(_item["details"]) and len(_item["details"]["attibutes"]) > 0 and \
@@ -362,6 +373,7 @@ class Z0SCAN(PluginBase):
                                 "position": position
                                 })
                             req = self.req(position, payload)
+                            if req is None: return
                             _occerens = SearchInputInResponse(_payload, req.text)
                             for i in _occerens:
                                 _attibutes = i["details"]["attibutes"]
@@ -392,6 +404,7 @@ class Z0SCAN(PluginBase):
                             "position": position
                             })
                         req = self.req(position, payload)
+                        if req is None: return
                         _occerens = SearchInputInResponse(flag, req.text)
                         for i in _occerens:
                             if i["details"]["tagname"] == flag:
@@ -423,6 +436,7 @@ class Z0SCAN(PluginBase):
                         "position": position, 
                         })
                     req = self.req(position, payload)
+                    if req is None: return
                     _occerens = SearchInputInResponse(flag, req.text)
                     for i in _occerens:
                         if i["details"]["content"] == flag and i["details"]["tagname"].lower() == script_tag.lower():

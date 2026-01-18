@@ -17,6 +17,7 @@ class Z0SCAN(_PluginBase):
         try:
             url = 'http://' + self.host + '/solr/'
             r = requests.get(url)
+            if not r: return
             if r.status_code == 200 and 'Solr Admin' in r.text and 'Dashboard' in r.text:
                 result = self.generate_result()
                 result.main({

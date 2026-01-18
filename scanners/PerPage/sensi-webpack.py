@@ -19,6 +19,7 @@ class Z0SCAN(PluginBase):
         if self.requests.suffix.lower() == '.js':
             new_url = self.requests.url + ".map"
             req = requests.get(new_url, headers=self.requests.headers)
+            if not req: return
             if req.status_code == 200 and 'webpack:///' in req.text:
                 result = self.generate_result()
                 result.main({
