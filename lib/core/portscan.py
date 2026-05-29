@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# JiuZero/z0scan
+
+import threading
+import re
+import socket
+import time
+from lib.core.log import logger
+from lib.core.data import KB, conf
+from lib.controller.controller import task_push_for_portscan
+
+class ScanPort:
+    def __init__(self, ipaddr):
+        self.ipaddr = ipaddr
+        self.threads = []  # 存储线程引用，用于等待所有线程完成
+
+    def _safe_decode_pattern(self, pattern):
+        # 安全解码
+        if isinstance(pattern, str):
+            return pattern
+        elif isinstance(pattern, bytes):
+            # 忽略错误
+            try:
+                return pattern.decode('utf-8', errors='ignore')
+            except:
+                return str(pattern)[2:-1]  # 将bytes转换为字符串表示
+        else:
+            # 其他类型直接转换为字符串
+            return str(pattern)
+
+    def socket_scan(self, task):
+        PROBE = {'GET / HTTP/1.0\r\n\r\n'}  # 端口探测请求
+        response = ''
+        ip = self.ipaddr
+        plugin_name, ports, fingers = task
+        
+        try:
+            for port in ports:
+                # 为每个端口创建独立socket（避免资源复用导致的阻塞）
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                # 仅保留单个端口的操作超时（2秒），防止单端口阻塞
+                sock.settimeout(3.0)
+                
+                try:
+                    result = sock.connect_ex((ip, int(port)))
+                    if result == 0:
+                        try:
+                            for probe in PROBE:
+                                sock.sendall(probe.encode('utf-8'))
+                                response = sock.recv(256).decode('utf-8', 'ignore')
+                                
+                                if response:
+                                    # 过滤502网关错误场景
+                                    if re.search(r'<title>502 Bad Gateway', response, re.IGNORECASE):
+                                        return
+                                    logger.debug(f"{ip}:{port} OPEN", origin="portscan")
+                                    # 匹配服务指纹，加载对应插件
+                                    if fingers != None and fingers != []:
+                                        for pattern in fingers:
+                                            try:
+                                                pattern = self._safe_decode_pattern(pattern)
+                                                if re.search(pattern, response, re.IGNORECASE):
+                                                    logger.info(f"Load plugin '{plugin_name}' on {ip}:{port}", origin="portscan")
+                                                    task_push_for_portscan(plugin_name, host=f"{ip}:{port}", sockrecv=response)
+                                                    break  # 匹配到一个指纹即可，避免重复加载
+                                            except Exception as pattern_error:
+                                                logger.warninging(f"Pattern processing error: {str(pattern_error)}", origin="portscan")
+                                                continue
+                                    # 无指纹时直接加载插件
+                                    else:
+                                        logger.info(f"Load plugin '{plugin_name}' on {ip}:{port} (no fingerprint)", origin="portscan")
+                                        task_push_for_portscan(plugin_name, host=f"{ip}:{port}", sockrecv=response)
+                                        
+                        except socket.timeout:
+                            logger.debug(f"{ip}:{port} response timeout (no service data)", origin="portscan")
+                            continue
+                        except Exception as recv_error:
+                            logger.debug(f"{ip}:{port} receive error: {str(recv_error)}", origin="portscan")
+                            continue
+                        finally:
+                            # 强制关闭socket，释放资源（避免句柄泄漏）
+                            try:
+                                sock.close()
+                            except Exception as close_e:
+                                logger.debug(f"Close socket error: {str(close_e)}", origin="portscan")
+                                
+                except socket.timeout:
+                    logger.debug(f"{ip}:{port} connection timeout (no TCP handshake)", origin="portscan")
+                    continue
+                except (ConnectionResetError, OSError) as conn_e:
+                    logger.debug(f"{ip}:{port} connection failed: {str(conn_e)}", origin="portscan")
+                    continue
+                finally:
+                    # 双重保障：确保socket被关闭（即使前面出现异常）
+                    try:
+                        if not sock._closed:
+                            sock.close()
+                    except:
+                        pass
+                        
+        except Exception as thread_e:
+            logger.error(f"Scan thread error: {str(thread_e)}", origin="portscan")
+            raise
+            
+    def run(self):
+        try:
+            # 加载端口扫描任务
+            tasks = []
+            for poc_name, info in KB["portscan"].items():
+                ports, fingers = info
+                # 过滤无效端口（1-65535）
+                valid_ports = [p for p in ports if 1 <= int(p) <= 65535]
+                if valid_ports:
+                    tasks.append((poc_name, valid_ports, fingers))
+            
+            if not tasks:
+                return
+            
+            # 启动线程执行扫描任务
+            self.threads = []
+            for task in tasks:
+                thread = threading.Thread(target=self.socket_scan, args=(task,))
+                thread.daemon = False  # 非守护线程，确保扫描完成前主程序不退出
+                self.threads.append(thread)
+                thread.start()
+                logger.debug(f"Started thread for plugin: {task[0]}", origin="portscan")
+            
+            # 等待所有扫描线程完成（确保所有端口扫描结束）
+            for thread in self.threads:
+                thread.join()  # 阻塞等待单个线程完成，无超时
+                
+            logger.debug(f"All tasks completed for {self.ipaddr}", origin="portscan")
+            
+        except socket.gaierror:
+            logger.error(f"Failed to resolve hostname: {self.ipaddr}", origin="portscan")
+        except Exception as run_e:
+            logger.error(f"Main scan error: {str(run_e)}", origin="portscan")

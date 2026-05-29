@@ -1,0 +1,6 @@
+include *
+include lib/data/*
+include certs/*
+include output/README.MD
+include data/*
+include doc/*

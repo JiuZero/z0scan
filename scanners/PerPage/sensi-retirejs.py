@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# JiuZero 2025/6/21
+
+from helper.retirejs import main_scanner, js_extractor
+from api import VulType, Type, PLACE, PluginBase, generateResponse, conf, KB
+
+
+class Z0SCAN(PluginBase):
+    name = 'sensi-retirejs'
+    desc = 'Outdated JS Component Detection'
+    version = "2025.6.21"
+    risk = -1
+
+    def audit(self):
+        js_links = js_extractor(self.response.raw)
+        ret = main_scanner(self.requests.url, self.response.raw)
+        if ret:
+            self._result(self.requests.url, ret)
+        for link in js_links:
+            ret2 = main_scanner(link, '')
+            if ret2:
+                self._result(link, ret2)
+                    
+    def _result(self, link, ret):
+        result = self.generate_result()
+        result.main({
+            "type": Type.ANALYZE, 
+            "url": self.requests.url, 
+            "vultype": VulType.SENSITIVE, 
+            "show": {
+                "Link": link, 
+                }
+            })
+        result.step("Request1", {
+            "request": self.requests.raw, 
+            "response": self.response.raw, 
+            "desc": f"The page includes JavaScript libraries with known vulnerabilities"
+            })
+        self.success(result)
